@@ -186,3 +186,5 @@ footer {
   .footer-info { text-align:left; }
   .kakao-float { bottom:20px; right:16px; }
 }
+
+.footer-logo span, .footer-logo span b { color: #F0EDF8 !important; }
