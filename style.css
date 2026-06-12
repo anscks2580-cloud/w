@@ -120,6 +120,60 @@ footer {
   max-width:500px; margin-bottom:52px;
 }
 
+/* ── KAKAO FLOATING ── */
+.kakao-float {
+  position: fixed;
+  bottom: 28px; right: 28px;
+  z-index: 999;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  text-decoration: none;
+}
+
+.kakao-float-btn {
+  width: 56px; height: 56px;
+  background: #FEE500;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.kakao-float:hover .kakao-float-btn {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.kakao-float-btn svg { width: 28px; height: 28px; }
+
+.kakao-float-label {
+  font-size: 11px; font-weight: 600;
+  color: #3C1E1E;
+  background: #FEE500;
+  padding: 3px 8px; border-radius: 10px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+/* ── KAKAO FOOTER BTN ── */
+.kakao-footer-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px;
+  background: #FEE500;
+  color: #3C1E1E;
+  font-size: 14px; font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.kakao-footer-btn:hover {
+  background: #fdd800;
+  transform: translateY(-2px);
+}
+
+.kakao-footer-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
 /* ── RESPONSIVE ── */
 @media (max-width:768px) {
   nav { padding:0 20px; }
@@ -127,4 +181,5 @@ footer {
   .nav-tel { display:none; }
   footer { padding:32px 20px; }
   .footer-info { text-align:left; }
+  .kakao-float { bottom:20px; right:16px; }
 }
