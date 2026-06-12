@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강의 시청 방법 | 송우찬수학학원 평촌관</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.page-inner { max-width: 800px; margin: 0 auto; padding: 80px 48px 96px; }
+
+.page-hero {
+  padding: 72px 0 48px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 64px;
+}
+
+.breadcrumb {
+  font-size: 12px; color: var(--muted);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 6px;
+}
+.breadcrumb a { color: var(--muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--gold); }
+.breadcrumb span { color: var(--gold); }
+
+/* ── STEPS ── */
+.steps { display: flex; flex-direction: column; gap: 0; }
+
+.step {
+  display: flex; gap: 28px;
+  padding: 36px 0;
+  border-bottom: 1px solid var(--border-soft);
+  position: relative;
+}
+
+.step:last-child { border-bottom: none; }
+
+.step-num {
+  flex-shrink: 0;
+  width: 46px; height: 46px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 600; color: var(--gold);
+  margin-top: 2px;
+}
+
+.step h3 {
+  font-size: 18px; font-weight: 600;
+  margin-bottom: 10px; letter-spacing: -0.3px;
+}
+
+.step p {
+  font-size: 14px; color: var(--muted); line-height: 1.85;
+  margin-bottom: 0;
+}
+
+.step-tip {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 14px;
+  padding: 6px 14px;
+  background: var(--gold-glow);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px; color: var(--gold);
+}
+
+/* ── FAQ ── */
+.faq-section { margin-top: 80px; }
+
+.faq-list { margin-top: 36px; display: flex; flex-direction: column; gap: 12px; }
+
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.faq-q {
+  width: 100%; text-align: left;
+  padding: 20px 24px;
+  background: none; border: none;
+  color: var(--off-white);
+  font-size: 15px; font-weight: 500; font-family: inherit;
+  cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px;
+  transition: color 0.2s;
+}
+
+.faq-q:hover { color: var(--gold); }
+
+.faq-arrow {
+  flex-shrink: 0; font-size: 18px; color: var(--muted);
+  transition: transform 0.25s;
+}
+
+.faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--gold); }
+
+.faq-a {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.3s ease;
+  font-size: 14px; color: var(--muted); line-height: 1.85;
+}
+
+.faq-item.open .faq-a { max-height: 300px; }
+
+.faq-a-inner { padding: 0 24px 22px; }
+
+/* ── CTA ── */
+.cta-box {
+  margin-top: 72px;
+  padding: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.cta-box h3 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+.cta-box p { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+
+.cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+.btn-gold {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 26px;
+  background: var(--gold);
+  color: var(--bg);
+  font-size: 14px; font-weight: 600;
+  border-radius: 8px; text-decoration: none;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-gold:hover { background: #f5cc50; transform: translateY(-2px); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 26px;
+  border: 1px solid var(--border);
+  color: var(--off-white);
+  font-size: 14px; font-weight: 400;
+  border-radius: 8px; text-decoration: none;
+  transition: border-color 0.2s;
+}
+
+.btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+@media (max-width: 768px) {
+  .page-inner { padding: 60px 20px 80px; }
+  .step { flex-direction: column; gap: 16px; }
+  .step-num { width: 40px; height: 40px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="logo-mark">송</div>
+    <span class="logo-text"><em>송우찬</em>수학학원 평촌관</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="about.html">학원소개</a></li>
+    <li><a href="videos.html">동영상강의</a></li>
+    <li><a href="howto.html" class="active">강의 시청 방법</a></li>
+  </ul>
+  <div class="nav-tel">031.386.8899</div>
+</nav>
+
+<div class="page">
+  <div class="page-inner">
+
+    <div class="page-hero">
+      <div class="breadcrumb">
+        <a href="index.html">홈</a> › <span>강의 시청 방법</span>
+      </div>
+      <div class="section-eyebrow">Guide</div>
+      <h1 class="section-title">강의 이렇게 보시면 됩니다</h1>
+      <p class="section-desc">
+        별도 앱 설치 없이 누구나 무료로 시청 가능합니다.<br>
+        아래 순서대로 따라오세요.
+      </p>
+    </div>
+
+    <!-- 스텝 -->
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>동영상강의 페이지로 이동</h3>
+          <p>상단 메뉴의 <strong style="color:var(--off-white)">동영상강의</strong>를 클릭하면 전체 강의 목록이 나옵니다. 카테고리 버튼(수학Ⅰ, 수학Ⅱ, 미적분 등)으로 원하는 단원을 빠르게 찾을 수 있어요.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h3>강의 카드 클릭 → 바로 재생</h3>
+          <p>원하는 강의 썸네일을 클릭하면 팝업 플레이어가 열리면서 바로 재생됩니다. 전체화면 버튼을 누르면 더 크게 볼 수 있어요.</p>
+          <span class="step-tip">💡 팝업 하단의 '유튜브에서 보기' 버튼을 누르면 유튜브 앱으로 이동합니다</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>유튜브 채널 구독으로 최신 강의 받기</h3>
+          <p>송우찬수학학원 유튜브 채널을 구독하고 알림 설정(🔔)까지 눌러두면 새 강의가 올라올 때마다 알림을 받을 수 있습니다. 구독과 알림 모두 무료입니다.</p>
+          <span class="step-tip">🔔 알림 설정까지 눌러야 새 강의 알림이 옵니다</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <h3>모르는 부분은 전화 또는 방문 상담</h3>
+          <p>영상을 보다 궁금한 점이 생기면 언제든지 학원으로 연락 주세요. 평촌관 031.386.8899 / 산본관 031.346.8899</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <div class="section-eyebrow">FAQ</div>
+      <h2 class="section-title">자주 묻는 질문</h2>
+
+      <div class="faq-list">
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>강의를 보려면 로그인이 필요한가요?</span>
+            <span class="faq-arrow">∨</span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">아니요. 현재 모든 강의는 유튜브에 무료로 공개되어 있어 별도 로그인 없이 바로 시청하실 수 있습니다.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>스마트폰에서도 볼 수 있나요?</span>
+            <span class="faq-arrow">∨</span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">네. PC, 태블릿, 스마트폰 모두 지원합니다. 모바일에서는 팝업 플레이어 대신 유튜브 앱으로 바로 이동하는 방식이 더 편할 수 있습니다.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>강의는 얼마나 자주 올라오나요?</span>
+            <span class="faq-arrow">∨</span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">수업 진도에 맞춰 주기적으로 업로드됩니다. 채널 구독과 알림 설정을 해두시면 새 강의를 놓치지 않을 수 있습니다.</div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>학원에 다니지 않아도 볼 수 있나요?</span>
+            <span class="faq-arrow">∨</span>
+          </button>
+          <div class="faq-a">
+            <div class="faq-a-inner">네, 누구나 무료로 시청 가능합니다. 다만 강의와 연계된 교재나 문제 풀이 피드백은 학원생에게 제공되며, 자세한 상담은 전화로 문의 주세요.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-box">
+      <h3>강의가 마음에 드셨나요?</h3>
+      <p>직접 수업에 대해 궁금한 점이 있으시면 언제든 상담 주세요.</p>
+      <div class="cta-btns">
+        <a href="videos.html" class="btn-gold">강의 보러가기 →</a>
+        <a href="about.html" class="btn-ghost">학원소개 보기</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo">
+    <div class="logo-mark">송</div>
+    <span><b>송우찬수학학원</b> 평촌관</span>
+  </div>
+  <div class="footer-info">
+    경기도 안양시 동안구 평촌학원가<br>
+    평촌관 031.386.8899 · 산본관 031.346.8899<br>
+    © 2025 송우찬수학학원
+  </div>
+</footer>
+
+<script>
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  item.classList.toggle('open');
+}
+</script>
+
+</body>
+</html>
