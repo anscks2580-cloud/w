@@ -1,37 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160">
-  <!-- S (크게, 위쪽) -->
-  <text x="8" y="100"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 40" width="72" height="40">
+  <!-- S -->
+  <text x="1" y="32"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="108"
-    font-weight="700"
-    font-style="italic"
-    fill="currentColor"
-    letter-spacing="-4">S</text>
-
-  <!-- W (중간, S 오른쪽 아래) -->
-  <text x="48" y="88"
+    font-size="38" font-weight="700" font-style="italic"
+    fill="currentColor">S</text>
+  <!-- W -->
+  <text x="22" y="26"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="52"
-    font-weight="700"
-    font-style="italic"
-    fill="currentColor"
-    letter-spacing="-2">W</text>
-
-  <!-- C (크게, 오른쪽) -->
-  <text x="72" y="122"
+    font-size="18" font-weight="700" font-style="italic"
+    fill="currentColor">W</text>
+  <!-- C -->
+  <text x="38" y="36"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="90"
-    font-weight="700"
-    font-style="italic"
-    fill="currentColor"
-    letter-spacing="-4">C</text>
-
-  <!-- MATH (소문자, W 옆) -->
-  <text x="82" y="70"
+    font-size="30" font-weight="700" font-style="italic"
+    fill="currentColor">C</text>
+  <!-- MATH -->
+  <text x="47" y="19"
     font-family="Georgia, 'Times New Roman', serif"
-    font-size="14"
-    font-weight="400"
-    font-style="italic"
-    fill="currentColor"
-    letter-spacing="1">MATH</text>
+    font-size="6" font-weight="400" font-style="italic"
+    fill="currentColor" letter-spacing="0.5">MATH</text>
 </svg>
