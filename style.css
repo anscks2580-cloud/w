@@ -125,10 +125,10 @@ footer {
 /* ── KAKAO FLOATING ── */
 .kakao-float {
   position: fixed;
-  bottom: 20px; right: 16px;
+  bottom: 24px; right: 16px;
   z-index: 999;
   text-decoration: none;
-  display: flex; align-items: center; gap: 7px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
 }
 
 .kakao-float-btn {
