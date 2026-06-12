@@ -1,1 +1,0 @@
-# www.fanmath.co.kr
