@@ -22,33 +22,43 @@
   display: flex;
   gap: 56px;
   align-items: flex-start;
-  padding: 52px 56px;
-  margin-bottom: 32px;
-  background: linear-gradient(145deg, #2A1E55 0%, #1A1230 60%, #150E28 100%);
-  border-radius: 20px;
-  border: 1px solid rgba(240,192,64,0.18);
+  padding: 56px 60px;
+  margin-bottom: 36px;
+  background:
+    linear-gradient(145deg, rgba(58,38,110,0.9) 0%, rgba(26,18,48,0.98) 50%, rgba(18,10,32,1) 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(240,192,64,0.15);
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.04) inset,
-    0 32px 64px rgba(0,0,0,0.5),
-    0 1px 0 rgba(240,192,64,0.6);
+    0 0 0 1px rgba(255,255,255,0.05) inset,
+    0 1px 0 rgba(240,192,64,0.7),
+    0 2px 4px rgba(240,192,64,0.08),
+    0 20px 60px rgba(0,0,0,0.6),
+    0 40px 80px rgba(0,0,0,0.3);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(2px);
 }
 
 .principal-section::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0; left: 10%; right: 10%;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(240,192,64,0.8) 30%, #F0C040 50%, rgba(240,192,64,0.8) 70%, transparent 100%);
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(240,192,64,0.4) 20%,
+    rgba(240,192,64,1) 50%,
+    rgba(240,192,64,0.4) 80%,
+    transparent 100%);
+  filter: blur(0.3px);
 }
 
 .principal-section::after {
   content: '';
   position: absolute;
-  top: -80px; right: -80px;
-  width: 260px; height: 260px;
-  background: radial-gradient(circle, rgba(124,111,160,0.12) 0%, transparent 70%);
+  top: -120px; right: -60px;
+  width: 340px; height: 340px;
+  background: radial-gradient(circle, rgba(124,111,160,0.1) 0%, rgba(240,192,64,0.03) 40%, transparent 70%);
   pointer-events: none;
 }
 
@@ -67,12 +77,15 @@
 }
 
 .photo-frame {
-  width: 220px;
-  height: 280px;
-  border-radius: 14px;
+  width: 230px;
+  height: 290px;
+  border-radius: 16px;
   background: linear-gradient(160deg, #2D2050 0%, #1A1230 100%);
-  border: 1px solid rgba(240,192,64,0.2);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(240,192,64,0.3);
+  border: 1px solid rgba(240,192,64,0.25);
+  box-shadow:
+    0 1px 0 rgba(240,192,64,0.5),
+    0 20px 50px rgba(0,0,0,0.6),
+    0 4px 16px rgba(240,192,64,0.06);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -95,12 +108,13 @@
 
 .photo-name-tag {
   text-align: center;
+  margin-top: 4px;
 }
 
 .photo-name-tag .name {
-  font-size: 17px; font-weight: 700;
-  letter-spacing: -0.3px;
-  margin-bottom: 4px;
+  font-size: 18px; font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 5px;
   color: var(--off-white);
 }
 
@@ -119,7 +133,7 @@
 }
 
 .greeting-title {
-  font-size: clamp(20px, 2.5vw, 28px);
+  font-size: clamp(22px, 2.8vw, 32px);
   font-weight: 700; letter-spacing: -0.8px;
   line-height: 1.35; margin-bottom: 28px;
   word-break: keep-all; color: var(--off-white);
@@ -138,8 +152,8 @@
 }
 
 .greeting-body {
-  font-size: 15px; color: var(--muted);
-  line-height: 2; word-break: keep-all;
+  font-size: 15px; color: #C4BAD8;
+  line-height: 2.1; word-break: keep-all;
   white-space: pre-line;
 }
 
