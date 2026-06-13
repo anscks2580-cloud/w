@@ -22,11 +22,22 @@
   display: flex;
   gap: 48px;
   align-items: flex-start;
-  padding: 40px;
-  margin-bottom: 32px;
-  background: #F5F0E8;
+  padding: 44px;
+  margin-bottom: 28px;
+  background: linear-gradient(135deg, #231848 0%, #1A1230 100%);
   border-radius: 18px;
-  color: #2A1E55;
+  border: 1px solid rgba(240,192,64,0.25);
+  box-shadow: 0 2px 0 0 rgba(240,192,64,0.5), 0 8px 40px rgba(0,0,0,0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.principal-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
 }
 
 .principal-section:last-of-type {
@@ -77,11 +88,11 @@
   font-size: 17px; font-weight: 700;
   letter-spacing: -0.3px;
   margin-bottom: 4px;
-  color: #1A1230;
+  color: var(--off-white);
 }
 
 .photo-name-tag .role {
-  font-size: 12px; color: #8B6914;
+  font-size: 12px; color: var(--gold);
   letter-spacing: 0.5px;
 }
 
@@ -91,19 +102,19 @@
 .greeting-eyebrow {
   font-size: 11px; font-weight: 500;
   letter-spacing: 2.5px; text-transform: uppercase;
-  color: #8B6914; margin-bottom: 14px;
+  color: var(--gold); margin-bottom: 14px;
 }
 
 .greeting-title {
   font-size: clamp(20px, 2.5vw, 28px);
   font-weight: 700; letter-spacing: -0.8px;
   line-height: 1.35; margin-bottom: 28px;
-  word-break: keep-all; color: #1A1230;
+  word-break: keep-all; color: var(--off-white);
 }
 
 .greeting-title em {
   font-style: normal;
-  color: #8B6914;
+  color: var(--gold);
 }
 
 .greeting-divider {
@@ -114,7 +125,7 @@
 }
 
 .greeting-body {
-  font-size: 15px; color: #4A3F6B;
+  font-size: 15px; color: var(--muted);
   line-height: 2; word-break: keep-all;
   white-space: pre-line;
 }
@@ -122,13 +133,13 @@
 .greeting-sig {
   margin-top: 36px;
   padding-top: 28px;
-  border-top: 1px solid rgba(42,30,85,0.15);
-  font-size: 14px; color: #4A3F6B;
+  border-top: 1px solid var(--border-soft);
+  font-size: 14px; color: var(--muted);
   display: flex; align-items: center; gap: 12px;
 }
 
-.sig-label { font-size: 12px; color: #7C6FA0; letter-spacing: 0.5px; }
-.sig-name  { font-size: 16px; font-weight: 700; color: #1A1230; letter-spacing: -0.3px; }
+.sig-label { font-size: 12px; color: var(--purple-soft); letter-spacing: 0.5px; }
+.sig-name  { font-size: 16px; font-weight: 700; color: var(--off-white); letter-spacing: -0.3px; }
 
 
 
