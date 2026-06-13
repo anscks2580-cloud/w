@@ -170,7 +170,19 @@
     <li><a href="howto.html">강의 시청 방법</a></li>
   </ul>
 
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="메뉴">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+<div class="mobile-menu" id="mobileMenu">
+    <a href="about.html" >학원소개</a>
+    <a href="videos.html" >동영상강의</a>
+    <a href="textbook.html" >교재소개</a>
+    <a href="curriculum.html" >커리큘럼</a>
+    <a href="interview.html" >졸업생 인터뷰</a>
+    <a href="press.html" >언론보도</a>
+    <a href="howto.html" class='active'>강의 시청 방법</a>
+  </div>
 
 <div class="page">
   <div class="page-inner">
@@ -220,7 +232,18 @@
         <div class="step-num">4</div>
         <div>
           <h3>모르는 부분은 전화 또는 방문 상담</h3>
-          <p>영상을 보다 궁금한 점이 생기면 언제든지 학원으로 연락 주세요. 평촌관 031.386.8899 / 산본관 031.346.8899</p>
+          <p>영상을 보다 궁금한 점이 생기면 언제든지 학원으로 연락 주세요.</p>
+          <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">
+            <a href="tel:031-386-8899" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+              <span style="font-size:13px;color:var(--muted);min-width:52px;">평촌관</span>
+              <span style="font-size:22px;font-weight:700;color:var(--gold);letter-spacing:-0.5px;">031-386-8899</span>
+            </a>
+            <a href="tel:031-346-8899" style="display:flex;align-items:center;gap:12px;text-decoration:none;">
+              <span style="font-size:13px;color:var(--muted);min-width:52px;">산본관</span>
+              <span style="font-size:22px;font-weight:700;color:var(--gold);letter-spacing:-0.5px;">031-346-8899</span>
+            </a>
+          </div>
+          <p style="margin-top:18px;font-size:13px;color:var(--muted);">* 전화번호를 누르시면 바로 연결 가능합니다.</p>
         </div>
       </div>
 
