@@ -6,114 +6,138 @@
 <title>교재소개 | 송우찬수학학원</title>
 <link rel="stylesheet" href="style.css">
 <style>
-.page-inner { max-width: 960px; margin: 0 auto; padding: 80px 48px 96px; }
+.page-inner { max-width: 1000px; margin: 0 auto; padding: 80px 48px 96px; }
+.page-hero { padding: 72px 0 48px; border-bottom: 1px solid var(--border-soft); margin-bottom: 52px; }
+.breadcrumb { font-size:12px; color:var(--muted); margin-bottom:20px; display:flex; align-items:center; gap:6px; }
+.breadcrumb a { color:var(--muted); text-decoration:none; }
+.breadcrumb a:hover { color:var(--gold); }
+.breadcrumb span { color:var(--gold); }
 
-.page-hero {
-  padding: 72px 0 48px;
-  border-bottom: 1px solid var(--border-soft);
-  margin-bottom: 64px;
+/* ── 1단계 탭: 고등 / 중등 ── */
+.main-tab-bar {
+  display: flex; gap: 0;
+  border-bottom: 2px solid var(--border-soft);
+  margin-bottom: 0;
 }
-
-.breadcrumb {
-  font-size: 12px; color: var(--muted);
-  margin-bottom: 20px; display: flex; align-items: center; gap: 6px;
-}
-.breadcrumb a { color: var(--muted); text-decoration: none; }
-.breadcrumb a:hover { color: var(--gold); }
-.breadcrumb span { color: var(--gold); }
-
-/* ── 교재 카테고리 ── */
-.tb-category { margin-bottom: 72px; }
-
-.tb-category-header {
-  display: flex; align-items: center; gap: 14px;
-  margin-bottom: 28px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.tb-category-icon {
-  width: 40px; height: 40px;
-  background: var(--gold-glow);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
-}
-
-.tb-category-title {
-  font-size: 18px; font-weight: 700;
+.main-tab-btn {
+  padding: 12px 32px;
+  background: none; border: none;
+  font-size: 15px; font-weight: 600;
+  font-family: inherit;
+  color: var(--muted); cursor: pointer;
+  position: relative; transition: color 0.2s;
   letter-spacing: -0.3px;
 }
-
-.tb-category-sub {
-  font-size: 12px; color: var(--muted); margin-top: 2px;
-}
-
-/* ── 교재 카드 그리드 ── */
-.tb-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
-}
-
-.tb-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  padding: 26px 24px;
-  transition: border-color 0.2s, transform 0.2s;
-  position: relative; overflow: hidden;
-}
-
-.tb-card::before {
+.main-tab-btn::after {
   content: '';
-  position: absolute; top: 0; left: 0; right: 0;
+  position: absolute; bottom: -2px; left: 0; right: 0;
   height: 2px; background: var(--gold);
-  transform: scaleX(0); transform-origin: left;
-  transition: transform 0.3s;
+  transform: scaleX(0); transition: transform 0.2s;
+}
+.main-tab-btn.active { color: var(--gold); }
+.main-tab-btn.active::after { transform: scaleX(1); }
+
+/* ── 2단계 탭: 고1/고2/고3/내신 ── */
+.sub-tab-bar {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 20px 0 28px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 48px;
+}
+.sub-tab-btn {
+  padding: 7px 18px;
+  border: 1px solid var(--border-soft);
+  border-radius: 100px; background: transparent;
+  color: var(--muted); font-size: 13px; font-family: inherit;
+  cursor: pointer; transition: all 0.2s;
+}
+.sub-tab-btn.active, .sub-tab-btn:hover {
+  background: var(--gold); color: var(--bg);
+  border-color: var(--gold); font-weight: 600;
 }
 
-.tb-card:hover {
-  border-color: rgba(240,192,64,0.35);
-  transform: translateY(-3px);
+/* 패널 */
+.main-panel { display: none; }
+.main-panel.active { display: block; }
+.sub-panel { display: none; }
+.sub-panel.active { display: block; }
+
+/* ── 교재 카드: 좌사진 + 우설명 ── */
+.book-row {
+  display: flex; gap: 48px; align-items: flex-start;
+  padding: 48px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.book-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.book-row.reverse { flex-direction: row-reverse; }
+
+.book-img-wrap {
+  flex-shrink: 0; width: 240px;
 }
 
-.tb-card:hover::before { transform: scaleX(1); }
+.book-img-wrap img {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  display: block;
+  object-fit: cover;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
 
-.tb-book-label {
+.book-img-placeholder {
+  width: 100%; aspect-ratio: 3/4;
+  background: var(--bg-card);
+  border: 2px dashed rgba(240,192,64,0.2);
+  border-radius: 10px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; color: var(--muted); font-size: 13px; text-align: center; padding: 20px;
+}
+.book-img-placeholder span { font-size: 32px; opacity: 0.35; }
+
+.book-desc { flex: 1; padding-top: 6px; }
+
+.book-label {
   font-size: 10px; font-weight: 600;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--gold);
-  background: var(--gold-glow);
-  padding: 3px 9px; border-radius: 4px;
-  display: inline-block; margin-bottom: 14px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 12px;
 }
 
-.tb-book-name {
-  font-size: 17px; font-weight: 700;
-  letter-spacing: -0.3px; margin-bottom: 10px;
-  line-height: 1.35;
+.book-name {
+  font-size: 24px; font-weight: 700;
+  letter-spacing: -0.8px; line-height: 1.25;
+  margin-bottom: 6px;
 }
 
-.tb-book-desc {
-  font-size: 13px; color: var(--muted);
-  line-height: 1.8;
+.book-sub {
+  font-size: 14px; color: var(--gold);
+  margin-bottom: 20px; opacity: 0.8;
 }
 
-.tb-badge {
-  display: inline-block;
-  margin-top: 14px;
-  font-size: 11px; color: var(--gold);
-  background: var(--gold-glow);
+.book-divider {
+  width: 28px; height: 2px;
+  background: var(--gold); opacity: 0.5;
+  margin-bottom: 20px;
+}
+
+.book-text {
+  font-size: 14px; color: var(--muted);
+  line-height: 1.9; white-space: pre-line;
+  margin-bottom: 20px;
+}
+
+.book-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.book-tag {
+  padding: 5px 12px;
   border: 1px solid var(--border);
-  padding: 3px 10px; border-radius: 20px;
+  border-radius: 100px;
+  font-size: 12px; color: var(--gold);
 }
 
-/* ── 저작권 안내 ── */
+/* 저작권 */
 .copyright-notice {
-  margin-top: 64px;
-  padding: 20px 24px;
+  margin-top: 64px; padding: 20px 24px;
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border-soft);
   border-radius: 10px;
@@ -123,7 +147,9 @@
 
 @media (max-width: 768px) {
   .page-inner { padding: 60px 20px 80px; }
-  .tb-grid { grid-template-columns: 1fr; }
+  .book-row { flex-direction: column !important; gap: 24px; padding: 36px 0; }
+  .book-img-wrap { width: 100%; max-width: 240px; }
+  .main-tab-btn { padding: 10px 20px; font-size: 14px; }
 }
 </style>
 </head>
@@ -132,12 +158,12 @@
 <nav>
   <a href="index.html" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#F0EDF8;flex-shrink:0;overflow:hidden;max-width:100%;">
     <img src="data:image/png;base64,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" style="height:30px;width:30px;object-fit:contain;flex-shrink:0;display:block;" alt="SWC">
-    <span style="font-size:13px;font-weight:600;color:#F0EDF8;white-space:nowrap;letter-spacing:-0.3px;overflow:hidden;text-overflow:ellipsis;">송우찬수학학원</span>
+    <span style="font-size:13px;font-weight:600;color:#F0EDF8;white-space:nowrap;letter-spacing:-0.3px;">송우찬수학학원</span>
   </a>
-    <ul class="nav-links" style="white-space:nowrap;flex-shrink:0;">
+  <ul class="nav-links" style="white-space:nowrap;flex-shrink:0;">
     <li><a href="about.html">학원소개</a></li>
     <li><a href="videos.html">동영상강의</a></li>
-    <li><a href="textbook.html">교재소개</a></li>
+    <li><a href="textbook.html" class="active">교재소개</a></li>
     <li><a href="curriculum.html">커리큘럼</a></li>
     <li><a href="interview.html">졸업생 인터뷰</a></li>
     <li><a href="press.html">언론보도</a></li>
@@ -149,106 +175,213 @@
   <div class="page-inner">
 
     <div class="page-hero">
-      <div class="breadcrumb">
-        <a href="index.html">홈</a> › <span>교재소개</span>
-      </div>
+      <div class="breadcrumb"><a href="index.html">홈</a> › <span>교재소개</span></div>
       <div class="section-eyebrow">Textbook</div>
       <h1 class="section-title">송우찬수학학원 자체 교재</h1>
-      <p class="section-desc">
-        모든 교재는 송우찬수학학원이 직접 개발한 자체 교재입니다.<br>
-        학생 수준과 목적에 맞게 체계적으로 구성되어 있습니다.
-      </p>
+      <p class="section-desc">모든 교재는 송우찬수학학원이 직접 개발한 자체 교재입니다.<br>학생 수준과 목적에 맞게 체계적으로 구성되어 있습니다.</p>
     </div>
 
-    <!-- 고등부 기본 -->
-    <div class="tb-category">
-      <div class="tb-category-header">
-        <div class="tb-category-icon">📘</div>
-        <div>
-          <div class="tb-category-title">고등부 기본 교재</div>
-          <div class="tb-category-sub">개념부터 심화까지 단계별 완성</div>
+    <!-- 1단계 탭 -->
+    <div class="main-tab-bar">
+      <button class="main-tab-btn active" onclick="switchMain('high', this)">고등</button>
+      <button class="main-tab-btn" onclick="switchMain('middle', this)">중등</button>
+    </div>
+
+    <!-- ══ 고등 패널 ══ -->
+    <div class="main-panel active" id="main-high">
+      <div class="sub-tab-bar">
+        <button class="sub-tab-btn active" onclick="switchSub('high','g1',this)">고1</button>
+        <button class="sub-tab-btn" onclick="switchSub('high','g2',this)">고2</button>
+        <button class="sub-tab-btn" onclick="switchSub('high','g3',this)">고3</button>
+        <button class="sub-tab-btn" onclick="switchSub('high','naeshin',this)">내신대비</button>
+      </div>
+
+      <!-- 고1 -->
+      <div class="sub-panel active" id="high-g1">
+        <div class="book-row">
+          <div class="book-img-wrap">
+            <!-- 사진 준비되면: <img src="tb_triplet_concept.jpg" alt="트리플렛 개념편"> -->
+            <div class="book-img-placeholder"><span>📘</span>트리플렛 개념편<br>사진 준비 중</div>
+          </div>
+          <div class="book-desc">
+            <div class="book-label">고1 · 개념편</div>
+            <div class="book-name">트리플렛 개념편</div>
+            <div class="book-sub">기초 개념 완성</div>
+            <div class="book-divider"></div>
+            <div class="book-text">수학의 핵심 개념을 체계적으로 정리한 기본서입니다.
+공식을 외우는 것이 아니라 왜 그 공식이 성립하는지,
+개념의 흐름을 이해하는 데 초점을 맞춘 교재입니다.
+
+설명을 입력해 주세요.</div>
+            <div class="book-tags">
+              <span class="book-tag">개념 이해</span>
+              <span class="book-tag">기초 완성</span>
+              <span class="book-tag">고1 과정</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="tb-grid">
-        <div class="tb-card">
-          <span class="tb-book-label">개념편</span>
-          <div class="tb-book-name">트리플렛 개념편</div>
-          <div class="tb-book-desc">수학의 핵심 개념을 체계적으로 정리한 기본서. 개념의 흐름을 이해하고 원리를 납득하는 데 초점을 맞춥니다.</div>
-          <span class="tb-badge">기초 · 개념 이해</span>
+
+      <!-- 고2 -->
+      <div class="sub-panel" id="high-g2">
+        <div class="book-row">
+          <div class="book-img-wrap">
+            <div class="book-img-placeholder"><span>📘</span>트리플렛 유형편<br>사진 준비 중</div>
+          </div>
+          <div class="book-desc">
+            <div class="book-label">고2 · 유형편</div>
+            <div class="book-name">트리플렛 유형편</div>
+            <div class="book-sub">유형 훈련 · 실전 대비</div>
+            <div class="book-divider"></div>
+            <div class="book-text">개념을 익힌 후 수능·내신 빈출 유형을 집중 훈련합니다.
+유형별 접근법을 체득해 실전 적응력을 높이는 교재입니다.
+
+설명을 입력해 주세요.</div>
+            <div class="book-tags">
+              <span class="book-tag">유형 훈련</span>
+              <span class="book-tag">실전 대비</span>
+              <span class="book-tag">고2 과정</span>
+            </div>
+          </div>
         </div>
-        <div class="tb-card">
-          <span class="tb-book-label">유형편</span>
-          <div class="tb-book-name">트리플렛 유형편</div>
-          <div class="tb-book-desc">개념을 익힌 후 수능 · 내신 빈출 유형을 집중 훈련. 유형별 접근법을 체득해 실전 적응력을 높입니다.</div>
-          <span class="tb-badge">유형 훈련 · 실전 대비</span>
+      </div>
+
+      <!-- 고3 -->
+      <div class="sub-panel" id="high-g3">
+        <div class="book-row">
+          <div class="book-img-wrap">
+            <div class="book-img-placeholder"><span>📕</span>트리플렛 심화편<br>사진 준비 중</div>
+          </div>
+          <div class="book-desc">
+            <div class="book-label">고3 · 심화편</div>
+            <div class="book-name">트리플렛 심화편</div>
+            <div class="book-sub">심화 · 상위권 완성</div>
+            <div class="book-divider"></div>
+            <div class="book-text">상위권을 목표로 하는 학생을 위한 고난도 심화서입니다.
+킬러 문항 정복을 위한 사고력 훈련에 집중하며,
+1일 20제 / 72+ / 92+ 교재와 연계됩니다.
+
+설명을 입력해 주세요.</div>
+            <div class="book-tags">
+              <span class="book-tag">심화</span>
+              <span class="book-tag">킬러 문항</span>
+              <span class="book-tag">상위권</span>
+            </div>
+          </div>
         </div>
-        <div class="tb-card">
-          <span class="tb-book-label">심화편</span>
-          <div class="tb-book-name">트리플렛 심화편</div>
-          <div class="tb-book-desc">상위권 목표 학생을 위한 고난도 문제 중심의 심화서. 킬러 문항 정복을 위한 사고력 훈련에 집중합니다.</div>
-          <span class="tb-badge">심화 · 상위권 완성</span>
+        <div class="book-row reverse">
+          <div class="book-img-wrap">
+            <div class="book-img-placeholder"><span>📕</span>1일 20제<br>사진 준비 중</div>
+          </div>
+          <div class="book-desc">
+            <div class="book-label">고3 · 수능 훈련</div>
+            <div class="book-name">1일 20제</div>
+            <div class="book-sub">매일 훈련 · 감각 유지</div>
+            <div class="book-divider"></div>
+            <div class="book-text">매일 20문제씩 꾸준히 풀며 수능 감각을 유지하는 훈련서입니다.
+수능 실전과 동일한 난이도로 일관된 학습 루틴을 만들어 줍니다.
+
+설명을 입력해 주세요.</div>
+            <div class="book-tags">
+              <span class="book-tag">일일 훈련</span>
+              <span class="book-tag">감각 유지</span>
+              <span class="book-tag">수능 대비</span>
+            </div>
+          </div>
+        </div>
+        <div class="book-row">
+          <div class="book-img-wrap">
+            <div class="book-img-placeholder"><span>📕</span>72+<br>사진 준비 중</div>
+          </div>
+          <div class="book-desc">
+            <div class="book-label">고3 · 중상위권</div>
+            <div class="book-name">72+</div>
+            <div class="book-sub">중상위권 도약</div>
+            <div class="book-divider"></div>
+            <div class="book-text">수능 72점 이상을 목표로 하는 집중 문제집입니다.
+중상위권 도약을 위한 핵심 문항을 엄선했습니다.
+
+설명을 입력해 주세요.</div>
+            <div class="book-tags">
+              <span class="book-tag">72점 이상</span>
+              <span class="book-tag">중상위권</span>
+            </div>
+          </div>
+        </div>
+        <div class="book-row reverse">
+          <div class="book-img-wrap">
+            <div class="book-img-placeholder"><span>📕</span>92+<br>사진 준비 중</div>
+          </div>
+          <div class="book-desc">
+            <div class="book-label">고3 · 최상위권</div>
+            <div class="book-name">92+</div>
+            <div class="book-sub">최상위권 · 만점 도전</div>
+            <div class="book-divider"></div>
+            <div class="book-text">수능 92점 이상 최상위권을 위한 고난도 문제집입니다.
+킬러·준킬러 문항 집중 훈련으로 만점에 도전합니다.
+
+설명을 입력해 주세요.</div>
+            <div class="book-tags">
+              <span class="book-tag">92점 이상</span>
+              <span class="book-tag">최상위권</span>
+              <span class="book-tag">만점 도전</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 고등 내신대비 -->
+      <div class="sub-panel" id="high-naeshin">
+        <div class="book-row">
+          <div class="book-img-wrap">
+            <div class="book-img-placeholder"><span>📗</span>고별문제 파이널<br>사진 준비 중</div>
+          </div>
+          <div class="book-desc">
+            <div class="book-label">고등 내신 · 마무리</div>
+            <div class="book-name">고별문제 내신대비 파이널</div>
+            <div class="book-sub">고등 내신 최종 마무리</div>
+            <div class="book-divider"></div>
+            <div class="book-text">고등학교 내신 최종 마무리를 위한 실전서입니다.
+학교별 기출 경향을 분석해 시험 직전 집중 훈련에 최적화되어 있습니다.
+
+설명을 입력해 주세요.</div>
+            <div class="book-tags">
+              <span class="book-tag">고등 내신</span>
+              <span class="book-tag">기출 분석</span>
+              <span class="book-tag">시험 대비</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 내신대비 -->
-    <div class="tb-category">
-      <div class="tb-category-header">
-        <div class="tb-category-icon">📗</div>
-        <div>
-          <div class="tb-category-title">내신대비 교재</div>
-          <div class="tb-category-sub">중등 · 고등 내신 시험 완벽 대비</div>
-        </div>
+    <!-- ══ 중등 패널 ══ -->
+    <div class="main-panel" id="main-middle">
+      <div class="sub-tab-bar">
+        <button class="sub-tab-btn active" onclick="switchSub('middle','naeshin',this)">내신대비</button>
       </div>
-      <div class="tb-grid">
-        <div class="tb-card">
-          <span class="tb-book-label">중등 내신</span>
-          <div class="tb-book-name">별별문제 내신대비 스타트</div>
-          <div class="tb-book-desc">중학교 내신을 처음 준비하는 학생을 위한 입문서. 시험에 자주 나오는 핵심 문제 유형으로 내신 기초를 잡습니다.</div>
-          <span class="tb-badge">중등 내신 · 입문</span>
-        </div>
-        <div class="tb-card">
-          <span class="tb-book-label">고등 내신</span>
-          <div class="tb-book-name">고별문제 내신대비 파이널</div>
-          <div class="tb-book-desc">고등학교 내신 최종 마무리를 위한 실전서. 학교별 기출 경향을 분석해 시험 직전 집중 훈련에 최적화되어 있습니다.</div>
-          <span class="tb-badge">고등 내신 · 마무리</span>
-        </div>
-        <div class="tb-card">
-          <span class="tb-book-label">기출분석</span>
-          <div class="tb-book-name">기출분석</div>
-          <div class="tb-book-desc">주요 학교 기출문제를 체계적으로 분석한 자료집. 출제 경향과 패턴을 파악해 내신 고득점 전략을 세울 수 있습니다.</div>
-          <span class="tb-badge">기출 · 출제 경향 분석</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- 고3 수능 -->
-    <div class="tb-category">
-      <div class="tb-category-header">
-        <div class="tb-category-icon">📕</div>
-        <div>
-          <div class="tb-category-title">고3 수능 교재</div>
-          <div class="tb-category-sub">수능 실전 완성을 위한 집중 훈련서</div>
-        </div>
-      </div>
-      <div class="tb-grid">
-        <div class="tb-card">
-          <span class="tb-book-label">일일 훈련</span>
-          <div class="tb-book-name">1일 20제</div>
-          <div class="tb-book-desc">매일 20문제씩 꾸준히 풀어 감각을 유지하는 훈련서. 수능 실전과 동일한 난이도로 일관된 학습 루틴을 만들어 줍니다.</div>
-          <span class="tb-badge">매일 훈련 · 감각 유지</span>
-        </div>
-        <div class="tb-card">
-          <span class="tb-book-label">고득점</span>
-          <div class="tb-book-name">72+</div>
-          <div class="tb-book-desc">수능 72점 이상을 목표로 하는 학생을 위한 집중 문제집. 중상위권 도약을 위한 핵심 문항을 엄선했습니다.</div>
-          <span class="tb-badge">중상위권 · 도약</span>
-        </div>
-        <div class="tb-card">
-          <span class="tb-book-label">최상위</span>
-          <div class="tb-book-name">92+</div>
-          <div class="tb-book-desc">수능 92점 이상 최상위권을 목표로 하는 고난도 문제집. 킬러 문항과 준킬러 문항 집중 훈련으로 만점에 도전합니다.</div>
-          <span class="tb-badge">최상위권 · 만점 도전</span>
+      <!-- 중등 내신대비 -->
+      <div class="sub-panel active" id="middle-naeshin">
+        <div class="book-row">
+          <div class="book-img-wrap">
+            <div class="book-img-placeholder"><span>📗</span>별별문제 스타트<br>사진 준비 중</div>
+          </div>
+          <div class="book-desc">
+            <div class="book-label">중등 내신 · 입문</div>
+            <div class="book-name">별별문제 내신대비 스타트</div>
+            <div class="book-sub">중등 내신 기초 완성</div>
+            <div class="book-divider"></div>
+            <div class="book-text">중학교 내신을 처음 준비하는 학생을 위한 입문서입니다.
+시험에 자주 나오는 핵심 문제 유형으로 내신 기초를 잡아줍니다.
+
+설명을 입력해 주세요.</div>
+            <div class="book-tags">
+              <span class="book-tag">중등 내신</span>
+              <span class="book-tag">입문</span>
+              <span class="book-tag">기초 완성</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -275,10 +408,26 @@
   </div>
   <a href="https://pf.kakao.com/_KxaxdlX" target="_blank" class="kakao-footer-link"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.47 5.08 3.72 6.56l-.95 3.54a.3.3 0 0 0 .44.33l4.07-2.72A11.5 11.5 0 0 0 12 18.6c5.523 0 10-3.477 10-7.8S17.523 3 12 3Z"/></svg> 카카오톡 문의</a>
 </footer>
-
 <a href="https://pf.kakao.com/_KxaxdlX" target="_blank" class="kakao-float" aria-label="카카오톡 문의">
   <div class="kakao-float-btn"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.47 5.08 3.72 6.56l-.95 3.54a.3.3 0 0 0 .44.33l4.07-2.72A11.5 11.5 0 0 0 12 18.6c5.523 0 10-3.477 10-7.8S17.523 3 12 3Z"/></svg></div>
   <span class="kakao-float-label">카카오톡 문의</span>
 </a>
+
+<script>
+function switchMain(id, btn) {
+  document.querySelectorAll('.main-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('main-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function switchSub(group, id, btn) {
+  const panel = document.getElementById('main-' + group);
+  panel.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+  panel.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(group + '-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
 </body>
 </html>
