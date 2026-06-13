@@ -182,7 +182,7 @@
 
     <p class="hero-sub">
       개념의 흐름을 이해하면 문제가 보입니다.<br>
-      고등수학 · 수리논술 전문
+      고등수학 · 수리논술 · 중등수학 전문
     </p>
 
     <div class="card-grid">
@@ -209,10 +209,18 @@
     </div>
 
     <div class="contact-strip">
-      <div class="cs-item">
-        <div class="cs-label">평촌관</div>
-        <div class="cs-value" style="font-size:22px;font-weight:700;"><a href="tel:031-386-8899" style="color:var(--gold);text-decoration:none;">031-386-8899</a></div>
+      <div class="cs-item" style="text-align:center;">
+        <div class="cs-label" style="font-size:13px;color:var(--muted);margin-bottom:8px;">평촌관</div>
+        <div><a href="tel:031-386-8899" style="font-size:28px;font-weight:800;color:var(--gold);text-decoration:none;letter-spacing:-0.5px;">031-386-8899</a></div>
       </div>
+      <div style="width:1px;background:var(--border-soft);height:40px;"></div>
+      <div class="cs-item" style="text-align:center;">
+        <div class="cs-label" style="font-size:13px;color:var(--muted);margin-bottom:8px;">산본관</div>
+        <div><a href="tel:031-346-8899" style="font-size:28px;font-weight:800;color:var(--gold);text-decoration:none;letter-spacing:-0.5px;">031-346-8899</a></div>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:12px;opacity:0.7;">* 전화번호를 누르시면 바로 연결 가능합니다.</p>
+  </div>
       <div class="cs-item">
         <div class="cs-label">산본관</div>
         <div class="cs-value" style="font-size:22px;font-weight:700;"><a href="tel:031-346-8899" style="color:var(--gold);text-decoration:none;">031-346-8899</a></div>
@@ -244,5 +252,21 @@
   <div class="kakao-float-btn"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.47 5.08 3.72 6.56l-.95 3.54a.3.3 0 0 0 .44.33l4.07-2.72A11.5 11.5 0 0 0 12 18.6c5.523 0 10-3.477 10-7.8S17.523 3 12 3Z"/></svg></div>
   <span class="kakao-float-label">카카오톡 문의</span>
 </a>
+<script>
+function toggleMenu() {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    btn.classList.remove('open');
+    menu.classList.remove('open');
+  }
+});
+</script>
 </body>
 </html>

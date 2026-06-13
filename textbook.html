@@ -442,5 +442,21 @@ function switchSub(group, id, btn) {
   btn.classList.add('active');
 }
 </script>
+<script>
+function toggleMenu() {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    btn.classList.remove('open');
+    menu.classList.remove('open');
+  }
+});
+</script>
 </body>
 </html>
