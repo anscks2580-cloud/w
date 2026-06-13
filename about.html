@@ -69,7 +69,7 @@
 /* 사진 영역 */
 .principal-photo {
   flex-shrink: 0;
-  width: 240px;
+  width: 260px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -77,8 +77,8 @@
 }
 
 .photo-frame {
-  width: 230px;
-  height: 290px;
+  width: 260px;
+  height: 330px;
   border-radius: 16px;
   background: linear-gradient(160deg, #2D2050 0%, #1A1230 100%);
   border: 1px solid rgba(240,192,64,0.25);
@@ -171,11 +171,25 @@
 
 
 @media (max-width: 768px) {
-  .page-inner { padding: 60px 20px 80px; }
-  .principal-section { flex-direction: column; gap: 36px; padding: 56px 0; }
-  .principal-photo { width: 100%; flex-direction: row; align-items: center; gap: 20px; }
-  .photo-frame { width: 120px; height: 150px; }
+  .page-inner { padding: 60px 16px 80px; }
+  .principal-section {
+    flex-direction: column;
+    gap: 28px;
+    padding: 32px 24px;
+  }
+  .principal-photo {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+  }
+  .photo-frame { width: 100px; height: 128px; border-radius: 12px; }
   .photo-name-tag { text-align: left; }
+  .photo-name-tag .name { font-size: 16px; }
+  .photo-name-tag .role { font-size: 11px; }
+  .principal-text { padding-top: 0; }
+  .greeting-title { font-size: 20px; margin-bottom: 18px; }
+  .greeting-body { font-size: 14px; line-height: 1.9; }
   .contact-grid { grid-template-columns: 1fr; }
 }
 </style>
