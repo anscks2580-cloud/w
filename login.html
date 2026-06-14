@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="style.css">
 <style>
 body { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
-.login-wrap { width:100%; max-width:400px; }
+.login-wrap { width:100%; max-width:420px; }
 .login-card {
   background: linear-gradient(145deg, #231848 0%, #1A1230 100%);
   border:1px solid rgba(240,192,64,0.2);
@@ -26,15 +26,14 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
 .login-logo img { height:36px; width:36px; object-fit:contain; }
 .login-logo span { font-size:16px; font-weight:700; color:var(--off-white); }
 .login-title { text-align:center; font-size:22px; font-weight:700; margin-bottom:6px; letter-spacing:-0.5px; }
-.login-sub { text-align:center; font-size:13px; color:var(--muted); margin-bottom:36px; }
+.login-sub { text-align:center; font-size:13px; color:var(--muted); margin-bottom:28px; }
 
 /* 탭 */
 .login-tabs { display:flex; gap:0; border-bottom:1px solid var(--border-soft); margin-bottom:28px; }
 .login-tab {
   flex:1; padding:10px; background:none; border:none;
   font-size:13px; font-weight:600; font-family:inherit;
-  color:var(--muted); cursor:pointer; position:relative;
-  transition:color 0.2s;
+  color:var(--muted); cursor:pointer; position:relative; transition:color 0.2s;
 }
 .login-tab::after {
   content:''; position:absolute; bottom:-1px; left:0; right:0;
@@ -46,7 +45,7 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
 .tab-form { display:none; }
 .tab-form.active { display:block; }
 
-.form-group { margin-bottom:18px; }
+.form-group { margin-bottom:16px; }
 .form-group label {
   display:block; font-size:11px; color:var(--muted);
   letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; font-weight:500;
@@ -60,18 +59,34 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
 }
 .form-group input:focus { border-color:rgba(240,192,64,0.5); background:rgba(255,255,255,0.07); }
 .form-group input::placeholder { color:rgba(255,255,255,0.2); }
+
+/* 체크박스 옵션 */
+.login-options {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:16px;
+}
+.checkbox-label {
+  display:flex; align-items:center; gap:7px;
+  font-size:12px; color:var(--muted); cursor:pointer;
+}
+.checkbox-label input[type=checkbox] {
+  width:15px; height:15px; accent-color:var(--gold);
+  cursor:pointer;
+}
+
 .btn-login {
   width:100%; padding:14px;
   background:var(--gold); color:var(--bg);
   font-size:15px; font-weight:700;
   border:none; border-radius:8px;
-  cursor:pointer; font-family:inherit; margin-top:8px;
+  cursor:pointer; font-family:inherit;
   transition:background 0.2s, transform 0.15s;
 }
 .btn-login:hover { background:#f5cc50; transform:translateY(-1px); }
 .btn-login:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
 .error-msg {
-  display:none; margin-top:14px; padding:12px 16px;
+  display:none; margin-top:12px; padding:12px 16px;
   background:rgba(255,80,80,0.1); border:1px solid rgba(255,80,80,0.3);
   border-radius:8px; font-size:13px; color:#ff9090; text-align:center;
 }
@@ -93,21 +108,29 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
     <div class="login-sub">학생 또는 관리자로 로그인하세요</div>
 
     <div class="login-tabs">
-      <button class="login-tab active" onclick="switchLoginTab('student', this)">학생 로그인</button>
-      <button class="login-tab" onclick="switchLoginTab('admin', this)">관리자 로그인</button>
+      <button class="login-tab active" onclick="switchTab('student',this)">학생 로그인</button>
+      <button class="login-tab" onclick="switchTab('admin',this)">관리자 로그인</button>
     </div>
 
     <!-- 학생 탭 -->
     <div class="tab-form active" id="form-student">
       <div class="form-group">
-        <label>이름 (아이디)</label>
-        <input type="text" id="s-name" placeholder="이름을 입력하세요">
+        <label>아이디 (이름)</label>
+        <input type="text" id="s-name" placeholder="이름을 입력하세요" autocomplete="username">
       </div>
       <div class="form-group">
-        <label>전화번호 (비밀번호)</label>
-        <input type="password" id="s-pw" placeholder="전화번호 숫자만 입력">
+        <label>비밀번호 (전화번호)</label>
+        <input type="password" id="s-pw" placeholder="전화번호 숫자만 입력" autocomplete="current-password">
       </div>
-      <button class="btn-login" onclick="loginStudent()">학생 로그인</button>
+      <div class="login-options">
+        <label class="checkbox-label">
+          <input type="checkbox" id="s-saveId"> 아이디 저장
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="s-autoLogin"> 자동 로그인
+        </label>
+      </div>
+      <button class="btn-login" id="s-btn" onclick="loginStudent()">로그인</button>
       <div class="error-msg" id="s-err"></div>
     </div>
 
@@ -115,13 +138,19 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
     <div class="tab-form" id="form-admin">
       <div class="form-group">
         <label>관리자 이메일</label>
-        <input type="email" id="a-email" placeholder="이메일 입력">
+        <input type="email" id="a-email" placeholder="이메일 입력" autocomplete="username">
       </div>
       <div class="form-group">
         <label>비밀번호</label>
-        <input type="password" id="a-pw" placeholder="비밀번호 입력">
+        <input type="password" id="a-pw" placeholder="비밀번호 입력" autocomplete="current-password">
       </div>
-      <button class="btn-login" onclick="loginAdmin()">관리자 로그인</button>
+      <div class="login-options">
+        <label class="checkbox-label">
+          <input type="checkbox" id="a-autoLogin"> 자동 로그인
+        </label>
+        <span></span>
+      </div>
+      <button class="btn-login" id="a-btn" onclick="loginAdmin()">관리자 로그인</button>
       <div class="error-msg" id="a-err"></div>
     </div>
 
@@ -134,7 +163,7 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
@@ -151,7 +180,15 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-window.switchLoginTab = function(id, btn) {
+// 저장된 아이디 불러오기
+const savedId = localStorage.getItem('swc_saved_id');
+if (savedId) {
+  document.getElementById('s-name').value = savedId;
+  document.getElementById('s-saveId').checked = true;
+}
+
+// 탭 전환
+window.switchTab = function(id, btn) {
   document.querySelectorAll('.login-tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-form').forEach(f => f.classList.remove('active'));
   btn.classList.add('active');
@@ -162,18 +199,30 @@ window.switchLoginTab = function(id, btn) {
 window.loginStudent = async function() {
   const name = document.getElementById('s-name').value.trim();
   const pw = document.getElementById('s-pw').value.trim().replace(/-/g,'');
-  if (!name || !pw) { showErr('s-err','이름과 전화번호를 입력해주세요.'); return; }
+  const saveId = document.getElementById('s-saveId').checked;
+  const autoLogin = document.getElementById('s-autoLogin').checked;
+  const btn = document.getElementById('s-btn');
+  const err = document.getElementById('s-err');
 
-  const btn = event.target;
+  if (!name || !pw) { showErr('s-err','아이디와 비밀번호를 입력해주세요.'); return; }
+
   btn.disabled = true; btn.textContent = '로그인 중...';
+  err.style.display = 'none';
+
+  // 아이디 저장
+  if (saveId) localStorage.setItem('swc_saved_id', name);
+  else localStorage.removeItem('swc_saved_id');
+
+  // 자동로그인: LOCAL(영구) vs SESSION(브라우저 닫으면 해제)
+  const persistence = autoLogin ? browserLocalPersistence : browserSessionPersistence;
 
   try {
-    const email = name + '@songmath.kr';
-    await signInWithEmailAndPassword(auth, email, pw);
+    await setPersistence(auth, persistence);
+    await signInWithEmailAndPassword(auth, name + '@songmath.kr', pw);
     window.location.href = 'videos.html';
   } catch(e) {
-    showErr('s-err','이름 또는 전화번호가 올바르지 않습니다.');
-    btn.disabled = false; btn.textContent = '학생 로그인';
+    showErr('s-err','아이디 또는 비밀번호가 올바르지 않습니다.');
+    btn.disabled = false; btn.textContent = '로그인';
   }
 };
 
@@ -181,12 +230,17 @@ window.loginStudent = async function() {
 window.loginAdmin = async function() {
   const email = document.getElementById('a-email').value.trim();
   const pw = document.getElementById('a-pw').value;
+  const autoLogin = document.getElementById('a-autoLogin').checked;
+  const btn = document.getElementById('a-btn');
+
   if (!email || !pw) { showErr('a-err','이메일과 비밀번호를 입력해주세요.'); return; }
 
-  const btn = event.target;
   btn.disabled = true; btn.textContent = '로그인 중...';
 
+  const persistence = autoLogin ? browserLocalPersistence : browserSessionPersistence;
+
   try {
+    await setPersistence(auth, persistence);
     const cred = await signInWithEmailAndPassword(auth, email, pw);
     const adminDoc = await getDoc(doc(db, 'admins', cred.user.uid));
     if (!adminDoc.exists()) {
@@ -207,11 +261,9 @@ function showErr(id, msg) {
 }
 
 // 엔터키
-['s-pw','a-pw'].forEach(id => {
-  document.getElementById(id)?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') e.target.closest('.tab-form').querySelector('.btn-login').click();
-  });
-});
+document.getElementById('s-name').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('s-pw').focus(); });
+document.getElementById('s-pw').addEventListener('keydown', e => { if(e.key==='Enter') loginStudent(); });
+document.getElementById('a-pw').addEventListener('keydown', e => { if(e.key==='Enter') loginAdmin(); });
 </script>
 </body>
 </html>
