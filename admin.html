@@ -301,6 +301,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { initializeApp as initializeSecondaryApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
@@ -316,6 +317,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// 학생 계정 생성용 보조 앱 (생성 후 자동 로그인 방지)
+const secondaryApp = initializeSecondaryApp(firebaseConfig, 'secondary');
+const secondaryAuth = getAuth(secondaryApp);
 
 // 학년별 자동 배정 태그 맵
 const GRADE_TAG_MAP = {
@@ -396,7 +401,7 @@ window.createStudent = async () => {
 
   try {
     const email = name + '@songmath.kr';
-    const cred = await createUserWithEmailAndPassword(auth, email, phone);
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, phone);
     const assignedVideos = autoAssign ? getAutoAssignVideos(grade) : [];
     await setDoc(doc(db, 'students', cred.user.uid), {
       name, phone, grade, branch, assignedVideos,
@@ -468,7 +473,7 @@ function parseExcel(file) {
 window.uploadExcel = async () => {
   if (!excelData.length) return;
   const autoAssign = document.getElementById('e-autoAssign').checked;
-  const btn = event.target;
+  const btn = document.querySelector('#tab-excel .btn-primary');
   btn.disabled = true;
   let ok = 0, fail = 0, skip = 0;
 
@@ -478,7 +483,7 @@ window.uploadExcel = async () => {
     try {
       const email = row.name + '@songmath.kr';
       const phone = row.phone.replace(/-/g,'');
-      const cred = await createUserWithEmailAndPassword(auth, email, phone);
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, email, phone);
       const assignedVideos = autoAssign ? getAutoAssignVideos(row.grade) : [];
       await setDoc(doc(db, 'students', cred.user.uid), {
         name: row.name, phone: phone,
