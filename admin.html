@@ -469,24 +469,32 @@ window.uploadExcel = async () => {
   if (!excelData.length) return;
   const autoAssign = document.getElementById('e-autoAssign').checked;
   const btn = event.target;
-  btn.disabled = true; btn.textContent = '등록 중...';
-  let ok = 0, fail = 0;
+  btn.disabled = true;
+  let ok = 0, fail = 0, skip = 0;
 
-  for (const row of excelData) {
+  for (let i = 0; i < excelData.length; i++) {
+    const row = excelData[i];
+    btn.textContent = `등록 중... (${i+1}/${excelData.length})`;
     try {
       const email = row.name + '@songmath.kr';
-      const cred = await createUserWithEmailAndPassword(auth, email, row.phone);
+      const phone = row.phone.replace(/-/g,'');
+      const cred = await createUserWithEmailAndPassword(auth, email, phone);
       const assignedVideos = autoAssign ? getAutoAssignVideos(row.grade) : [];
       await setDoc(doc(db, 'students', cred.user.uid), {
-        name: row.name, phone: row.phone,
+        name: row.name, phone: phone,
         grade: row.grade, branch: row.branch,
         assignedVideos, createdAt: new Date().toISOString()
       });
       ok++;
-    } catch(e) { fail++; }
+    } catch(e) {
+      if (e.code === 'auth/email-already-in-use') skip++;
+      else fail++;
+    }
+    // Firebase rate limit 방지: 5명마다 1초 대기
+    if ((i + 1) % 5 === 0) await new Promise(r => setTimeout(r, 1000));
   }
 
-  showMsg('excelMsg', `완료! 성공 ${ok}명 / 실패 ${fail}명 (이미 등록된 학생 포함)`, ok > 0 ? 'success' : 'error');
+  showMsg('excelMsg', `완료! 신규 ${ok}명 / 중복 ${skip}명 / 오류 ${fail}명`, ok > 0 ? 'success' : 'error');
   btn.disabled = false; btn.textContent = '일괄 등록';
   await loadStudents();
 };
