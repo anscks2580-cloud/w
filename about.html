@@ -439,7 +439,15 @@ onAuthStateChanged(auth, async (user) => {
     // 학생 or 관리자 이름 가져오기
     const studentDoc = await getDoc(doc(db, 'students', user.uid));
     const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-    const name = studentDoc.exists() ? studentDoc.data().name : (adminDoc.exists() ? '관리자' : user.email);
+    let name;
+    if (studentDoc.exists()) {
+      const d = studentDoc.data();
+      name = (d.grade || '') + ' ' + d.name + ' 학생';
+    } else if (adminDoc.exists()) {
+      name = '관리자';
+    } else {
+      name = user.email;
+    }
 
     loginBtn.style.display = 'none';
     userName.style.display = 'inline';
@@ -515,7 +523,15 @@ onAuthStateChanged(auth, async (user) => {
     // 학생 or 관리자 이름 가져오기
     const studentDoc = await getDoc(doc(db, 'students', user.uid));
     const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-    const name = studentDoc.exists() ? studentDoc.data().name : (adminDoc.exists() ? '관리자' : user.email);
+    let name;
+    if (studentDoc.exists()) {
+      const d = studentDoc.data();
+      name = (d.grade || '') + ' ' + d.name + ' 학생';
+    } else if (adminDoc.exists()) {
+      name = '관리자';
+    } else {
+      name = user.email;
+    }
 
     loginBtn.style.display = 'none';
     userName.style.display = 'inline';
