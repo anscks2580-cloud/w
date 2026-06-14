@@ -426,16 +426,32 @@ window.deleteStudent = async (uid, name) => {
 let excelData = [];
 
 function setupExcelDrop() {
-  const drop = document.getElementById('excelDrop');
   const input = document.getElementById('excelFileInput');
-
   input.addEventListener('change', e => parseExcel(e.target.files[0]));
 
-  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
-  drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
-  drop.addEventListener('drop', e => {
-    e.preventDefault(); drop.classList.remove('drag');
-    parseExcel(e.dataTransfer.files[0]);
+  // 드래그 이벤트는 document에 위임 (탭 전환 후에도 동작)
+  document.addEventListener('dragover', e => {
+    const drop = document.getElementById('excelDrop');
+    if (drop && drop.contains(e.target)) {
+      e.preventDefault();
+      drop.classList.add('drag');
+    }
+  });
+
+  document.addEventListener('dragleave', e => {
+    const drop = document.getElementById('excelDrop');
+    if (drop && !drop.contains(e.relatedTarget)) {
+      drop.classList.remove('drag');
+    }
+  });
+
+  document.addEventListener('drop', e => {
+    const drop = document.getElementById('excelDrop');
+    if (drop && drop.contains(e.target)) {
+      e.preventDefault();
+      drop.classList.remove('drag');
+      parseExcel(e.dataTransfer.files[0]);
+    }
   });
 }
 
