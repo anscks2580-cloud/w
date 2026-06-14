@@ -225,6 +225,8 @@
   <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="메뉴">
     <span></span><span></span><span></span>
   </button>
+  <a href="login.html" id="navLoginBtn" style="font-size:13px;color:var(--gold);text-decoration:none;padding:7px 16px;border:1px solid var(--border);border-radius:6px;white-space:nowrap;">로그인</a>
+  <div id="navUserArea" style="display:flex;align-items:center;gap:10px;flex-shrink:0;"></div>
 </nav>
 <div class="mobile-menu" id="mobileMenu">
     <a href="about.html" >학원소개</a>
@@ -303,22 +305,101 @@
   </div>
 </div>
 
-<script>
-// ══════════════════════════════════════════════
-//  영상 목록 — 여기에 실제 유튜브 영상을 추가하세요
-//  youtubeId: 유튜브 URL의 ?v= 뒤 11자리 코드
-// ══════════════════════════════════════════════
-const videos = [
-  { title:"송우찬수학학원 강의", tag:"수학1", youtubeId:"KCWVcK1J_lc", date:"2025.06" },
-];
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD_eYNKzfa-aT41E3Dqt_HyJc6UeSR5ErA",
+  authDomain: "songmath.firebaseapp.com",
+  projectId: "songmath",
+  storageBucket: "songmath.firebasestorage.app",
+  messagingSenderId: "936295436575",
+  appId: "1:936295436575:web:d1e201508719850cfbe02a"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let allVideos = [];
+let myVideos = [];
 let currentTag = 'all';
+let isLoggedIn = false;
 
-function render(tag) {
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    isLoggedIn = true;
+    // 학생 정보 가져오기
+    const studentDoc = await getDoc(doc(db, 'students', user.uid));
+    const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+
+    // nav에 학생 이름 + 로그아웃 표시
+    const isAdmin = adminDoc.exists();
+    updateNavUser(studentDoc.exists() ? studentDoc.data().name : '관리자', isAdmin);
+
+    // 전체 영상 목록 가져오기
+    const videoSnap = await getDocs(collection(db, 'videos'));
+    allVideos = [];
+    videoSnap.forEach(d => allVideos.push({id: d.id, ...d.data()}));
+
+    if (isAdmin) {
+      myVideos = allVideos; // 관리자는 전체
+    } else if (studentDoc.exists()) {
+      const assigned = studentDoc.data().assignedVideos || [];
+      myVideos = allVideos.filter(v => assigned.includes(v.id));
+    }
+    renderVideos('all');
+  } else {
+    // 비로그인: 빈 화면 + 로그인 유도
+    isLoggedIn = false;
+    showLoginPrompt();
+  }
+});
+
+function updateNavUser(name, isAdmin) {
+  const navEl = document.getElementById('navUserArea');
+  if (!navEl) return;
+  navEl.innerHTML = `
+    <span style="font-size:13px;color:var(--muted);">${name} 님</span>
+    ${isAdmin ? '<a href="admin.html" style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">관리자</a>' : ''}
+    <button onclick="doLogout()" style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;">로그아웃</button>
+  `;
+}
+
+window.doLogout = async function() {
+  await signOut(auth);
+  window.location.reload();
+};
+
+function showLoginPrompt() {
   const grid = document.getElementById('videoGrid');
-  const list = tag === 'all' ? videos : videos.filter(v => v.tag === tag);
+  grid.innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:80px 20px;">
+      <div style="font-size:40px;margin-bottom:20px;">🔒</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:10px;">로그인이 필요합니다</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:32px;">배정된 강의를 시청하려면 로그인해 주세요.</div>
+      <a href="login.html" style="display:inline-block;padding:13px 32px;background:var(--gold);color:var(--bg);font-weight:700;border-radius:8px;text-decoration:none;font-size:15px;">로그인하기</a>
+    </div>
+  `;
+}
+
+window.filterVideos = function(tag, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTag = tag;
+  renderVideos(tag);
+};
+
+function renderVideos(tag) {
+  const grid = document.getElementById('videoGrid');
+  const list = tag === 'all' ? myVideos : myVideos.filter(v => v.tag === tag);
   if (!list.length) {
-    grid.innerHTML = '<div class="empty-state">해당 카테고리의 강의가 아직 없습니다.</div>';
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--muted);">
+      ${isLoggedIn ? '배정된 강의가 없습니다.' : ''}
+    </div>`;
     return;
   }
   grid.innerHTML = list.map(v => `
@@ -330,48 +411,31 @@ function render(tag) {
       <div class="video-info">
         <span class="video-tag">${v.tag}</span>
         <div class="video-title">${v.title}</div>
-        <div class="video-date">${v.date}</div>
+        <div class="video-date">${v.date || ''}</div>
       </div>
     </div>
   `).join('');
 }
 
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    render(btn.dataset.tag);
-  });
-});
-
-render('all');
-
-// 모달
-function openModal(id, title) {
+window.openModal = function(id, title) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalIframe').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
   document.getElementById('modalYtLink').href = `https://www.youtube.com/watch?v=${id}`;
   document.getElementById('modal').classList.add('open');
-}
+};
 
-function closeModal() {
+window.closeModal = function() {
   document.getElementById('modal').classList.remove('open');
   document.getElementById('modalIframe').src = '';
-}
+};
 
-function closeOnBg(e) {
-  if (e.target === document.getElementById('modal')) closeModal();
-}
+window.closeOnBg = function(e) {
+  if (e.target === document.getElementById('modal')) window.closeModal();
+};
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') window.closeModal(); });
 </script>
 
-
-<!-- Kakao Floating -->
-<a href="https://pf.kakao.com/_KxaxdlX" target="_blank" class="kakao-float" aria-label="카카오톡 문의">
-  <div class="kakao-float-btn"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.47 5.08 3.72 6.56l-.95 3.54a.3.3 0 0 0 .44.33l4.07-2.72A11.5 11.5 0 0 0 12 18.6c5.523 0 10-3.477 10-7.8S17.523 3 12 3Z"/></svg></div>
-  <span class="kakao-float-label">카카오톡 문의</span>
-</a>
 <script>
 function toggleMenu() {
   var btn = document.getElementById('hamburger');
