@@ -492,19 +492,22 @@ onAuthStateChanged(auth, async (user) => {
     // 학생 or 관리자 이름 가져오기
     const studentDoc = await getDoc(doc(db, 'students', user.uid));
     const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-    let name;
+    let name, nameHtml;
     if (studentDoc.exists()) {
       const d = studentDoc.data();
-      name = (d.grade || '') + ' ' + d.name + ' 학생';
+      nameHtml = `${d.branch || ''} | ${d.grade || ''} <b style="color:var(--off-white);font-weight:700;">${d.name}</b> 학생`;
+      name = nameHtml;
     } else if (adminDoc.exists()) {
-      name = '관리자';
+      nameHtml = '관리자';
+      name = nameHtml;
     } else {
-      name = user.email;
+      nameHtml = user.email;
+      name = nameHtml;
     }
 
     loginBtn.style.display = 'none';
     userName.style.display = 'inline';
-    userName.textContent = name + ' 님';
+    userName.innerHTML = name;
     logoutBtn.style.display = 'inline';
   } else {
     loginBtn.style.display = 'inline';
