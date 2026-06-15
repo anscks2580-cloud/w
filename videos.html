@@ -253,12 +253,14 @@
     </div>
 
     <div class="filter-bar">
-      <button class="filter-btn active" data-tag="all">전체</button>
-      <button class="filter-btn" data-tag="수학1">수학Ⅰ</button>
-      <button class="filter-btn" data-tag="수학2">수학Ⅱ</button>
-      <button class="filter-btn" data-tag="미적분">미적분</button>
-      <button class="filter-btn" data-tag="확통">확률과 통계</button>
-      <button class="filter-btn" data-tag="논술">수리논술</button>
+      <button class="filter-btn active" onclick="filterVideos('all',this)">전체</button>
+      <button class="filter-btn" onclick="filterVideos('수학1',this)">수학Ⅰ</button>
+      <button class="filter-btn" onclick="filterVideos('수학2',this)">수학Ⅱ</button>
+      <button class="filter-btn" onclick="filterVideos('미적분',this)">미적분</button>
+      <button class="filter-btn" onclick="filterVideos('확통',this)">확률과 통계</button>
+      <button class="filter-btn" onclick="filterVideos('논술',this)">수리논술</button>
+      <button class="filter-btn" onclick="filterVideos('중등',this)">중등수학</button>
+      <button class="filter-btn" onclick="filterVideos('내신',this)">내신대비</button>
     </div>
 
     <div class="video-grid" id="videoGrid"></div>
@@ -339,18 +341,20 @@ onAuthStateChanged(auth, async (user) => {
     const isAdmin = adminDoc.exists();
     updateNavUser(studentDoc.exists() ? studentDoc.data().name : '관리자', isAdmin);
 
-    // 전체 영상 목록 가져오기
-    const videoSnap = await getDocs(collection(db, 'videos'));
-    allVideos = [];
-    videoSnap.forEach(d => allVideos.push({id: d.id, ...d.data()}));
+    // 전체 영상 목록 실시간 리스너
+    const { onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const assigned = isAdmin ? null : (studentDoc.exists() ? studentDoc.data().assignedVideos || [] : []);
 
-    if (isAdmin) {
-      myVideos = allVideos; // 관리자는 전체
-    } else if (studentDoc.exists()) {
-      const assigned = studentDoc.data().assignedVideos || [];
-      myVideos = allVideos.filter(v => assigned.includes(v.id));
-    }
-    renderVideos('all');
+    onSnapshot(collection(db, 'videos'), (snap) => {
+      allVideos = [];
+      snap.forEach(d => allVideos.push({id: d.id, ...d.data()}));
+      if (isAdmin) {
+        myVideos = allVideos;
+      } else {
+        myVideos = allVideos.filter(v => assigned.includes(v.id));
+      }
+      renderVideos(currentTag);
+    });
   } else {
     // 비로그인: 빈 화면 + 로그인 유도
     isLoggedIn = false;
@@ -404,7 +408,7 @@ function renderVideos(tag) {
   grid.innerHTML = list.map(v => `
     <div class="video-card" onclick="openModal('${v.youtubeId}','${v.title}')">
       <div class="video-thumb">
-        <img src="https://img.youtube.com/vi/${v.youtubeId}/mqdefault.jpg" alt="${v.title}" loading="lazy">
+        <img src="https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg" alt="${v.title}" loading="lazy">
         <div class="play-overlay"><div class="play-btn"><div class="play-icon"></div></div></div>
       </div>
       <div class="video-info">
