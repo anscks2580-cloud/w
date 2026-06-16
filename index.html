@@ -182,7 +182,7 @@
     <li><a href="curriculum.html">커리큘럼</a></li>
     <li><a href="interview.html">졸업생 인터뷰</a></li>
     <li><a href="press.html">언론보도</a></li>
-    <li><a href="howto.html">강의 시청 방법</a></li>
+    
   </ul>
 
   <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;"><div id="navUserArea" style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
@@ -201,7 +201,6 @@
     <a href="curriculum.html" >커리큘럼</a>
     <a href="interview.html" >졸업생 인터뷰</a>
     <a href="press.html" >언론보도</a>
-    <a href="howto.html" >강의 시청 방법</a>
   </div>
 
 <div class="page">
@@ -345,8 +344,6 @@ onAuthStateChanged(auth, async (user) => {
     userName.style.display = 'inline';
     userName.innerHTML = name;
     logoutBtn.style.display = 'inline';
-    const adminBtn = document.getElementById('navAdminBtn');
-    if (adminBtn) adminBtn.style.display = adminDoc.exists() ? 'inline' : 'none';
   } else {
     loginBtn.style.display = 'inline';
     userName.style.display = 'none';

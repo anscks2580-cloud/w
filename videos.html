@@ -266,7 +266,7 @@
     <li><a href="curriculum.html">커리큘럼</a></li>
     <li><a href="interview.html">졸업생 인터뷰</a></li>
     <li><a href="press.html">언론보도</a></li>
-    <li><a href="howto.html">강의 시청 방법</a></li>
+    
   </ul>
 
   <a href="login.html" id="navLoginBtn" style="font-size:13px;color:var(--gold);text-decoration:none;padding:7px 16px;border:1px solid var(--border);border-radius:6px;white-space:nowrap;">로그인</a>
@@ -281,7 +281,6 @@
     <a href="curriculum.html" >커리큘럼</a>
     <a href="interview.html" >졸업생 인터뷰</a>
     <a href="press.html" >언론보도</a>
-    <a href="howto.html" >강의 시청 방법</a>
   </div>
 
 <div class="page">
@@ -295,6 +294,44 @@
       <p class="section-desc">
         카테고리를 선택해 원하는 강의를 찾아보세요.
       </p>
+    </div>
+
+    <!-- 강의 시청 방법 안내 -->
+    <div id="howtoGuide" style="margin-bottom:40px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;cursor:pointer;" onclick="toggleHowto()">
+        <span style="font-size:13px;font-weight:600;color:var(--gold);letter-spacing:1px;text-transform:uppercase;">강의 시청 방법</span>
+        <span id="howtoArrow" style="font-size:12px;color:var(--muted);transition:transform 0.3s;">▲ 접기</span>
+      </div>
+      <div id="howtoBody" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+        <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start;">
+          <span style="font-size:18px;font-weight:700;color:var(--gold);flex-shrink:0;">1</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;">로그인</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">우측 상단 로그인 버튼 → 이름과 전화번호로 로그인합니다.</div>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start;">
+          <span style="font-size:18px;font-weight:700;color:var(--gold);flex-shrink:0;">2</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;">카테고리 선택</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">중등 / 고등 / 기출해설 / 수리논술 중 원하는 카테고리를 선택하세요.</div>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start;">
+          <span style="font-size:18px;font-weight:700;color:var(--gold);flex-shrink:0;">3</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;">강의 카드 클릭</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">썸네일을 클릭하면 팝업 플레이어가 열리면서 바로 재생됩니다.</div>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start;">
+          <span style="font-size:18px;font-weight:700;color:var(--gold);flex-shrink:0;">4</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;">문의</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">궁금한 점은 <a href="tel:031-386-8899" style="color:var(--gold);text-decoration:none;">031-386-8899</a>(평촌관)으로 연락 주세요.</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="filter-wrap">
@@ -428,7 +465,7 @@ function updateNavUser(name, isAdmin) {
   if (!navEl) return;
   navEl.innerHTML = `
     <span style="font-size:13px;color:var(--muted);">${name} 님</span>
-    ${isAdmin ? '<a href="admin.html" style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">관리자 페이지</a>' : ''}
+    ${isAdmin ? '<a href="admin.html" style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">관리자</a>' : ''}
     <button onclick="doLogout()" style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;">로그아웃</button>
   `;
 }
@@ -547,6 +584,14 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') window.closeMod
 </script>
 
 <script>
+window.toggleHowto = function() {
+  const body = document.getElementById('howtoBody');
+  const arrow = document.getElementById('howtoArrow');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'grid';
+  arrow.textContent = isOpen ? '▼ 펼치기' : '▲ 접기';
+};
+
 function toggleMenu() {
   var btn = document.getElementById('hamburger');
   var menu = document.getElementById('mobileMenu');
