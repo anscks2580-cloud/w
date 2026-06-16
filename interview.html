@@ -50,6 +50,36 @@
   .page-inner { padding:60px 20px 80px; }
   .img-grid { grid-template-columns:1fr 1fr; gap:12px; }
 }
+
+/* ── nav 링크 hover 효과 ── */
+.nav-links a {
+  position: relative;
+  transition: color 0.2s, transform 0.2s;
+  display: inline-block;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 0; right: 0;
+  height: 1.5px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+.nav-links a:hover {
+  color: var(--gold) !important;
+  transform: translateY(-1px);
+}
+.nav-links a:hover::after {
+  transform: scaleX(1);
+}
+.nav-links a.active {
+  color: var(--gold) !important;
+}
+.nav-links a.active::after {
+  transform: scaleX(1);
+}
 </style>
 </head>
 <body>
