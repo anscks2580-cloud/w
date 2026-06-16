@@ -235,19 +235,13 @@
       </a>
 
       <div class="menu-card" style="cursor:default;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-          <span class="card-icon" style="margin-bottom:0;">🏆</span>
-          <div style="display:flex;gap:6px;">
-            <button onclick="hofPrev()" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;">‹</button>
-            <button onclick="hofNext()" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;">›</button>
-          </div>
-        </div>
+        <span class="card-icon">🏆</span>
         <div class="card-title">명예의 전당</div>
-        <div class="card-desc" style="margin-bottom:16px;">송우찬수학학원 합격생</div>
-        <div id="hofSlider" style="overflow:hidden;">
+        <div class="card-desc" style="margin-bottom:12px;">송우찬수학학원 합격생</div>
+        <div style="overflow:hidden;height:60px;">
           <div id="hofTrack" style="display:flex;transition:transform 0.4s ease;"></div>
         </div>
-        <div style="display:flex;justify-content:center;gap:5px;margin-top:14px;" id="hofDots"></div>
+        <div id="hofDots" style="display:flex;justify-content:center;gap:4px;margin-top:10px;"></div>
       </div>
 
     </div>
@@ -371,83 +365,106 @@ window.doNavLogout = async function() {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  var hofData = [
-    { tier: 'SKY', color: '#9B8ED4', bg: 'rgba(124,111,160,0.12)', items: [
-      { univ: '서울대학교', name: '배○석' },
-      { univ: '연세대학교', name: '정○현' },
-      { univ: '고려대학교', name: '탁○서' }
-    ]},
-    { tier: '상위권', color: '#4A9FD4', bg: 'rgba(29,126,183,0.1)', items: [
-      { univ: '성균관대학교', name: '이○윤' },
-      { univ: '서울교대', name: '김○은' },
-      { univ: '한국외대', name: '이○혁' },
-      { univ: '이화여대', name: '윤○서' },
-      { univ: '이화여대', name: '목○우' },
-      { univ: '중앙대학교', name: '최○아' },
-      { univ: '홍익대학교', name: '이○' }
-    ]},
-    { tier: '중상위권', color: '#20A878', bg: 'rgba(29,158,117,0.09)', items: [
-      { univ: '동국대학교', name: '김○현' },
-      { univ: '동국대학교', name: '윤○형' },
-      { univ: '세종대학교', name: '이○학' },
-      { univ: '세종대학교', name: '임○훈' },
-      { univ: '세종대학교', name: '최○아' },
-      { univ: '성신여대', name: '강○경' },
-      { univ: '아주대학교', name: '심○민' },
-      { univ: '아주대학교', name: '이○훈' },
-      { univ: '단국대학교', name: '신○우' },
-      { univ: '단국대학교', name: '최○빈' }
-    ]}
+  var groups = [
+    {
+      color: '#9B8ED4',
+      items: [
+        { univ: '서울대학교', name: '배○석' },
+        { univ: '연세대학교', name: '정○현' },
+        { univ: '고려대학교', name: '탁○서' }
+      ]
+    },
+    {
+      color: '#4A9FD4',
+      items: [
+        { univ: '성균관대학교', name: '이○윤' },
+        { univ: '이화여대', name: '윤○서' },
+        { univ: '이화여대', name: '목○우' },
+        { univ: '중앙대학교', name: '최○아' },
+        { univ: '한국외대', name: '이○혁' },
+        { univ: '동국대학교', name: '김○현' },
+        { univ: '동국대학교', name: '윤○형' },
+        { univ: '아주대학교', name: '심○민' },
+        { univ: '아주대학교', name: '이○훈' },
+        { univ: '세종대학교', name: '이○학' },
+        { univ: '세종대학교', name: '임○훈' },
+        { univ: '세종대학교', name: '최○아' },
+        { univ: '홍익대학교', name: '이○' },
+        { univ: '단국대학교', name: '신○우' },
+        { univ: '단국대학교', name: '최○빈' },
+        { univ: '서울교대', name: '김○은' },
+        { univ: '성신여대', name: '강○경' }
+      ]
+    }
   ];
 
-  var hofIdx = 0;
+  var PER_SLIDE = 4;
+
+  // 슬라이드 목록 생성: 각 그룹을 PER_SLIDE개씩 분할
+  var slides = [];
+  groups.forEach(function(g, gi) {
+    for (var i = 0; i < g.items.length; i += PER_SLIDE) {
+      slides.push({
+        groupIdx: gi,
+        color: g.color,
+        items: g.items.slice(i, i + PER_SLIDE),
+        total: Math.ceil(g.items.length / PER_SLIDE),
+        page: Math.floor(i / PER_SLIDE) + 1
+      });
+    }
+  });
+
   var track = document.getElementById('hofTrack');
   var dotsEl = document.getElementById('hofDots');
-  if (!track || !dotsEl) return;
+  if (!track) return;
 
-  function buildChip(it, group) {
-    var d = document.createElement('div');
-    d.style.cssText = 'display:inline-flex;flex-direction:column;background:' + group.bg + ';border:1px solid ' + group.color + '30;border-left:2px solid ' + group.color + ';border-radius:0 6px 6px 0;padding:6px 10px;min-width:90px;';
-    d.innerHTML = '<span style="font-size:11px;font-weight:600;color:var(--off-white);">' + it.univ + '</span><span style="font-size:10px;color:var(--muted);margin-top:2px;">' + it.name + '</span>';
-    return d;
-  }
+  var idx = 0;
 
-  function hofBuild() {
-    track.innerHTML = '';
-    dotsEl.innerHTML = '';
-    hofData.forEach(function(group, gi) {
-      var slide = document.createElement('div');
-      slide.style.cssText = 'min-width:100%;box-sizing:border-box;';
-      var label = document.createElement('div');
-      label.style.cssText = 'font-size:10px;font-weight:700;color:' + group.color + ';letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;';
-      label.textContent = group.tier;
-      slide.appendChild(label);
-      var chips = document.createElement('div');
-      chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
-      group.items.forEach(function(it) { chips.appendChild(buildChip(it, group)); });
-      slide.appendChild(chips);
-      track.appendChild(slide);
+  slides.forEach(function(s) {
+    var slide = document.createElement('div');
+    slide.style.cssText = 'min-width:100%;box-sizing:border-box;';
 
+    var grid = document.createElement('div');
+    if (s.groupIdx === 0) {
+      var lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:9px;font-weight:700;color:#9B8ED4;letter-spacing:1.5px;margin-bottom:7px;';
+      lbl.textContent = 'SKY';
+      slide.appendChild(lbl);
+    }
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;';
+    s.items.forEach(function(it) {
+      var chip = document.createElement('div');
+      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:4px 8px;background:' + s.color + '18;';
+      chip.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--off-white);">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);">' + it.name + '</div>';
+      grid.appendChild(chip);
+    });
+    slide.appendChild(grid);
+    track.appendChild(slide);
+  });
+
+  // dots
+  if (dotsEl) {
+    slides.forEach(function(_, i) {
       var dot = document.createElement('div');
-      dot.style.cssText = 'width:6px;height:6px;border-radius:50%;background:' + (gi === 0 ? 'var(--gold)' : 'rgba(255,255,255,0.2)') + ';cursor:pointer;transition:background 0.2s;';
-      dot.onclick = function() { hofGo(gi); };
+      dot.style.cssText = 'width:5px;height:5px;border-radius:50%;background:' + (i === 0 ? 'var(--gold)' : 'rgba(255,255,255,0.2)') + ';cursor:pointer;transition:background 0.2s;';
+      dot.onclick = function() { go(i); };
       dotsEl.appendChild(dot);
     });
   }
 
-  function hofGo(i) {
-    hofIdx = i;
-    track.style.transform = 'translateX(-' + (hofIdx * 100) + '%)';
-    dotsEl.querySelectorAll('div').forEach(function(d, j) {
-      d.style.background = j === hofIdx ? 'var(--gold)' : 'rgba(255,255,255,0.2)';
-    });
+  function go(i) {
+    idx = (i + slides.length) % slides.length;
+    track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+    if (dotsEl) {
+      dotsEl.querySelectorAll('div').forEach(function(d, j) {
+        d.style.background = j === idx ? 'var(--gold)' : 'rgba(255,255,255,0.2)';
+      });
+    }
   }
 
-  window.hofNext = function() { hofGo((hofIdx + 1) % hofData.length); };
-  window.hofPrev = function() { hofGo((hofIdx - 1 + hofData.length) % hofData.length); };
-
-  hofBuild();
-  setInterval(function() { window.hofNext(); }, 4000);
+  window.hofNext = function() { go(idx + 1); };
+  window.hofPrev = function() { go(idx - 1); };
+  setInterval(function() { window.hofNext(); }, 3000);
 });
 </script>
 </body>
