@@ -23,10 +23,22 @@
 .breadcrumb span { color: var(--gold); }
 
 /* ── 필터 ── */
+.filter-wrap { margin-bottom: 36px; }
+
 .filter-bar {
   display: flex; gap: 8px; flex-wrap: wrap;
-  margin-bottom: 36px;
+  margin-bottom: 10px;
 }
+
+.filter-sub {
+  display: none; gap: 8px; flex-wrap: wrap;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+
+.filter-sub.open { display: flex; }
 
 .filter-btn {
   padding: 8px 20px;
@@ -44,6 +56,11 @@
   color: var(--bg);
   border-color: var(--gold);
   font-weight: 600;
+}
+
+.filter-sub .filter-btn {
+  padding: 6px 16px;
+  font-size: 12px;
 }
 
 /* ── 영상 그리드 ── */
@@ -244,23 +261,39 @@
       <div class="breadcrumb">
         <a href="index.html">홈</a> › <span>동영상강의</span>
       </div>
-      <div class="section-eyebrow">무료 강의</div>
-      <h1 class="section-title">유튜브 동영상강의</h1>
+      <h1 class="section-title">동영상강의</h1>
       <p class="section-desc">
-        카테고리를 선택해 원하는 강의를 찾아보세요.<br>
-        모든 강의는 유튜브에서 무료로 제공합니다.
+        카테고리를 선택해 원하는 강의를 찾아보세요.
       </p>
     </div>
 
-    <div class="filter-bar">
-      <button class="filter-btn active" onclick="filterVideos('all',this)">전체</button>
-      <button class="filter-btn" onclick="filterVideos('수학1',this)">수학Ⅰ</button>
-      <button class="filter-btn" onclick="filterVideos('수학2',this)">수학Ⅱ</button>
-      <button class="filter-btn" onclick="filterVideos('미적분',this)">미적분</button>
-      <button class="filter-btn" onclick="filterVideos('확통',this)">확률과 통계</button>
-      <button class="filter-btn" onclick="filterVideos('논술',this)">수리논술</button>
-      <button class="filter-btn" onclick="filterVideos('중등',this)">중등수학</button>
-      <button class="filter-btn" onclick="filterVideos('내신',this)">내신대비</button>
+    <div class="filter-wrap">
+      <!-- 1단계: 메인 카테고리 -->
+      <div class="filter-bar" id="filterMain">
+        <button class="filter-btn active" onclick="selectMain('all',this)">ALL</button>
+        <button class="filter-btn" onclick="selectMain('중등',this)">중등</button>
+        <button class="filter-btn" onclick="selectMain('고등',this)">고등</button>
+        <button class="filter-btn" onclick="selectMain('기출해설',this)">기출해설</button>
+        <button class="filter-btn" onclick="selectMain('수리논술',this)">수리논술</button>
+      </div>
+      <!-- 2단계: 중등 서브 -->
+      <div class="filter-sub" id="sub-중등">
+        <button class="filter-btn active" onclick="selectSub('중등-all',this,'중등')">전체</button>
+        <button class="filter-btn" onclick="selectSub('중1',this,'중등')">중1</button>
+        <button class="filter-btn" onclick="selectSub('중2',this,'중등')">중2</button>
+        <button class="filter-btn" onclick="selectSub('중3',this,'중등')">중3</button>
+      </div>
+      <!-- 2단계: 고등 서브 -->
+      <div class="filter-sub" id="sub-고등">
+        <button class="filter-btn active" onclick="selectSub('고등-all',this,'고등')">전체</button>
+        <button class="filter-btn" onclick="selectSub('공통수학1',this,'고등')">공통수학1</button>
+        <button class="filter-btn" onclick="selectSub('공통수학2',this,'고등')">공통수학2</button>
+        <button class="filter-btn" onclick="selectSub('대수',this,'고등')">대수</button>
+        <button class="filter-btn" onclick="selectSub('미적분',this,'고등')">미적분</button>
+        <button class="filter-btn" onclick="selectSub('확통',this,'고등')">확통</button>
+        <button class="filter-btn" onclick="selectSub('미적분2',this,'고등')">미적분2</button>
+        <button class="filter-btn" onclick="selectSub('기하',this,'고등')">기하</button>
+      </div>
     </div>
 
     <div class="video-grid" id="videoGrid"></div>
@@ -298,11 +331,7 @@
         allow="autoplay; fullscreen; picture-in-picture">
       </iframe>
     </div>
-    <div class="modal-footer">
-      <a id="modalYtLink" href="#" target="_blank" class="modal-yt-link">
-        ↗ Vimeo에서 보기
-      </a>
-    </div>
+
   </div>
 </div>
 
@@ -353,7 +382,7 @@ onAuthStateChanged(auth, async (user) => {
       } else {
         myVideos = allVideos.filter(v => assigned.includes(v.id));
       }
-      renderVideos(currentTag);
+      renderVideos();
     });
   } else {
     // 비로그인: 빈 화면 + 로그인 유도
@@ -364,6 +393,8 @@ onAuthStateChanged(auth, async (user) => {
 
 function updateNavUser(name, isAdmin) {
   const navEl = document.getElementById('navUserArea');
+  const loginBtn = document.getElementById('navLoginBtn');
+  if (loginBtn) loginBtn.style.display = 'none';
   if (!navEl) return;
   navEl.innerHTML = `
     <span style="font-size:13px;color:var(--muted);">${name} 님</span>
@@ -389,19 +420,65 @@ function showLoginPrompt() {
   `;
 }
 
-window.filterVideos = function(tag, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  currentTag = tag;
-  renderVideos(tag);
+// 메인 카테고리 → Firestore tag 매핑
+const MAIN_TAGS = {
+  '중등': ['중1','중2','중3'],
+  '고등': ['공통수학1','공통수학2','대수','미적분','확통','미적분2','기하'],
+  '기출해설': ['기출해설'],
+  '수리논술': ['수리논술'],
 };
 
-function renderVideos(tag) {
+let currentMain = 'all';
+let currentSub = null; // null = 서브 전체
+
+window.selectMain = function(main, btn) {
+  // 메인 버튼 active
+  document.querySelectorAll('#filterMain .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMain = main;
+  currentSub = null;
+
+  // 서브 패널 열고 닫기
+  document.querySelectorAll('.filter-sub').forEach(el => el.classList.remove('open'));
+  if (main === '중등' || main === '고등') {
+    const subEl = document.getElementById('sub-' + main);
+    if (subEl) {
+      subEl.classList.add('open');
+      // 서브 '전체' 버튼 active 초기화
+      subEl.querySelectorAll('.filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+    }
+  }
+  renderVideos();
+};
+
+window.selectSub = function(sub, btn, main) {
+  const subEl = document.getElementById('sub-' + main);
+  subEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSub = sub.endsWith('-all') ? null : sub;
+  renderVideos();
+};
+
+window.filterVideos = function() {}; // legacy 호환용 빈 함수
+
+function renderVideos() {
   const grid = document.getElementById('videoGrid');
-  const list = tag === 'all' ? myVideos : myVideos.filter(v => v.tag === tag);
+
+  let list;
+  if (currentMain === 'all') {
+    list = myVideos;
+  } else if (currentSub) {
+    // 서브 카테고리 선택
+    list = myVideos.filter(v => v.tag === currentSub);
+  } else {
+    // 메인 카테고리 전체 (서브 all)
+    const tags = MAIN_TAGS[currentMain] || [currentMain];
+    list = myVideos.filter(v => tags.includes(v.tag));
+  }
+
   if (!list.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--muted);">
-      ${isLoggedIn ? '배정된 강의가 없습니다.' : ''}
+      ${isLoggedIn ? '등록된 강의가 없습니다.' : ''}
     </div>`;
     return;
   }
@@ -424,7 +501,6 @@ function renderVideos(tag) {
 window.openModal = function(id, title) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalIframe').src = `https://player.vimeo.com/video/${id}?autoplay=1&title=0&byline=0&portrait=0`;
-  document.getElementById('modalYtLink').href = `https://vimeo.com/${id}`;
   document.getElementById('modal').classList.add('open');
 };
 
