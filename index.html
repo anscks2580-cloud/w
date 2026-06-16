@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
       lbl.textContent = 'SKY';
       slide.appendChild(lbl);
     }
-    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;';
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:5px;';
     s.items.forEach(function(it) {
       var chip = document.createElement('div');
       chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:4px 8px;background:' + s.color + '18;';
