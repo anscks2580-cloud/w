@@ -91,6 +91,7 @@
   <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;"><div id="navUserArea" style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
     <a href="login.html" id="navLoginBtn" style="font-size:13px;color:var(--gold);text-decoration:none;padding:7px 16px;border:1px solid var(--border);border-radius:6px;white-space:nowrap;display:none;">로그인</a>
     <span id="navUserName" style="font-size:13px;color:var(--muted);white-space:nowrap;display:none;"></span>
+    <a id="navAdminBtn" href="admin.html" style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;white-space:nowrap;display:none;">관리자 페이지</a>
     <button id="navLogoutBtn" onclick="doNavLogout()" style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;white-space:nowrap;display:none;">로그아웃</button>
   </div><button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="메뉴">
     <span></span><span></span><span></span>
@@ -267,6 +268,8 @@ onAuthStateChanged(auth, async (user) => {
     userName.style.display = 'inline';
     userName.innerHTML = name;
     logoutBtn.style.display = 'inline';
+    const adminBtn = document.getElementById('navAdminBtn');
+    if (adminBtn) adminBtn.style.display = adminDoc.exists() ? 'inline' : 'none';
   } else {
     loginBtn.style.display = 'inline';
     userName.style.display = 'none';

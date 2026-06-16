@@ -398,7 +398,7 @@ function updateNavUser(name, isAdmin) {
   if (!navEl) return;
   navEl.innerHTML = `
     <span style="font-size:13px;color:var(--muted);">${name} 님</span>
-    ${isAdmin ? '<a href="admin.html" style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">관리자</a>' : ''}
+    ${isAdmin ? '<a href="admin.html" style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">관리자 페이지</a>' : ''}
     <button onclick="doLogout()" style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;">로그아웃</button>
   `;
 }
