@@ -234,118 +234,24 @@
         <span class="card-arrow">강의 보러가기 →</span>
       </a>
 
+      <div class="menu-card" style="cursor:default;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <span class="card-icon" style="margin-bottom:0;">🏆</span>
+          <div style="display:flex;gap:6px;">
+            <button onclick="hofPrev()" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;">‹</button>
+            <button onclick="hofNext()" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;">›</button>
+          </div>
+        </div>
+        <div class="card-title">명예의 전당</div>
+        <div class="card-desc" style="margin-bottom:16px;">송우찬수학학원 합격생</div>
+        <div id="hofSlider" style="overflow:hidden;">
+          <div id="hofTrack" style="display:flex;transition:transform 0.4s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:5px;margin-top:14px;" id="hofDots"></div>
+      </div>
 
     </div>
 
-    <!-- 명예의 전당 -->
-    <div style="margin:64px 0 56px;">
-      <div style="text-align:center;margin-bottom:36px;">
-        <div class="section-eyebrow">Hall of Fame</div>
-        <h2 class="section-title" style="font-size:clamp(22px,3vw,30px);">명예의 전당</h2>
-        <p class="section-desc">송우찬수학학원을 거쳐간 합격생들</p>
-      </div>
-
-      <!-- SKY -->
-      <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:600;color:#9B8ED4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;padding-left:2px;">SKY</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">
-          <div style="background:rgba(124,111,160,0.08);border:1px solid rgba(124,111,160,0.25);border-left:3px solid #7F77DD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">서울대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">배○석</div>
-          </div>
-          <div style="background:rgba(124,111,160,0.08);border:1px solid rgba(124,111,160,0.25);border-left:3px solid #7F77DD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">연세대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">정○현</div>
-          </div>
-          <div style="background:rgba(124,111,160,0.08);border:1px solid rgba(124,111,160,0.25);border-left:3px solid #7F77DD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">고려대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">탁○서</div>
-          </div>
-          <div style="background:rgba(124,111,160,0.08);border:1px solid rgba(124,111,160,0.25);border-left:3px solid #7F77DD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">성균관대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">이○윤</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 상위권 -->
-      <div style="margin-bottom:28px;">
-        <div style="font-size:11px;font-weight:600;color:#4A9FD4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;padding-left:2px;">상위권</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">
-          <div style="background:rgba(29,126,183,0.07);border:1px solid rgba(29,126,183,0.2);border-left:3px solid #378ADD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">서울교대</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">김○은</div>
-          </div>
-          <div style="background:rgba(29,126,183,0.07);border:1px solid rgba(29,126,183,0.2);border-left:3px solid #378ADD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">한국외대</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">이○혁</div>
-          </div>
-          <div style="background:rgba(29,126,183,0.07);border:1px solid rgba(29,126,183,0.2);border-left:3px solid #378ADD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">이화여대</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">윤○서</div>
-          </div>
-          <div style="background:rgba(29,126,183,0.07);border:1px solid rgba(29,126,183,0.2);border-left:3px solid #378ADD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">이화여대</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">목○우</div>
-          </div>
-          <div style="background:rgba(29,126,183,0.07);border:1px solid rgba(29,126,183,0.2);border-left:3px solid #378ADD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">중앙대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">최○아</div>
-          </div>
-          <div style="background:rgba(29,126,183,0.07);border:1px solid rgba(29,126,183,0.2);border-left:3px solid #378ADD;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">홍익대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">이○</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 중상위권 -->
-      <div>
-        <div style="font-size:11px;font-weight:600;color:#20A878;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;padding-left:2px;">중상위권</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">동국대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">김○현</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">동국대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">윤○형</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">세종대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">이○학</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">세종대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">임○훈</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">세종대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">최○아</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">성신여대</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">강○경</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">아주대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">심○민</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">아주대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">이○훈</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">단국대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">신○우</div>
-          </div>
-          <div style="background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.2);border-left:3px solid #1D9E75;border-radius:0 10px 10px 0;padding:12px 14px;">
-            <div style="font-size:13px;font-weight:600;color:var(--off-white);">단국대학교</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">최○빈</div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div class="contact-strip">
       <div style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;">
@@ -461,6 +367,76 @@ window.doNavLogout = async function() {
   await signOut(auth);
   window.location.reload();
 };
+</script>
+
+<script>
+const hofData = [
+  { tier: "SKY", color: "#9B8ED4", bg: "rgba(124,111,160,0.12)", items: [
+    { univ: "서울대학교", name: "배○석" },
+    { univ: "연세대학교", name: "정○현" },
+    { univ: "고려대학교", name: "탁○서" },
+  ]},
+  { tier: "상위권", color: "#4A9FD4", bg: "rgba(29,126,183,0.1)", items: [
+    { univ: "성균관대학교", name: "이○윤" },
+    { univ: "서울교대", name: "김○은" },
+    { univ: "한국외대", name: "이○혁" },
+    { univ: "이화여대", name: "윤○서" },
+    { univ: "이화여대", name: "목○우" },
+    { univ: "중앙대학교", name: "최○아" },
+    { univ: "홍익대학교", name: "이○" },
+  ]},
+  { tier: "중상위권", color: "#20A878", bg: "rgba(29,158,117,0.09)", items: [
+    { univ: "동국대학교", name: "김○현" },
+    { univ: "동국대학교", name: "윤○형" },
+    { univ: "세종대학교", name: "이○학" },
+    { univ: "세종대학교", name: "임○훈" },
+    { univ: "세종대학교", name: "최○아" },
+    { univ: "성신여대", name: "강○경" },
+    { univ: "아주대학교", name: "심○민" },
+    { univ: "아주대학교", name: "이○훈" },
+    { univ: "단국대학교", name: "신○우" },
+    { univ: "단국대학교", name: "최○빈" },
+  ]},
+];
+
+let hofIdx = 0;
+const track = document.getElementById('hofTrack');
+const dots = document.getElementById('hofDots');
+
+function hofBuild() {
+  track.innerHTML = hofData.map((group, gi) => {
+    const chips = group.items.map(it =>
+      \`<div style="display:inline-flex;flex-direction:column;background:\${group.bg};border:1px solid \${group.color}30;border-left:2px solid \${group.color};border-radius:0 6px 6px 0;padding:6px 10px;min-width:100px;">
+        <span style="font-size:11px;font-weight:600;color:var(--off-white);">\${it.univ}</span>
+        <span style="font-size:10px;color:var(--muted);margin-top:1px;">\${it.name}</span>
+      </div>\`
+    ).join('');
+    return \`<div style="min-width:100%;box-sizing:border-box;">
+      <div style="font-size:10px;font-weight:700;color:\${group.color};letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">\${group.tier}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">\${chips}</div>
+    </div>\`;
+  }).join('');
+
+  dots.innerHTML = hofData.map((_, i) =>
+    \`<div onclick="hofGo(\${i})" style="width:6px;height:6px;border-radius:50%;background:\${i===hofIdx?'var(--gold)':'rgba(255,255,255,0.2)'};cursor:pointer;transition:background 0.2s;"></div>\`
+  ).join('');
+}
+
+function hofGo(i) {
+  hofIdx = i;
+  track.style.transform = \`translateX(-\${hofIdx * 100}%)\`;
+  dots.querySelectorAll('div').forEach((d, j) => {
+    d.style.background = j === hofIdx ? 'var(--gold)' : 'rgba(255,255,255,0.2)';
+  });
+}
+
+window.hofNext = () => hofGo((hofIdx + 1) % hofData.length);
+window.hofPrev = () => hofGo((hofIdx - 1 + hofData.length) % hofData.length);
+
+hofBuild();
+
+// 4초마다 자동 전환
+setInterval(() => hofNext(), 4000);
 </script>
 </body>
 </html>
