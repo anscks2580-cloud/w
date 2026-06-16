@@ -272,7 +272,7 @@
       <h3>+ 강의 추가</h3>
       <div class="form-row">
         <div class="form-group"><label>강의 제목</label><input type="text" id="v-title" placeholder="수열의 극한 개념 완전정복"></div>
-        <div class="form-group"><label>유튜브 ID</label><input type="text" id="v-ytid" placeholder="dQw4w9WgXcQ"></div>
+        <div class="form-group"><label>Vimeo ID</label><input type="text" id="v-ytid" placeholder="123456789"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>카테고리</label>
@@ -617,12 +617,12 @@ function renderVideos() {
 
 window.addVideo = async () => {
   const title = document.getElementById('v-title').value.trim();
-  const youtubeId = document.getElementById('v-ytid').value.trim();
+  const vimeoId = document.getElementById('v-ytid').value.trim();
   const tag = document.getElementById('v-tag').value;
   const date = document.getElementById('v-date').value.trim();
-  if (!title || !youtubeId) { showMsg('videoMsg','제목과 유튜브 ID를 입력해주세요.','error'); return; }
+  if (!title || !vimeoId) { showMsg('videoMsg','제목과 Vimeo ID를 입력해주세요.','error'); return; }
   await setDoc(doc(db, 'videos', Date.now().toString()), {
-    title, youtubeId, tag, date, createdAt: new Date().toISOString()
+    title, vimeoId, tag, date, createdAt: new Date().toISOString()
   });
   showMsg('videoMsg','강의 추가 완료!','success');
   document.getElementById('v-title').value='';

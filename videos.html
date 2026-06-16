@@ -295,12 +295,12 @@
     <div class="modal-video">
       <iframe id="modalIframe"
         allowfullscreen
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+        allow="autoplay; fullscreen; picture-in-picture">
       </iframe>
     </div>
     <div class="modal-footer">
       <a id="modalYtLink" href="#" target="_blank" class="modal-yt-link">
-        ↗ 유튜브에서 보기
+        ↗ Vimeo에서 보기
       </a>
     </div>
   </div>
@@ -406,9 +406,10 @@ function renderVideos(tag) {
     return;
   }
   grid.innerHTML = list.map(v => `
-    <div class="video-card" onclick="openModal('${v.youtubeId}','${v.title}')">
+    <div class="video-card" onclick="openModal('${v.vimeoId}','${v.title}')">
       <div class="video-thumb">
-        <img src="https://img.youtube.com/vi/${v.youtubeId}/hqdefault.jpg" alt="${v.title}" loading="lazy">
+        <img src="https://vumbnail.com/${v.vimeoId}.jpg" alt="${v.title}" loading="lazy"
+             onerror="this.src='https://i.vimeocdn.com/video/${v.vimeoId}_640.jpg'">
         <div class="play-overlay"><div class="play-btn"><div class="play-icon"></div></div></div>
       </div>
       <div class="video-info">
@@ -422,8 +423,8 @@ function renderVideos(tag) {
 
 window.openModal = function(id, title) {
   document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalIframe').src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
-  document.getElementById('modalYtLink').href = `https://www.youtube.com/watch?v=${id}`;
+  document.getElementById('modalIframe').src = `https://player.vimeo.com/video/${id}?autoplay=1&title=0&byline=0&portrait=0`;
+  document.getElementById('modalYtLink').href = `https://vimeo.com/${id}`;
   document.getElementById('modal').classList.add('open');
 };
 
