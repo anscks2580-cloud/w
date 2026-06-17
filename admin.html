@@ -201,11 +201,15 @@
     </div>
     <div class="card">
       <h3>📋 등록된 학생 (<span id="studentCount">0</span>명)</h3>
-      <div style="margin-bottom:14px;">
+      <div style="margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-danger" onclick="deleteAllStudents()" style="font-size:12px;">
           🗑 전체 학생 삭제 (Firestore만 / Auth는 Firebase Console에서 별도 삭제)
         </button>
+        <button class="btn btn-secondary" onclick="fixTeacherUid()" style="font-size:12px;">
+          🔧 선생님 UID 일괄 매칭 수정
+        </button>
       </div>
+      <div class="msg" id="fixTeacherMsg"></div>
       <div id="studentList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
     </div>
   </div>
@@ -391,7 +395,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { initializeApp as initializeSecondaryApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp as initializeSecondaryApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
@@ -411,8 +415,7 @@ const db      = getFirestore(app);
 const storage = getStorage(app);
 
 // 학생 계정 생성용 보조 앱 (생성 후 자동 로그인 방지)
-const secondaryApp = getApps().find(a => a.name === 'secondary')
-  || initializeSecondaryApp(firebaseConfig, 'secondary');
+const secondaryApp = initializeSecondaryApp(firebaseConfig, 'secondary');
 const secondaryAuth = getAuth(secondaryApp);
 
 // 학년별 자동 배정 태그 맵
@@ -866,6 +869,30 @@ window.createTeacher = async () => {
     const msg = e.code === 'auth/email-already-in-use' ? '이미 등록된 이름입니다.' : '오류: ' + e.message;
     showMsg('teacherCreateMsg', msg, 'error');
   }
+};
+
+window.fixTeacherUid = async () => {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '수정 중...';
+  try {
+    const studentSnap = await getDocs(collection(db, 'students'));
+    let updated = 0, skipped = 0;
+    const promises = [];
+    studentSnap.docs.forEach(d => {
+      const data = d.data();
+      const teacher = teachersCache.find(t => t.name === data.teacherName);
+      if (!teacher) { skipped++; return; }
+      if (data.teacherUid === teacher.id) { skipped++; return; }
+      promises.push(updateDoc(doc(db, 'students', d.id), { teacherUid: teacher.id }));
+      updated++;
+    });
+    await Promise.all(promises);
+    showMsg('fixTeacherMsg', `✅ ${updated}명 매칭 완료! (${skipped}명 스킵)`, 'success');
+    await loadStudents();
+  } catch(e) {
+    showMsg('fixTeacherMsg', '오류: ' + e.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = '🔧 선생님 UID 일괄 매칭 수정';
 };
 
 window.deleteTeacher = async (uid, name) => {
