@@ -493,16 +493,31 @@ let studentSearchQuery = '';
 let myStudents = []; // 내 담당 학생만
 
 // ── 날짜 헬퍼 ──
+// 월요일 기준 주의 월~일 범위를 반환 (월요일에 접속하면 지난주, 나머지는 이번주)
+function getTargetMonday(d = new Date()) {
+  const day = d.getDay(); // 0=일 1=월
+  // 이번주 월요일
+  const thisMonday = new Date(d);
+  thisMonday.setHours(0,0,0,0);
+  thisMonday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  // 월요일에 접속 시 지난주 월요일
+  if (day === 1) {
+    thisMonday.setDate(thisMonday.getDate() - 7);
+  }
+  return thisMonday;
+}
 function getWeekLabel(d = new Date()) {
-  const y = d.getFullYear();
-  const start = new Date(y, 0, 1);
-  const w = Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
-  return `${y}년 ${w}주차`;
+  const monday = getTargetMonday(d);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = (dt) => `${dt.getMonth()+1}월 ${dt.getDate()}일`;
+  return `${monday.getFullYear()}년 ${fmt(monday)}~${fmt(sunday)}`;
 }
 function getWeekKey(d = new Date()) {
-  const y = d.getFullYear();
+  const monday = getTargetMonday(d);
+  const y = monday.getFullYear();
   const start = new Date(y, 0, 1);
-  const w = Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
+  const w = Math.ceil(((monday - start) / 86400000 + start.getDay() + 1) / 7);
   return `${y}-W${String(w).padStart(2,'0')}`;
 }
 function getMonthLabel(d = new Date()) { return `${d.getFullYear()}년 ${d.getMonth()+1}월`; }
