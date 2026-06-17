@@ -199,15 +199,20 @@
       <div class="alert err" id="weekly-err"></div>
 
       <!-- 요일 필터 -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
         <span style="font-size:12px;color:var(--muted);margin-right:4px;">요일 필터:</span>
-        <button class="rating-btn selected" id="day-all" onclick="filterByDay('all',this)">전체</button>
+        <button class="rating-btn" id="day-all" onclick="filterByDay('all',this)">전체</button>
         <button class="rating-btn" id="day-월" onclick="filterByDay('월',this)">월</button>
         <button class="rating-btn" id="day-화" onclick="filterByDay('화',this)">화</button>
         <button class="rating-btn" id="day-수" onclick="filterByDay('수',this)">수</button>
         <button class="rating-btn" id="day-목" onclick="filterByDay('목',this)">목</button>
         <button class="rating-btn" id="day-금" onclick="filterByDay('금',this)">금</button>
         <button class="rating-btn" id="day-토" onclick="filterByDay('토',this)">토</button>
+      </div>
+      <!-- 이름 검색 -->
+      <div style="margin-bottom:16px;">
+        <input type="text" id="studentSearch" placeholder="🔍 이름 검색..." oninput="filterBySearch()"
+          style="width:100%;max-width:280px;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;">
       </div>
 
       <!-- 학생 선택 -->
@@ -479,6 +484,7 @@ let studentsCache  = [];
 // ── 주간 설문 상태 ──
 const weeklyRatings = { homework: null, attitude: null, clinic: null };
 let currentDayFilter = 'all';
+let studentSearchQuery = '';
 let myStudents = []; // 내 담당 학생만
 
 // ── 날짜 헬퍼 ──
@@ -527,6 +533,12 @@ function showPortal() {
   document.getElementById('m-month').value = thisMonth;
   loadStudents();
   setupPdfDrop();
+  // 오늘 요일 자동 선택
+  const dayNames = ['일','월','화','수','목','금','토'];
+  const todayDay = dayNames[new Date().getDay()];
+  const todayBtn = document.getElementById('day-' + todayDay);
+  if (todayBtn) { filterByDay(todayDay, todayBtn); }
+  else { filterByDay('all', document.getElementById('day-all')); }
 }
 
 // ── 로그인 ──
@@ -581,9 +593,12 @@ async function loadStudents() {
 
 // 요일 필터 적용해서 w-student 셀렉트 렌더
 function renderWeeklyStudentSelect() {
-  const filtered = currentDayFilter === 'all'
+  let filtered = currentDayFilter === 'all'
     ? myStudents
     : myStudents.filter(s => (s.days||[]).includes(currentDayFilter));
+  if (studentSearchQuery) {
+    filtered = filtered.filter(s => (s.name||'').includes(studentSearchQuery));
+  }
   const el = document.getElementById('w-student');
   if (!el) return;
   el.innerHTML = '<option value="">학생 선택...</option>' +
@@ -597,6 +612,11 @@ window.filterByDay = function(day, btn) {
   currentDayFilter = day;
   document.querySelectorAll('[id^="day-"]').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  renderWeeklyStudentSelect();
+};
+
+window.filterBySearch = function() {
+  studentSearchQuery = (document.getElementById('studentSearch')?.value || '').trim();
   renderWeeklyStudentSelect();
 };
 
