@@ -521,7 +521,6 @@ function showPortal() {
   document.getElementById('portalScreen').style.display='block';
   document.getElementById('teacherBadge').textContent = currentTeacher.name + ' 선생님';
   document.getElementById('weekLabel').textContent = getWeekLabel();
-  document.getElementById('monthLabel').textContent = getMonthLabel();
   const todayStr = new Date().toISOString().split('T')[0];
   document.getElementById('t-date').value = todayStr;
   const thisMonth = new Date().toISOString().slice(0,7);
