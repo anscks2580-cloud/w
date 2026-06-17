@@ -174,6 +174,21 @@
           <select id="n-branch"><option>평촌관</option><option>산본관</option></select>
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label>담당 선생님</label>
+          <select id="n-teacher"><option value="">선생님 선택...</option></select>
+        </div>
+        <div class="form-group"><label>등원 요일</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;padding:9px 0;">
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="n-day" value="월" style="accent-color:var(--gold);width:14px;height:14px;"> 월</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="n-day" value="화" style="accent-color:var(--gold);width:14px;height:14px;"> 화</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="n-day" value="수" style="accent-color:var(--gold);width:14px;height:14px;"> 수</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="n-day" value="목" style="accent-color:var(--gold);width:14px;height:14px;"> 목</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="n-day" value="금" style="accent-color:var(--gold);width:14px;height:14px;"> 금</label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="n-day" value="토" style="accent-color:var(--gold);width:14px;height:14px;"> 토</label>
+          </div>
+        </div>
+      </div>
       <div style="display:flex;gap:10px;align-items:center;margin-top:4px;">
         <button class="btn btn-primary" onclick="createStudent()">등록</button>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;">
@@ -415,6 +430,8 @@ function renderStudents() {
     <div class="student-item">
       <div class="student-name">${s.name}</div>
       <span class="student-meta">${s.grade} · ${s.branch}</span>
+      <span class="student-meta" style="color:var(--gold);font-size:12px;">${s.teacherName ? s.teacherName + ' T' : '미배정'}</span>
+      <span class="student-meta" style="font-size:11px;">${(s.days||[]).join('·') || '-'}</span>
       <span class="student-meta" style="font-size:11px;">강의 ${(s.assignedVideos||[]).length}개</span>
       <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}','${s.name}')">삭제</button>
     </div>`).join('');
@@ -438,6 +455,9 @@ window.createStudent = async () => {
   const phone = document.getElementById('n-phone').value.trim().replace(/-/g,'');
   const grade = document.getElementById('n-grade').value;
   const branch = document.getElementById('n-branch').value;
+  const teacherUid = document.getElementById('n-teacher').value;
+  const teacherName = teacherUid ? (teachersCache.find(t => t.id === teacherUid)?.name || '') : '';
+  const days = [...document.querySelectorAll('.n-day:checked')].map(c => c.value);
   const autoAssign = document.getElementById('n-autoAssign').checked;
   if (!name || !phone) { showMsg('createMsg','이름과 전화번호를 입력해주세요.','error'); return; }
 
@@ -447,6 +467,7 @@ window.createStudent = async () => {
     const assignedVideos = autoAssign ? getAutoAssignVideos(grade) : [];
     await setDoc(doc(db, 'students', cred.user.uid), {
       name, phone, grade, branch, assignedVideos,
+      teacherUid, teacherName, days,
       createdAt: new Date().toISOString()
     });
     showMsg('createMsg', `${name} 학생 등록 완료! (강의 ${assignedVideos.length}개 자동 배정)`, 'success');
@@ -712,9 +733,16 @@ function renderTeachers() {
 }
 
 function renderTeacherSelect() {
+  // 보고서 열람용
   const sel = document.getElementById('reportTeacher');
   sel.innerHTML = '<option value="">선생님을 선택하세요</option>' +
     teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
+  // 학생 등록용
+  const nSel = document.getElementById('n-teacher');
+  if (nSel) {
+    nSel.innerHTML = '<option value="">선생님 선택...</option>' +
+      teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
+  }
 }
 
 window.createTeacher = async () => {

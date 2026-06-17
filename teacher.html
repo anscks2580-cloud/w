@@ -198,7 +198,19 @@
       <div class="alert ok" id="weekly-ok"></div>
       <div class="alert err" id="weekly-err"></div>
 
-      <!-- 담당 학생 선택 -->
+      <!-- 요일 필터 -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
+        <span style="font-size:12px;color:var(--muted);margin-right:4px;">요일 필터:</span>
+        <button class="rating-btn selected" id="day-all" onclick="filterByDay('all',this)">전체</button>
+        <button class="rating-btn" id="day-월" onclick="filterByDay('월',this)">월</button>
+        <button class="rating-btn" id="day-화" onclick="filterByDay('화',this)">화</button>
+        <button class="rating-btn" id="day-수" onclick="filterByDay('수',this)">수</button>
+        <button class="rating-btn" id="day-목" onclick="filterByDay('목',this)">목</button>
+        <button class="rating-btn" id="day-금" onclick="filterByDay('금',this)">금</button>
+        <button class="rating-btn" id="day-토" onclick="filterByDay('토',this)">토</button>
+      </div>
+
+      <!-- 학생 선택 -->
       <div class="form-grid">
         <div class="form-group">
           <label>담당 학생</label>
@@ -207,64 +219,52 @@
           </select>
         </div>
         <div class="form-group">
-          <label>과목 / 단원</label>
+          <label>수업 단원</label>
           <input type="text" id="w-topic" placeholder="예: 수1 · 지수함수">
         </div>
       </div>
 
-      <!-- 수업 참여도 -->
+      <!-- 과제 충실도 -->
       <div class="survey-item">
-        <div class="survey-label">수업 참여도 <span>이번 주 수업 태도 및 집중도</span></div>
-        <div class="rating-row" data-field="participation">
-          <button class="rating-btn" data-val="5" onclick="selectRating(this,'participation')">⭐ 매우 우수</button>
-          <button class="rating-btn" data-val="4" onclick="selectRating(this,'participation')">👍 우수</button>
-          <button class="rating-btn" data-val="3" onclick="selectRating(this,'participation')">😊 보통</button>
-          <button class="rating-btn" data-val="2" onclick="selectRating(this,'participation')">😕 미흡</button>
-          <button class="rating-btn" data-val="1" onclick="selectRating(this,'participation')">❌ 불량</button>
-        </div>
-      </div>
-
-      <!-- 과제 이행도 -->
-      <div class="survey-item">
-        <div class="survey-label">과제 이행도 <span>숙제 완료 여부 및 성실도</span></div>
+        <div class="survey-label">과제 충실도 <span>학생의 과제 충실도 (기준: 특이사항 없으면 중상)</span></div>
         <div class="rating-row" data-field="homework">
-          <button class="rating-btn" data-val="5" onclick="selectRating(this,'homework')">✅ 완벽 제출</button>
-          <button class="rating-btn" data-val="4" onclick="selectRating(this,'homework')">📚 대부분 제출</button>
-          <button class="rating-btn" data-val="3" onclick="selectRating(this,'homework')">📋 절반 제출</button>
-          <button class="rating-btn" data-val="2" onclick="selectRating(this,'homework')">😓 일부만</button>
-          <button class="rating-btn" data-val="1" onclick="selectRating(this,'homework')">❌ 미제출</button>
+          <button class="rating-btn" data-val="5" onclick="selectRating(this,'homework')">상</button>
+          <button class="rating-btn" data-val="4" onclick="selectRating(this,'homework')">중상</button>
+          <button class="rating-btn" data-val="3" onclick="selectRating(this,'homework')">중</button>
+          <button class="rating-btn" data-val="2" onclick="selectRating(this,'homework')">중하</button>
+          <button class="rating-btn" data-val="1" onclick="selectRating(this,'homework')">하</button>
         </div>
       </div>
 
-      <!-- 이해도 -->
+      <!-- 수업태도 -->
       <div class="survey-item">
-        <div class="survey-label">개념 이해도 <span>이번 주 학습 내용 습득 수준</span></div>
-        <div class="rating-row" data-field="understanding">
-          <button class="rating-btn" data-val="5" onclick="selectRating(this,'understanding')">🏆 완전 이해</button>
-          <button class="rating-btn" data-val="4" onclick="selectRating(this,'understanding')">👌 대체로 이해</button>
-          <button class="rating-btn" data-val="3" onclick="selectRating(this,'understanding')">🤔 부분 이해</button>
-          <button class="rating-btn" data-val="2" onclick="selectRating(this,'understanding')">😵 어려워함</button>
-          <button class="rating-btn" data-val="1" onclick="selectRating(this,'understanding')">🆘 이해 안됨</button>
+        <div class="survey-label">수업태도 <span>학생의 수업태도 (기준: 특이사항 없으면 중상)</span></div>
+        <div class="rating-row" data-field="attitude">
+          <button class="rating-btn" data-val="5" onclick="selectRating(this,'attitude')">상</button>
+          <button class="rating-btn" data-val="4" onclick="selectRating(this,'attitude')">중상</button>
+          <button class="rating-btn" data-val="3" onclick="selectRating(this,'attitude')">중</button>
+          <button class="rating-btn" data-val="2" onclick="selectRating(this,'attitude')">중하</button>
+          <button class="rating-btn" data-val="1" onclick="selectRating(this,'attitude')">하</button>
         </div>
       </div>
 
-      <!-- 오답 관리 -->
+      <!-- 클리닉 참여도 -->
       <div class="survey-item">
-        <div class="survey-label">오답 관리 <span>틀린 문제 복습 및 정리 여부</span></div>
-        <div class="rating-row" data-field="review">
-          <button class="rating-btn" data-val="5" onclick="selectRating(this,'review')">🎯 철저히 함</button>
-          <button class="rating-btn" data-val="4" onclick="selectRating(this,'review')">📝 대체로 함</button>
-          <button class="rating-btn" data-val="3" onclick="selectRating(this,'review')">🔄 일부 함</button>
-          <button class="rating-btn" data-val="2" onclick="selectRating(this,'review')">😬 거의 안함</button>
-          <button class="rating-btn" data-val="1" onclick="selectRating(this,'review')">❌ 전혀 안함</button>
+        <div class="survey-label">클리닉 참여도 <span>학생의 클리닉 참여도 (기준: 특이사항 없으면 중상)</span></div>
+        <div class="rating-row" data-field="clinic">
+          <button class="rating-btn" data-val="5" onclick="selectRating(this,'clinic')">상</button>
+          <button class="rating-btn" data-val="4" onclick="selectRating(this,'clinic')">중상</button>
+          <button class="rating-btn" data-val="3" onclick="selectRating(this,'clinic')">중</button>
+          <button class="rating-btn" data-val="2" onclick="selectRating(this,'clinic')">중하</button>
+          <button class="rating-btn" data-val="1" onclick="selectRating(this,'clinic')">하</button>
         </div>
       </div>
 
-      <!-- 메모 -->
+      <!-- 담임 말씀 -->
       <div class="form-grid full">
         <div class="form-group">
-          <label>이번 주 특이사항 / 메모 <span style="text-transform:none; letter-spacing:0;">(선택)</span></label>
-          <textarea id="w-memo" placeholder="학부모께 전달할 내용, 다음 주 주의사항 등..."></textarea>
+          <label>담임선생님 말씀 <span style="text-transform:none;letter-spacing:0;">— 특이사항 또는 학부모께 전달할 사항</span></label>
+          <textarea id="w-memo" placeholder="해당 학생에 대한 특이사항 혹은 부모님께 전달할 사항을 적어주세요."></textarea>
         </div>
       </div>
 
@@ -492,7 +492,9 @@ let currentTeacher = null;
 let studentsCache  = [];
 
 // ── 주간 설문 상태 ──
-const weeklyRatings = { participation: null, homework: null, understanding: null, review: null };
+const weeklyRatings = { homework: null, attitude: null, clinic: null };
+let currentDayFilter = 'all';
+let myStudents = []; // 내 담당 학생만
 
 // ── 날짜 헬퍼 ──
 function getWeekLabel(d = new Date()) {
@@ -568,25 +570,50 @@ window.logoutTeacher = async function() {
 async function loadStudents() {
   const snap = await getDocs(collection(db, 'students'));
   studentsCache = [];
-  snap.forEach(d => {
-    const data = d.data();
-    // 같은 관(branch) 또는 전체
-    studentsCache.push({ id: d.id, ...data });
-  });
+  snap.forEach(d => studentsCache.push({ id: d.id, ...d.data() }));
   studentsCache.sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
-  const opts = studentsCache.map(s =>
-    `<option value="${s.id}">${s.name} (${s.grade||''} / ${s.branch||''})</option>`
+
+  // 내 담당 학생만 필터
+  myStudents = studentsCache.filter(s => s.teacherUid === currentTeacher.uid);
+
+  renderWeeklyStudentSelect();
+  // 테스트/월말은 내 담당 전체
+  const myOpts = myStudents.map(s =>
+    `<option value="${s.id}">${s.name} (${s.grade||''})</option>`
   ).join('');
-  ['w-student','t-student','view-student'].forEach(id => {
+  ['t-student'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    const base = id === 'view-student' ? '<option value="">전체 학생</option>' : '<option value="">학생 선택...</option>';
-    el.innerHTML = base + opts;
+    el.innerHTML = '<option value="">학생 선택...</option>' + myOpts;
   });
+  const viewEl = document.getElementById('view-student');
+  if (viewEl) viewEl.innerHTML = '<option value="">전체 학생</option>' + myOpts;
+
   loadTestHistory();
   loadWeeklyHistory();
   loadMonthlyHistory();
 }
+
+// 요일 필터 적용해서 w-student 셀렉트 렌더
+function renderWeeklyStudentSelect() {
+  const filtered = currentDayFilter === 'all'
+    ? myStudents
+    : myStudents.filter(s => (s.days||[]).includes(currentDayFilter));
+  const el = document.getElementById('w-student');
+  if (!el) return;
+  el.innerHTML = '<option value="">학생 선택...</option>' +
+    filtered.map(s => {
+      const days = (s.days||[]).join('·');
+      return `<option value="${s.id}">${s.name} (${s.grade||''} / ${days||'-'})</option>`;
+    }).join('');
+}
+
+window.filterByDay = function(day, btn) {
+  currentDayFilter = day;
+  document.querySelectorAll('[id^="day-"]').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  renderWeeklyStudentSelect();
+};
 
 // ── 탭 전환 ──
 window.switchTab = function(id, btn) {
@@ -620,18 +647,25 @@ window.submitWeekly = async function() {
 
   if (!studentId) { showAlert(err, '학생을 선택해주세요.', 'err'); return; }
   const missing = Object.entries(weeklyRatings).filter(([,v]) => v === null).map(([k]) => k);
-  if (missing.length > 0) { showAlert(err, '모든 항목을 선택해주세요.', 'err'); return; }
+  if (missing.length > 0) { showAlert(err, '과제 충실도, 수업태도, 클리닉 참여도를 모두 선택해주세요.', 'err'); return; }
 
   const student = studentsCache.find(s => s.id === studentId);
   const weekKey = getWeekKey();
+  const ratingLabel = {5:'상',4:'중상',3:'중',2:'중하',1:'하'};
   try {
     await setDoc(doc(db, 'weeklyReports', `${currentTeacher.uid}_${studentId}_${weekKey}`), {
       teacherUid:  currentTeacher.uid,
       teacherName: currentTeacher.name,
       studentId, studentName: student?.name || '',
+      studentGrade: student?.grade || '',
       weekKey, weekLabel: getWeekLabel(),
       topic, memo,
       ratings: { ...weeklyRatings },
+      ratingsLabel: {
+        homework: ratingLabel[weeklyRatings.homework],
+        attitude: ratingLabel[weeklyRatings.attitude],
+        clinic:   ratingLabel[weeklyRatings.clinic],
+      },
       submittedAt: serverTimestamp()
     });
     showAlert(ok, `✅ ${student?.name} 학생의 주간성취도가 제출되었습니다.`, 'ok');
@@ -647,6 +681,7 @@ window.resetWeekly = function() {
   document.getElementById('w-topic').value = '';
   document.getElementById('w-memo').value = '';
   Object.keys(weeklyRatings).forEach(k => weeklyRatings[k] = null);
+  document.querySelectorAll('.rating-btn').forEach(b => { if (!b.id?.startsWith('day-')) b.classList.remove('selected'); });
   document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
 };
 
@@ -665,16 +700,16 @@ async function loadWeeklyHistory() {
     el.innerHTML = '';
     snap.forEach(d => {
       const data = d.data();
-      const r = data.ratings || {};
+      const rl = data.ratingsLabel || {};
       const div = document.createElement('div');
       div.className = 'history-item';
       div.innerHTML = `
         <div class="history-item-top">
-          <span class="history-week">${data.weekLabel} — ${data.studentName}</span>
+          <span class="history-week">${data.weekLabel} — ${data.studentName} (${data.studentGrade||''})</span>
           <span class="history-date">${data.topic || ''}</span>
         </div>
         <div class="history-summary">
-          참여 ${ratingLabel[r.participation]||'-'} &nbsp;·&nbsp; 과제 ${ratingLabel[r.homework]||'-'} &nbsp;·&nbsp; 이해 ${ratingLabel[r.understanding]||'-'} &nbsp;·&nbsp; 오답 ${ratingLabel[r.review]||'-'}
+          과제 ${rl.homework||'-'} &nbsp;·&nbsp; 수업태도 ${rl.attitude||'-'} &nbsp;·&nbsp; 클리닉 ${rl.clinic||'-'}
           ${data.memo ? `<br>📌 ${data.memo}` : ''}
         </div>
       `;
