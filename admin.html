@@ -201,6 +201,11 @@
     </div>
     <div class="card">
       <h3>📋 등록된 학생 (<span id="studentCount">0</span>명)</h3>
+      <div style="margin-bottom:14px;">
+        <button class="btn btn-danger" onclick="deleteAllStudents()" style="font-size:12px;">
+          🗑 전체 학생 삭제 (Firestore만 / Auth는 Firebase Console에서 별도 삭제)
+        </button>
+      </div>
       <div id="studentList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
     </div>
   </div>
@@ -211,9 +216,11 @@
       <h3>📊 엑셀 파일로 학생 일괄 등록</h3>
       <div class="grade-map-info">
         <b>엑셀 파일 형식 안내</b><br>
-        첫 번째 행: 헤더 (이름 / 전화번호 / 학년 / 관할)<br>
-        예시: 홍길동 | 01012345678 | 고1 | 평촌관<br>
-        학년 값: 중1, 중2, 중3, 고1, 고2, 고3, N수
+        컬럼 순서: <b style="color:var(--gold);">이름 / 전화번호 / 학년 / 관할 / 담당선생님 / 요일</b><br>
+        예시: 홍길동 | 01012345678 | 고1 | 평촌관 | 송문찬 | 월수금<br>
+        · 담당선생님: 선생님 이름 그대로 입력 (등록된 선생님과 자동 매칭)<br>
+        · 요일: 붙여서 입력 — 예) 월수금, 화목, 월화수목금<br>
+        · 학년 값: 중1, 중2, 중3, 고1, 고2, 고3, N수
       </div>
 
       <div class="excel-drop" id="excelDrop" onclick="document.getElementById('excelFileInput').click()">
@@ -514,6 +521,31 @@ window.deleteStudent = async (uid, name) => {
   await loadStudents();
 };
 
+window.deleteAllStudents = async () => {
+  if (!confirm(`⚠️ 등록된 학생 ${studentsCache.length}명을 모두 삭제합니다.
+
+Firestore 데이터만 삭제되며, Firebase Auth 계정은 Firebase Console → Authentication에서 별도로 삭제해야 합니다.
+
+계속하시겠습니까?`)) return;
+  if (!confirm('정말 삭제하시겠습니까? 되돌릴 수 없습니다.')) return;
+
+  const btn = document.querySelector('[onclick="deleteAllStudents()"]');
+  btn.disabled = true; btn.textContent = '삭제 중...';
+
+  let count = 0;
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < studentsCache.length; i += BATCH_SIZE) {
+    const batch = studentsCache.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(s => deleteDoc(doc(db, 'students', s.id))));
+    count += batch.length;
+    btn.textContent = `삭제 중... (${count}/${studentsCache.length})`;
+  }
+
+  btn.disabled = false; btn.textContent = '🗑 전체 학생 삭제';
+  showMsg('createMsg', `✅ ${count}명 삭제 완료! Auth 계정은 Firebase Console에서 삭제하세요.`, 'success');
+  await loadStudents();
+};
+
 // ── 엑셀 업로드 ──
 let excelData = [];
 
@@ -556,21 +588,34 @@ function parseExcel(file) {
     const rows = XLSX.utils.sheet_to_json(ws, {header:1});
 
     // 헤더 제거 후 파싱
-    excelData = rows.slice(1).filter(r => r[0]).map(r => ({
-      name: String(r[0]||'').trim(),
-      phone: String(r[1]||'').trim().replace(/-/g,''),
-      grade: String(r[2]||'').trim(),
-      branch: String(r[3]||'').trim() || '평촌관',
-    }));
+    excelData = rows.slice(1).filter(r => r[0]).map(r => {
+      const teacherName = String(r[4]||'').trim();
+      const dayStr      = String(r[5]||'').trim();
+      // 요일 파싱: "월수금" → ["월","수","금"]
+      const dayMap = {'월':'월','화':'화','수':'수','목':'목','금':'금','토':'토'};
+      const days = dayStr.split('').filter(ch => dayMap[ch]);
+      // 선생님 UID 매칭
+      const teacher = teachersCache.find(t => t.name === teacherName);
+      return {
+        name: String(r[0]||'').trim(),
+        phone: String(r[1]||'').trim().replace(/-/g,''),
+        grade: String(r[2]||'').trim(),
+        branch: String(r[3]||'').trim() || '평촌관',
+        teacherName, teacherUid: teacher?.id || '',
+        days,
+      };
+    });
 
     document.getElementById('previewCount').textContent = `총 ${excelData.length}명`;
     document.getElementById('previewTable').innerHTML = `
-      <tr><th>이름</th><th>전화번호</th><th>학년</th><th>관할</th><th>자동배정 강의</th></tr>
+      <tr><th>이름</th><th>전화번호</th><th>학년</th><th>관할</th><th>담당선생님</th><th>요일</th><th>강의</th></tr>
       ${excelData.map(r => `<tr>
         <td>${r.name}</td>
         <td>${r.phone}</td>
         <td><span class="preview-badge">${r.grade}</span></td>
         <td>${r.branch}</td>
+        <td style="color:${r.teacherUid?'var(--gold)':'#ff9090'};">${r.teacherName||'-'} ${r.teacherUid?'✅':'⚠️미매칭'}</td>
+        <td>${r.days.join('·')||'-'}</td>
         <td style="color:var(--gold);">${getAutoAssignVideos(r.grade).length}개</td>
       </tr>`).join('')}`;
     document.getElementById('excelPreview').style.display = 'block';
@@ -606,6 +651,9 @@ window.uploadExcel = async () => {
       await setDoc(doc(db, 'students', cred.user.uid), {
         name: row.name, phone: phone,
         grade: row.grade, branch: row.branch,
+        teacherUid: row.teacherUid || '',
+        teacherName: row.teacherName || '',
+        days: row.days || [],
         assignedVideos, createdAt: new Date().toISOString()
       });
       ok++;
@@ -634,13 +682,16 @@ window.uploadExcel = async () => {
 
 window.downloadTemplate = () => {
   const ws = XLSX.utils.aoa_to_sheet([
-    ['이름','전화번호','학년','관할'],
-    ['홍길동','01012345678','고1','평촌관'],
-    ['김철수','01087654321','중3','산본관'],
+    ['이름','전화번호','학년','관할','담당선생님','요일'],
+    ['홍길동','01012345678','고1','평촌관','송문찬','월수금'],
+    ['김철수','01087654321','중3','산본관','송우찬','화목'],
+    ['이영희','01011112222','고2','평촌관','송문찬','월화수목금'],
   ]);
+  // 컬럼 너비
+  ws['!cols'] = [{wch:10},{wch:14},{wch:6},{wch:8},{wch:10},{wch:10}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '학생목록');
-  XLSX.writeFile(wb, '학생등록양식.xlsx');
+  XLSX.writeFile(wb, '학생등록양식_v2.xlsx');
 };
 
 // ── 강의 배정 ──
