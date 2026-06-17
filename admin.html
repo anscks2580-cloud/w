@@ -313,6 +313,35 @@
       </div>
     </div>
     <div class="card">
+      <h3>📊 선생님 엑셀 일괄 등록</h3>
+      <div class="grade-map-info">
+        <b>엑셀 파일 형식</b><br>
+        컬럼 순서: <b style="color:var(--gold);">이름 / 비밀번호 / 담당관 / 담당과목 / 메모</b><br>
+        예시: 송문찬 | 12345678 | 평촌관 | 고등 | 고등부 전담<br>
+        · 담당관: 평촌관 / 산본관 / 공통<br>
+        · 비밀번호: 8자리 이상
+      </div>
+      <div class="excel-drop" id="teacherExcelDrop" onclick="document.getElementById('teacherExcelInput').click()">
+        <div class="excel-drop-icon">📂</div>
+        <p>클릭하거나 파일을 여기에 드래그하세요</p>
+        <small>.xlsx / .xls 파일 지원</small>
+      </div>
+      <input type="file" id="teacherExcelInput" accept=".xlsx,.xls" style="display:none;">
+      <div id="teacherExcelPreview" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span style="font-size:13px;color:var(--muted);" id="teacherPreviewCount"></span>
+          <button class="btn btn-primary" onclick="uploadTeacherExcel()">일괄 등록</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="preview-table" id="teacherPreviewTable"></table>
+        </div>
+      </div>
+      <div class="msg" id="teacherExcelMsg"></div>
+      <div style="margin-top:12px;">
+        <button class="btn btn-secondary" onclick="downloadTeacherTemplate()">양식 다운로드 (.xlsx)</button>
+      </div>
+    </div>
+    <div class="card">
       <h3>등록된 선생님 (<span id="teacherCount">0</span>명)</h3>
       <div id="teacherList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
     </div>
@@ -438,6 +467,7 @@ onAuthStateChanged(auth, async (user) => {
   await loadVideos();
   await loadTeachers();
   setupExcelDrop();
+  setupTeacherExcelDrop();
 });
 
 window.switchTab = (id, btn) => {
@@ -839,6 +869,87 @@ function renderTeacherSelect() {
     weekInput.value = `${y}-W${String(w).padStart(2,'0')}`;
   }
 }
+
+// ── 선생님 엑셀 일괄 등록 ──
+let teacherExcelData = [];
+
+function setupTeacherExcelDrop() {
+  const input = document.getElementById('teacherExcelInput');
+  input.addEventListener('change', e => parseTeacherExcel(e.target.files[0]));
+  const drop = document.getElementById('teacherExcelDrop');
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); parseTeacherExcel(e.dataTransfer.files[0]); });
+}
+
+function parseTeacherExcel(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+    teacherExcelData = rows.slice(1).filter(r => r[0]).map(r => ({
+      name:    String(r[0]||'').trim(),
+      pw:      String(r[1]||'').trim(),
+      branch:  String(r[2]||'').trim() || '평촌관',
+      subject: String(r[3]||'').trim(),
+      memo:    String(r[4]||'').trim(),
+    }));
+    document.getElementById('teacherPreviewCount').textContent = `총 ${teacherExcelData.length}명`;
+    document.getElementById('teacherPreviewTable').innerHTML = `
+      <tr><th>이름</th><th>비밀번호</th><th>담당관</th><th>담당과목</th><th>메모</th></tr>
+      ${teacherExcelData.map(r => `<tr>
+        <td>${r.name}</td>
+        <td>${r.pw.length >= 8 ? '✅' : '<span style="color:#ff9090">⚠️ 8자 미만</span>'}</td>
+        <td>${r.branch}</td><td>${r.subject}</td><td>${r.memo||'-'}</td>
+      </tr>`).join('')}`;
+    document.getElementById('teacherExcelPreview').style.display = 'block';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+window.uploadTeacherExcel = async () => {
+  if (!teacherExcelData.length) return;
+  const btn = event.target;
+  btn.disabled = true;
+  let ok = 0, skip = 0;
+  const failList = [];
+  for (const row of teacherExcelData) {
+    if (!row.name || !row.pw) continue;
+    if (row.pw.length < 8) { failList.push(`${row.name}: 비밀번호 8자 미만`); continue; }
+    try {
+      const email = row.name + '@songmath.kr';
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, email, row.pw);
+      await setDoc(doc(db, 'teachers', cred.user.uid), {
+        name: row.name, branch: row.branch, subject: row.subject,
+        memo: row.memo, email, createdAt: new Date().toISOString()
+      });
+      ok++;
+    } catch(e) {
+      if (e.code === 'auth/email-already-in-use') skip++;
+      else failList.push(`${row.name}: ${e.code}`);
+    }
+    await new Promise(r => setTimeout(r, 300));
+  }
+  let msg = `완료! 신규 ${ok}명 / 중복 ${skip}명`;
+  if (failList.length) msg += ` / 실패: ${failList.join(', ')}`;
+  showMsg('teacherExcelMsg', msg, ok > 0 ? 'success' : 'error');
+  btn.disabled = false;
+  await loadTeachers();
+};
+
+window.downloadTeacherTemplate = () => {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['이름','비밀번호','담당관','담당과목','메모'],
+    ['송문찬','12345678','평촌관','고등','고등부 전담'],
+    ['조현주','12345678','평촌관','중등',''],
+  ]);
+  ws['!cols'] = [{wch:10},{wch:12},{wch:8},{wch:10},{wch:20}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '선생님목록');
+  XLSX.writeFile(wb, '선생님등록양식.xlsx');
+};
 
 window.createTeacher = async () => {
   const name    = document.getElementById('t-name').value.trim();
