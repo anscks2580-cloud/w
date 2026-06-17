@@ -287,9 +287,7 @@
   <div class="tab-panel" id="tab-monthly">
 
     <div class="card">
-      <div class="card-title">📝 월말보고서 작성
-        <span style="font-size:12px; color:var(--muted); font-weight:400;" id="monthLabel"></span>
-      </div>
+      <div class="card-title">📎 월말보고서 PDF 업로드</div>
       <div class="alert ok" id="monthly-ok"></div>
       <div class="alert err" id="monthly-err"></div>
 
@@ -299,55 +297,39 @@
           <input type="month" id="m-month" style="color-scheme:dark;">
         </div>
         <div class="form-group">
-          <label>담당 반 / 학생 수</label>
-          <input type="text" id="m-classInfo" placeholder="예: 고2 수학 8명">
+          <label>메모 (선택)</label>
+          <input type="text" id="m-memo" placeholder="예: 고2반 보고서">
         </div>
       </div>
 
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>이달 수업 진도 요약</label>
-          <textarea id="m-progress" placeholder="예: 수1 지수·로그함수 완료, 수열 진입 (등차·등비수열까지)"></textarea>
-        </div>
+      <!-- 드래그앤드롭 업로드 영역 -->
+      <div id="pdfDrop" onclick="document.getElementById('pdfFileInput').click()"
+        style="border:2px dashed rgba(240,192,64,0.3);border-radius:12px;padding:36px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:16px;">
+        <div style="font-size:36px;margin-bottom:10px;">📄</div>
+        <p style="font-size:14px;color:var(--off-white);margin-bottom:4px;">PDF 파일을 클릭하거나 드래그해서 올려주세요</p>
+        <small style="font-size:12px;color:var(--muted);">.pdf 파일만 지원 · 최대 20MB</small>
+        <div id="pdfFileName" style="margin-top:12px;font-size:13px;color:var(--gold);display:none;"></div>
       </div>
+      <input type="file" id="pdfFileInput" accept=".pdf" style="display:none;">
 
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>학생 전체 성취 현황</label>
-          <textarea id="m-achievement" placeholder="예: 전반적으로 지수함수 개념 이해도 양호. 로그방정식에서 일부 학생 어려움 호소..."></textarea>
+      <!-- 업로드 진행바 -->
+      <div id="uploadProgressWrap" style="display:none;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+          <span>업로드 중...</span><span id="uploadPct">0%</span>
         </div>
-      </div>
-
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>관심 학생 / 주의 사항</label>
-          <textarea id="m-attention" placeholder="예: 홍길동 — 과제 미제출 3회. 학부모 상담 필요. / 김철수 — 성적 향상 뚜렷, 모의고사 대비 심화 권장"></textarea>
-        </div>
-      </div>
-
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>다음 달 계획</label>
-          <textarea id="m-plan" placeholder="예: 수열 심화 + 수학2 극한 도입. 중간고사 대비 기출 분석 예정"></textarea>
-        </div>
-      </div>
-
-      <div class="form-grid full">
-        <div class="form-group">
-          <label>기타 건의사항 / 원장 공유 내용 (선택)</label>
-          <textarea id="m-etc" placeholder="수업 환경, 교재, 일정 관련 건의사항..."></textarea>
+        <div style="background:rgba(255,255,255,0.08);border-radius:99px;height:6px;">
+          <div id="uploadBar" style="background:var(--gold);height:6px;border-radius:99px;width:0;transition:width 0.2s;"></div>
         </div>
       </div>
 
       <div class="btn-row">
-        <button class="btn btn-gold" onclick="submitMonthly()">보고서 제출</button>
-        <button class="btn btn-outline" onclick="resetMonthly()">초기화</button>
+        <button class="btn btn-gold" id="m-submitBtn" onclick="submitMonthlyPDF()">업로드</button>
       </div>
     </div>
 
-    <!-- 제출된 보고서 목록 -->
+    <!-- 내가 올린 보고서 목록 -->
     <div class="card">
-      <div class="card-title">📁 제출된 보고서</div>
+      <div class="card-title">📁 내가 제출한 보고서</div>
       <div id="monthlyHistory" class="history-list">
         <div class="empty-state"><div class="icon">📭</div>아직 제출된 보고서가 없습니다.</div>
       </div>
@@ -470,6 +452,8 @@
 <!-- ══════════ Firebase + 로직 ══════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll, deleteObject }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, collection, query, where, orderBy, deleteDoc, serverTimestamp }
@@ -486,7 +470,8 @@ const firebaseConfig = {
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db   = getFirestore(app);
+const db      = getFirestore(app);
+const storage = getStorage(app);
 
 let currentTeacher = null;
 let studentsCache  = [];
@@ -542,6 +527,7 @@ function showPortal() {
   const thisMonth = new Date().toISOString().slice(0,7);
   document.getElementById('m-month').value = thisMonth;
   loadStudents();
+  setupPdfDrop();
 }
 
 // ── 로그인 ──
@@ -720,40 +706,87 @@ async function loadWeeklyHistory() {
   }
 }
 
-// ══ 월말보고서 제출 ══
-window.submitMonthly = async function() {
-  const month      = document.getElementById('m-month').value;
-  const classInfo  = document.getElementById('m-classInfo').value.trim();
-  const progress   = document.getElementById('m-progress').value.trim();
-  const achievement= document.getElementById('m-achievement').value.trim();
-  const attention  = document.getElementById('m-attention').value.trim();
-  const plan       = document.getElementById('m-plan').value.trim();
-  const etc        = document.getElementById('m-etc').value.trim();
-  const ok  = document.getElementById('monthly-ok');
-  const err = document.getElementById('monthly-err');
+// ══ PDF 드롭존 설정 ══
+let selectedPdfFile = null;
 
-  if (!month || !progress || !achievement || !plan) {
-    showAlert(err, '보고 월, 진도 요약, 성취 현황, 다음 달 계획은 필수입니다.', 'err'); return;
-  }
-  try {
-    await setDoc(doc(db, 'monthlyReports', `${currentTeacher.uid}_${month}`), {
-      teacherUid:  currentTeacher.uid,
-      teacherName: currentTeacher.name,
-      month, classInfo, progress, achievement, attention, plan, etc,
-      submittedAt: serverTimestamp()
-    });
-    showAlert(ok, `✅ ${month} 월말보고서가 제출되었습니다.`, 'ok');
-    resetMonthly();
-    loadMonthlyHistory();
-  } catch(e) {
-    showAlert(err, '제출 오류: ' + e.message, 'err');
-  }
-};
+function setupPdfDrop() {
+  const input = document.getElementById('pdfFileInput');
+  const drop  = document.getElementById('pdfDrop');
+  if (!input || !drop) return;
 
-window.resetMonthly = function() {
-  ['m-classInfo','m-progress','m-achievement','m-attention','m-plan','m-etc'].forEach(id => {
-    document.getElementById(id).value = '';
+  input.addEventListener('change', e => setPdfFile(e.target.files[0]));
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor='var(--gold)'; drop.style.background='rgba(240,192,64,0.05)'; });
+  drop.addEventListener('dragleave', () => { drop.style.borderColor=''; drop.style.background=''; });
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.style.borderColor=''; drop.style.background='';
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') setPdfFile(f);
+    else alert('PDF 파일만 업로드 가능합니다.');
   });
+}
+
+function setPdfFile(file) {
+  if (!file) return;
+  if (file.type !== 'application/pdf') { alert('PDF 파일만 가능합니다.'); return; }
+  if (file.size > 20 * 1024 * 1024) { alert('파일 크기는 20MB 이하여야 합니다.'); return; }
+  selectedPdfFile = file;
+  const nameEl = document.getElementById('pdfFileName');
+  nameEl.textContent = `✅ ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`;
+  nameEl.style.display = 'block';
+}
+
+// ══ 월말보고서 PDF 업로드 ══
+window.submitMonthlyPDF = async function() {
+  const month = document.getElementById('m-month').value;
+  const memo  = document.getElementById('m-memo').value.trim();
+  const ok    = document.getElementById('monthly-ok');
+  const err   = document.getElementById('monthly-err');
+  const btn   = document.getElementById('m-submitBtn');
+
+  if (!month)           { showAlert(err, '보고 월을 선택해주세요.', 'err'); return; }
+  if (!selectedPdfFile) { showAlert(err, 'PDF 파일을 선택해주세요.', 'err'); return; }
+
+  btn.disabled = true; btn.textContent = '업로드 중...';
+  document.getElementById('uploadProgressWrap').style.display = 'block';
+
+  const fileName = `monthlyReports/${currentTeacher.uid}/${month}_${currentTeacher.name}_${Date.now()}.pdf`;
+  const storageRef = ref(storage, fileName);
+  const uploadTask = uploadBytesResumable(storageRef, selectedPdfFile);
+
+  uploadTask.on('state_changed',
+    snapshot => {
+      const pct = Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100);
+      document.getElementById('uploadBar').style.width = pct + '%';
+      document.getElementById('uploadPct').textContent = pct + '%';
+    },
+    error => {
+      showAlert(err, '업로드 오류: ' + error.message, 'err');
+      btn.disabled = false; btn.textContent = '업로드';
+      document.getElementById('uploadProgressWrap').style.display = 'none';
+    },
+    async () => {
+      const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+      await addDoc(collection(db, 'monthlyReports'), {
+        teacherUid:  currentTeacher.uid,
+        teacherName: currentTeacher.name,
+        month, memo,
+        fileName: selectedPdfFile.name,
+        filePath: fileName,
+        downloadURL,
+        fileSize: selectedPdfFile.size,
+        submittedAt: serverTimestamp()
+      });
+      showAlert(ok, `✅ ${month} 월말보고서가 업로드되었습니다.`, 'ok');
+      document.getElementById('m-month').value = '';
+      document.getElementById('m-memo').value = '';
+      document.getElementById('pdfFileName').style.display = 'none';
+      document.getElementById('uploadProgressWrap').style.display = 'none';
+      document.getElementById('uploadBar').style.width = '0';
+      selectedPdfFile = null;
+      btn.disabled = false; btn.textContent = '업로드';
+      loadMonthlyHistory();
+    }
+  );
 };
 
 // ── 월말 이력 로드 ──
@@ -770,14 +803,21 @@ async function loadMonthlyHistory() {
     el.innerHTML = '';
     snap.forEach(d => {
       const data = d.data();
+      const size = data.fileSize ? `(${(data.fileSize/1024/1024).toFixed(1)}MB)` : '';
       const div = document.createElement('div');
       div.className = 'history-item';
       div.innerHTML = `
         <div class="history-item-top">
           <span class="history-week">${data.month} 보고서</span>
-          <span class="history-date">${data.classInfo || ''}</span>
+          <span class="history-date">${data.memo || ''}</span>
         </div>
-        <div class="history-summary">${(data.progress || '').slice(0, 80)}${(data.progress||'').length > 80 ? '…' : ''}</div>
+        <div class="history-summary" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>📄 ${data.fileName || ''} ${size}</span>
+          <a href="${data.downloadURL}" target="_blank"
+            style="font-size:12px;color:var(--gold);text-decoration:none;padding:4px 10px;border:1px solid rgba(240,192,64,0.4);border-radius:6px;">
+            열기 / 다운로드
+          </a>
+        </div>
       `;
       el.appendChild(div);
     });

@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="style.css">
 <!-- SheetJS 엑셀 파싱 -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<!-- JSZip: PDF 일괄 다운로드용 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 .admin-wrap { max-width:960px; margin:0 auto; padding:100px 24px 96px; }
 .admin-header { margin-bottom:40px; }
@@ -308,12 +310,16 @@
       <div id="teacherList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
     </div>
     <div class="card">
-      <h3>선생님 보고서 열람</h3>
-      <div class="form-row" style="max-width:500px;margin-bottom:16px;">
-        <div class="form-group"><label>선생님 선택</label><select id="reportTeacher" onchange="loadReports()"><option value="">선생님을 선택하세요</option></select></div>
-        <div class="form-group"><label>보고서 종류</label><select id="reportType" onchange="loadReports()"><option value="weekly">주간성취도</option><option value="monthly">월말보고서</option></select></div>
+      <h3>📋 선생님 보고서 열람</h3>
+      <div class="form-row" style="max-width:500px;margin-bottom:12px;">
+        <div class="form-group"><label>선생님 선택</label><select id="reportTeacher" onchange="loadReports()"><option value="">전체 선생님</option></select></div>
+        <div class="form-group"><label>보고서 종류</label><select id="reportType" onchange="loadReports()"><option value="weekly">주간성취도</option><option value="monthly">월말보고서 (PDF)</option></select></div>
       </div>
-      <div id="reportList"><div style="color:var(--muted);font-size:13px;">선생님을 선택하면 보고서가 표시됩니다.</div></div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="loadReports()">조회</button>
+        <button class="btn btn-secondary btn-sm" id="zipBtn" onclick="downloadAllZip()" style="display:none;">📦 전체 ZIP 다운로드</button>
+      </div>
+      <div id="reportList"><div style="color:var(--muted);font-size:13px;">위에서 조회 버튼을 누르세요.</div></div>
     </div>
   </div>
 
@@ -359,6 +365,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { initializeApp as initializeSecondaryApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 
 const firebaseConfig = {
@@ -372,7 +379,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db      = getFirestore(app);
+const storage = getStorage(app);
 
 // 학생 계정 생성용 보조 앱 (생성 후 자동 로그인 방지)
 const secondaryApp = initializeSecondaryApp(firebaseConfig, 'secondary');
@@ -779,58 +787,108 @@ window.deleteTeacher = async (uid, name) => {
 };
 
 // 보고서 열람
+let monthlyDocsCache = []; // ZIP용 캐시
+
 window.loadReports = async () => {
   const teacherUid = document.getElementById('reportTeacher').value;
   const type       = document.getElementById('reportType').value;
   const el         = document.getElementById('reportList');
-  if (!teacherUid) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;">선생님을 선택하면 보고서가 표시됩니다.</div>'; return; }
+  const zipBtn     = document.getElementById('zipBtn');
 
   el.innerHTML = '<div style="color:var(--muted);font-size:13px;">불러오는 중...</div>';
+  zipBtn.style.display = 'none';
+  monthlyDocsCache = [];
+
   try {
-    const collName = type === 'weekly' ? 'weeklyReports' : 'monthlyReports';
-    const q = query(collection(db, collName), where('teacherUid','==',teacherUid), orderBy('submittedAt','desc'));
+    const collName = 'weeklyReports' ? (type === 'weekly' ? 'weeklyReports' : 'monthlyReports') : 'monthlyReports';
+    let q;
+    if (teacherUid) {
+      q = query(collection(db, type === 'weekly' ? 'weeklyReports' : 'monthlyReports'),
+        where('teacherUid','==',teacherUid), orderBy('submittedAt','desc'));
+    } else {
+      q = query(collection(db, type === 'weekly' ? 'weeklyReports' : 'monthlyReports'),
+        orderBy('submittedAt','desc'));
+    }
     const snap = await getDocs(q);
 
     if (snap.empty) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;">제출된 보고서가 없습니다.</div>'; return; }
 
-    const ratingLabel = {5:'매우 우수',4:'우수',3:'보통',2:'미흡',1:'불량'};
+    const ratingLabel = {5:'상',4:'중상',3:'중',2:'중하',1:'하'};
     let html = '';
-    snap.forEach(d => {
-      const data = d.data();
-      if (type === 'weekly') {
-        const r = data.ratings || {};
+
+    if (type === 'weekly') {
+      snap.forEach(d => {
+        const data = d.data();
+        const rl = data.ratingsLabel || {};
         html += `
           <div class="student-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
             <div style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:6px;">
-              <b>${data.weekLabel} — ${data.studentName}</b>
+              <b>${data.teacherName||''} T · ${data.weekLabel} — ${data.studentName} (${data.studentGrade||''})</b>
               <span style="font-size:12px;color:var(--muted);">${data.topic || ''}</span>
             </div>
             <div style="font-size:12px;color:var(--muted);">
-              참여 ${ratingLabel[r.participation]||'-'} &nbsp;·&nbsp; 과제 ${ratingLabel[r.homework]||'-'} &nbsp;·&nbsp; 이해 ${ratingLabel[r.understanding]||'-'} &nbsp;·&nbsp; 오답 ${ratingLabel[r.review]||'-'}
+              과제 ${rl.homework||'-'} &nbsp;·&nbsp; 수업태도 ${rl.attitude||'-'} &nbsp;·&nbsp; 클리닉 ${rl.clinic||'-'}
             </div>
             ${data.memo ? `<div style="font-size:12px;">📌 ${data.memo}</div>` : ''}
           </div>`;
-      } else {
+      });
+    } else {
+      // 월말 PDF
+      snap.forEach(d => {
+        const data = d.data();
+        monthlyDocsCache.push(data);
+        const size = data.fileSize ? `(${(data.fileSize/1024/1024).toFixed(1)}MB)` : '';
         html += `
-          <div class="student-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
-            <div style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:6px;">
-              <b>${data.month} 보고서</b>
-              <span style="font-size:12px;color:var(--muted);">${data.classInfo || ''}</span>
+          <div class="student-item" style="flex-wrap:wrap;gap:10px;">
+            <div style="flex:1;min-width:180px;">
+              <div style="font-weight:600;margin-bottom:4px;">${data.teacherName||''} T · ${data.month} 보고서</div>
+              <div style="font-size:12px;color:var(--muted);">📄 ${data.fileName||''} ${size}</div>
+              ${data.memo ? `<div style="font-size:12px;color:var(--muted);">${data.memo}</div>` : ''}
             </div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.7;">
-              <b style="color:var(--off-white);">진도</b> ${data.progress || '-'}<br>
-              <b style="color:var(--off-white);">성취</b> ${data.achievement || '-'}<br>
-              ${data.attention ? `<b style="color:var(--off-white);">관심학생</b> ${data.attention}<br>` : ''}
-              <b style="color:var(--off-white);">다음달 계획</b> ${data.plan || '-'}
-              ${data.etc ? `<br><b style="color:var(--off-white);">기타</b> ${data.etc}` : ''}
-            </div>
+            <a href="${data.downloadURL}" target="_blank" download
+              style="align-self:center;font-size:12px;color:var(--gold);text-decoration:none;padding:6px 14px;border:1px solid rgba(240,192,64,0.4);border-radius:6px;white-space:nowrap;">
+              ⬇ 다운로드
+            </a>
           </div>`;
-      }
-    });
+      });
+      if (monthlyDocsCache.length > 0) zipBtn.style.display = 'inline-flex';
+    }
+
     el.innerHTML = html;
   } catch(e) {
     el.innerHTML = `<div style="color:#ff9090;font-size:13px;">오류: ${e.message}<br>Firestore 인덱스가 필요할 수 있습니다.</div>`;
   }
+};
+
+// ── 전체 PDF ZIP 다운로드 ──
+window.downloadAllZip = async () => {
+  if (!monthlyDocsCache.length) return;
+  const btn = document.getElementById('zipBtn');
+  btn.disabled = true; btn.textContent = '압축 중...';
+
+  const zip = new JSZip();
+  const folder = zip.folder('월말보고서');
+
+  for (const data of monthlyDocsCache) {
+    try {
+      // CORS 우회: fetch로 blob 가져오기
+      const resp = await fetch(data.downloadURL);
+      const blob = await resp.blob();
+      const safeName = `${data.teacherName}_${data.month}_${data.fileName||'report.pdf'}`;
+      folder.file(safeName, blob);
+    } catch(e) {
+      console.warn('파일 가져오기 실패:', data.fileName, e);
+    }
+  }
+
+  const content = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(content);
+  a.download = `월말보고서_${new Date().toISOString().slice(0,7)}.zip`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  btn.disabled = false; btn.textContent = '📦 전체 ZIP 다운로드';
 };
 </script>
 </body>
