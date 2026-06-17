@@ -321,6 +321,27 @@
       </div>
       <div id="reportList"><div style="color:var(--muted);font-size:13px;">위에서 조회 버튼을 누르세요.</div></div>
     </div>
+
+    <!-- 주간성취도 엑셀 다운로드 -->
+    <div class="card">
+      <h3>📥 주간성취도 엑셀 다운로드</h3>
+      <div class="form-row" style="max-width:500px;margin-bottom:16px;">
+        <div class="form-group">
+          <label>조회 주차</label>
+          <input type="week" id="excelWeek" style="color-scheme:dark;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:14px;font-family:inherit;outline:none;">
+        </div>
+        <div class="form-group">
+          <label>선생님 필터</label>
+          <select id="excelTeacher">
+            <option value="">전체 선생님</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="downloadWeeklyExcel()">📊 엑셀 다운로드</button>
+      </div>
+      <div class="msg" id="excelWeeklyMsg"></div>
+    </div>
   </div>
 
   <!-- 강의 목록 -->
@@ -751,6 +772,21 @@ function renderTeacherSelect() {
     nSel.innerHTML = '<option value="">선생님 선택...</option>' +
       teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
   }
+  // 엑셀 다운로드용
+  const exSel = document.getElementById('excelTeacher');
+  if (exSel) {
+    exSel.innerHTML = '<option value="">전체 선생님</option>' +
+      teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
+  }
+  // 이번 주 기본값 설정
+  const weekInput = document.getElementById('excelWeek');
+  if (weekInput && !weekInput.value) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const start = new Date(y, 0, 1);
+    const w = Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
+    weekInput.value = `${y}-W${String(w).padStart(2,'0')}`;
+  }
 }
 
 window.createTeacher = async () => {
@@ -857,6 +893,98 @@ window.loadReports = async () => {
     el.innerHTML = html;
   } catch(e) {
     el.innerHTML = `<div style="color:#ff9090;font-size:13px;">오류: ${e.message}<br>Firestore 인덱스가 필요할 수 있습니다.</div>`;
+  }
+};
+
+// ── 주간성취도 엑셀 다운로드 ──
+window.downloadWeeklyExcel = async () => {
+  const weekVal    = document.getElementById('excelWeek').value;
+  const teacherUid = document.getElementById('excelTeacher').value;
+  const msgEl      = document.getElementById('excelWeeklyMsg');
+
+  if (!weekVal) { showMsg('excelWeeklyMsg', '조회할 주차를 선택해주세요.', 'error'); return; }
+
+  // week 값 파싱 (예: 2025-W03)
+  const [yearStr, weekStr] = weekVal.split('-W');
+  const weekKey = `${yearStr}-W${weekStr}`;
+
+  // 주차 라벨 계산
+  const weekNum = parseInt(weekStr);
+  const weekLabel = `${yearStr}년 ${weekNum}주차`;
+
+  showMsg('excelWeeklyMsg', '데이터 조회 중...', 'success');
+
+  try {
+    let q;
+    if (teacherUid) {
+      q = query(collection(db, 'weeklyReports'),
+        where('weekKey', '==', weekKey),
+        where('teacherUid', '==', teacherUid));
+    } else {
+      q = query(collection(db, 'weeklyReports'),
+        where('weekKey', '==', weekKey));
+    }
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      showMsg('excelWeeklyMsg', `${weekLabel} 제출된 성취도가 없습니다.`, 'error');
+      return;
+    }
+
+    // 데이터 수집
+    const rows = [];
+    snap.forEach(d => {
+      const data = d.data();
+      const rl = data.ratingsLabel || {};
+      rows.push({
+        선생님:        data.teacherName || '',
+        학생명:        data.studentName || '',
+        학년:          data.studentGrade || '',
+        단원:          data.topic || '',
+        과제충실도:    rl.homework || '',
+        수업태도:      rl.attitude || '',
+        클리닉참여도:  rl.clinic || '',
+        담임말씀:      data.memo || '',
+        제출일시:      data.submittedAt?.toDate?.()?.toLocaleDateString('ko-KR') || '',
+      });
+    });
+
+    // 선생님 → 학생명 순 정렬
+    rows.sort((a, b) => {
+      if (a.선생님 !== b.선생님) return a.선생님.localeCompare(b.선생님, 'ko');
+      return a.학생명.localeCompare(b.학생명, 'ko');
+    });
+
+    // SheetJS로 엑셀 생성
+    const ws = XLSX.utils.json_to_sheet(rows, {
+      header: ['선생님','학생명','학년','단원','과제충실도','수업태도','클리닉참여도','담임말씀','제출일시']
+    });
+
+    // 컬럼 너비 설정
+    ws['!cols'] = [
+      {wch:10},{wch:8},{wch:6},{wch:20},
+      {wch:10},{wch:10},{wch:12},{wch:40},{wch:12}
+    ];
+
+    // 헤더 행 스타일 (배경색)
+    const headerRange = XLSX.utils.decode_range(ws['!ref']);
+    for (let c = headerRange.s.c; c <= headerRange.e.c; c++) {
+      const cellAddr = XLSX.utils.encode_cell({r: 0, c});
+      if (!ws[cellAddr]) continue;
+      ws[cellAddr].s = {
+        font: { bold: true, color: { rgb: '1A1230' } },
+        fill: { fgColor: { rgb: 'F0C040' } },
+        alignment: { horizontal: 'center' }
+      };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, weekLabel);
+    XLSX.writeFile(wb, `주간성취도_${weekLabel}_${teacherUid ? (teachersCache.find(t=>t.id===teacherUid)?.name||'') + '_' : ''}${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`);
+
+    showMsg('excelWeeklyMsg', `✅ ${rows.length}명 데이터 다운로드 완료!`, 'success');
+  } catch(e) {
+    showMsg('excelWeeklyMsg', '오류: ' + e.message, 'error');
   }
 };
 
