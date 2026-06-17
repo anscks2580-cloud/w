@@ -198,16 +198,24 @@
       <div class="alert ok" id="weekly-ok"></div>
       <div class="alert err" id="weekly-err"></div>
 
-      <!-- 요일 필터 -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
-        <span style="font-size:12px;color:var(--muted);margin-right:4px;">요일 필터:</span>
+      <!-- 요일 그룹 필터 -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+        <span style="font-size:12px;color:var(--muted);margin-right:4px;">요일:</span>
         <button class="rating-btn" id="day-all" onclick="filterByDay('all',this)">전체</button>
-        <button class="rating-btn" id="day-월" onclick="filterByDay('월',this)">월</button>
-        <button class="rating-btn" id="day-화" onclick="filterByDay('화',this)">화</button>
-        <button class="rating-btn" id="day-수" onclick="filterByDay('수',this)">수</button>
-        <button class="rating-btn" id="day-목" onclick="filterByDay('목',this)">목</button>
-        <button class="rating-btn" id="day-금" onclick="filterByDay('금',this)">금</button>
-        <button class="rating-btn" id="day-토" onclick="filterByDay('토',this)">토</button>
+        <button class="rating-btn" id="day-mwf" onclick="filterByDay('mwf',this)">월수금</button>
+        <button class="rating-btn" id="day-tt" onclick="filterByDay('tt',this)">화목</button>
+        <button class="rating-btn" id="day-tts" onclick="filterByDay('tts',this)">화목토</button>
+      </div>
+      <!-- 학년 필터 -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+        <span style="font-size:12px;color:var(--muted);margin-right:4px;">학년:</span>
+        <button class="rating-btn" id="grade-all" onclick="filterByGrade('all',this)">전체</button>
+        <button class="rating-btn" id="grade-중1" onclick="filterByGrade('중1',this)">중1</button>
+        <button class="rating-btn" id="grade-중2" onclick="filterByGrade('중2',this)">중2</button>
+        <button class="rating-btn" id="grade-중3" onclick="filterByGrade('중3',this)">중3</button>
+        <button class="rating-btn" id="grade-고1" onclick="filterByGrade('고1',this)">고1</button>
+        <button class="rating-btn" id="grade-고2" onclick="filterByGrade('고2',this)">고2</button>
+        <button class="rating-btn" id="grade-고3" onclick="filterByGrade('고3',this)">고3</button>
       </div>
       <!-- 이름 검색 -->
       <div style="margin-bottom:16px;">
@@ -484,6 +492,7 @@ let studentsCache  = [];
 // ── 주간 설문 상태 ──
 const weeklyRatings = { homework: null, attitude: null, clinic: null };
 let currentDayFilter = 'all';
+let currentGradeFilter = 'all';
 let studentSearchQuery = '';
 let myStudents = []; // 내 담당 학생만
 
@@ -533,12 +542,17 @@ function showPortal() {
   document.getElementById('m-month').value = thisMonth;
   loadStudents();
   setupPdfDrop();
-  // 오늘 요일 자동 선택
-  const dayNames = ['일','월','화','수','목','금','토'];
-  const todayDay = dayNames[new Date().getDay()];
-  const todayBtn = document.getElementById('day-' + todayDay);
-  if (todayBtn) { filterByDay(todayDay, todayBtn); }
-  else { filterByDay('all', document.getElementById('day-all')); }
+  // 오늘 요일 → 그룹 자동 선택
+  const todayIdx = new Date().getDay(); // 0=일 1=월 2=화 3=수 4=목 5=금 6=토
+  let autoGroup = 'all';
+  if ([1,3,5].includes(todayIdx)) autoGroup = 'mwf';       // 월수금
+  else if ([2,4].includes(todayIdx)) autoGroup = 'tt';     // 화목
+  else if (todayIdx === 6) autoGroup = 'tts';              // 화목토(토요일)
+  const autoBtn = document.getElementById('day-' + autoGroup);
+  if (autoBtn) filterByDay(autoGroup, autoBtn);
+  // 학년 전체 기본 선택
+  const gradeAllBtn = document.getElementById('grade-all');
+  if (gradeAllBtn) gradeAllBtn.classList.add('selected');
 }
 
 // ── 로그인 ──
@@ -592,10 +606,25 @@ async function loadStudents() {
 }
 
 // 요일 필터 적용해서 w-student 셀렉트 렌더
+const DAY_GROUP = {
+  all:  null,
+  mwf:  ['월','수','금'],
+  tt:   ['화','목'],
+  tts:  ['화','목','토'],
+};
+
 function renderWeeklyStudentSelect() {
-  let filtered = currentDayFilter === 'all'
-    ? myStudents
-    : myStudents.filter(s => (s.days||[]).includes(currentDayFilter));
+  let filtered = myStudents;
+  // 요일 그룹 필터
+  const days = DAY_GROUP[currentDayFilter];
+  if (days) {
+    filtered = filtered.filter(s => days.some(d => (s.days||[]).includes(d)));
+  }
+  // 학년 필터
+  if (currentGradeFilter !== 'all') {
+    filtered = filtered.filter(s => s.grade === currentGradeFilter);
+  }
+  // 이름 검색
   if (studentSearchQuery) {
     filtered = filtered.filter(s => (s.name||'').includes(studentSearchQuery));
   }
@@ -617,6 +646,13 @@ window.filterByDay = function(day, btn) {
 
 window.filterBySearch = function() {
   studentSearchQuery = (document.getElementById('studentSearch')?.value || '').trim();
+  renderWeeklyStudentSelect();
+};
+
+window.filterByGrade = function(grade, btn) {
+  currentGradeFilter = grade;
+  document.querySelectorAll('[id^="grade-"]').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
   renderWeeklyStudentSelect();
 };
 
