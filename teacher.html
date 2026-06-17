@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>선생님 포털 | 송우찬수학학원</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── 레이아웃 ── */
+.teacher-wrap { max-width:960px; margin:0 auto; padding:100px 24px 96px; }
+.teacher-header { margin-bottom:36px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; }
+.teacher-header-left h1 { font-size:24px; font-weight:700; margin-bottom:4px; }
+.teacher-header-left p  { font-size:13px; color:var(--muted); }
+.badge-name { background:rgba(240,192,64,0.15); border:1px solid rgba(240,192,64,0.3); color:var(--gold); font-size:12px; font-weight:600; padding:5px 12px; border-radius:20px; }
+
+/* ── 탭 ── */
+.teacher-tabs { display:flex; gap:0; border-bottom:2px solid var(--border-soft); margin-bottom:32px; flex-wrap:wrap; }
+.teacher-tab {
+  padding:11px 22px; background:none; border:none;
+  font-size:13px; font-weight:600; font-family:inherit;
+  color:var(--muted); cursor:pointer; position:relative; transition:color 0.2s;
+}
+.teacher-tab::after {
+  content:''; position:absolute; bottom:-2px; left:0; right:0;
+  height:2px; background:var(--gold);
+  transform:scaleX(0); transition:transform 0.2s;
+}
+.teacher-tab.active { color:var(--gold); }
+.teacher-tab.active::after { transform:scaleX(1); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* ── 카드 ── */
+.card {
+  background:var(--bg-card); border:1px solid var(--border-soft);
+  border-radius:14px; padding:28px; margin-bottom:20px;
+}
+.card-title { font-size:15px; font-weight:600; color:var(--gold); margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+
+/* ── 폼 공통 ── */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.form-grid.full { grid-template-columns:1fr; }
+.form-group { display:flex; flex-direction:column; gap:6px; }
+.form-group label { font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-weight:500; }
+.form-group input, .form-group select, .form-group textarea {
+  padding:10px 13px; background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1); border-radius:8px;
+  color:var(--off-white); font-size:14px; font-family:inherit; outline:none;
+  transition:border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:rgba(240,192,64,0.5); }
+.form-group select option { background:#1A1230; }
+.form-group textarea { resize:vertical; min-height:90px; line-height:1.6; }
+
+/* ── 버튼 ── */
+.btn { padding:10px 22px; border:none; border-radius:8px; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; transition:all 0.2s; }
+.btn-gold { background:var(--gold); color:var(--bg); }
+.btn-gold:hover { opacity:0.85; }
+.btn-outline { background:transparent; border:1px solid var(--border-soft); color:var(--off-white); }
+.btn-outline:hover { border-color:var(--gold); color:var(--gold); }
+.btn-danger { background:rgba(255,80,80,0.15); border:1px solid rgba(255,80,80,0.3); color:#ff9090; }
+.btn-sm { padding:6px 14px; font-size:12px; }
+.btn-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+/* ── 설문 항목 ── */
+.survey-item { margin-bottom:22px; }
+.survey-label { font-size:14px; font-weight:600; margin-bottom:10px; }
+.survey-label span { font-size:12px; color:var(--muted); font-weight:400; margin-left:6px; }
+.rating-row { display:flex; gap:8px; flex-wrap:wrap; }
+.rating-btn {
+  padding:8px 16px; border:1px solid var(--border-soft); border-radius:8px;
+  background:rgba(255,255,255,0.03); color:var(--muted);
+  font-size:13px; font-weight:600; cursor:pointer; transition:all 0.18s; font-family:inherit;
+}
+.rating-btn:hover { border-color:var(--gold); color:var(--gold); }
+.rating-btn.selected { background:rgba(240,192,64,0.15); border-color:var(--gold); color:var(--gold); }
+
+/* ── 테스트 기록 테이블 ── */
+.test-table { width:100%; border-collapse:collapse; font-size:13px; }
+.test-table th { font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:8px 10px; text-align:left; border-bottom:1px solid var(--border-soft); }
+.test-table td { padding:10px 10px; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+.test-table tr:last-child td { border-bottom:none; }
+.test-table tr:hover td { background:rgba(255,255,255,0.02); }
+.score-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:700; }
+.score-a { background:rgba(80,200,80,0.15); color:#90ee90; }
+.score-b { background:rgba(240,192,64,0.15); color:var(--gold); }
+.score-c { background:rgba(255,140,80,0.15); color:#ffb080; }
+.score-d { background:rgba(255,80,80,0.15); color:#ff9090; }
+
+/* ── 알림 ── */
+.alert { padding:12px 16px; border-radius:8px; font-size:13px; margin-bottom:16px; display:none; }
+.alert.ok  { background:rgba(80,200,80,0.1);  color:#90ff90; border:1px solid rgba(80,200,80,0.3); }
+.alert.err { background:rgba(255,80,80,0.1);  color:#ff9090; border:1px solid rgba(255,80,80,0.3); }
+.alert.info{ background:rgba(100,160,255,0.1); color:#90c0ff; border:1px solid rgba(100,160,255,0.3); }
+
+/* ── 주간 이력 ── */
+.history-list { display:flex; flex-direction:column; gap:10px; }
+.history-item {
+  background:rgba(255,255,255,0.03); border:1px solid var(--border-soft);
+  border-radius:10px; padding:14px 16px; cursor:pointer; transition:border-color 0.2s;
+}
+.history-item:hover { border-color:rgba(240,192,64,0.3); }
+.history-item-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.history-week { font-size:13px; font-weight:600; }
+.history-date { font-size:11px; color:var(--muted); }
+.history-summary { font-size:12px; color:var(--muted); line-height:1.5; }
+
+/* ── 학생 선택 드롭다운 ── */
+.student-select-row { display:flex; gap:10px; align-items:flex-end; margin-bottom:20px; flex-wrap:wrap; }
+.student-select-row .form-group { flex:1; min-width:160px; }
+
+/* ── 빈 상태 ── */
+.empty-state { text-align:center; padding:40px 20px; color:var(--muted); font-size:13px; }
+.empty-state .icon { font-size:36px; margin-bottom:12px; }
+
+/* ── 반응형 ── */
+@media(max-width:600px) {
+  .form-grid { grid-template-columns:1fr; }
+  .teacher-tabs { gap:0; }
+  .teacher-tab { padding:10px 14px; font-size:12px; }
+}
+
+/* ── 로그인 화면 ── */
+#loginScreen { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+#portalScreen { display:none; }
+.login-card {
+  background:linear-gradient(145deg,#231848 0%,#1A1230 100%);
+  border:1px solid rgba(240,192,64,0.2);
+  border-radius:20px; padding:48px 40px; width:100%; max-width:400px;
+  box-shadow:0 1px 0 rgba(240,192,64,0.5), 0 24px 60px rgba(0,0,0,0.5);
+  position:relative; overflow:hidden;
+}
+.login-card::before {
+  content:''; position:absolute; top:0; left:10%; right:10%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(240,192,64,0.8),transparent);
+}
+.login-card-title { font-size:20px; font-weight:700; text-align:center; margin-bottom:4px; }
+.login-card-sub   { font-size:13px; color:var(--muted); text-align:center; margin-bottom:28px; }
+.btn-login-full { width:100%; padding:13px; background:var(--gold); color:var(--bg); font-size:15px; font-weight:700; border:none; border-radius:8px; cursor:pointer; font-family:inherit; }
+.login-footer-link { text-align:center; margin-top:20px; font-size:12px; color:var(--muted); }
+.login-footer-link a { color:var(--gold); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ 로그인 화면 ══════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-card-title">선생님 포털</div>
+    <div class="login-card-sub">송우찬수학학원 교직원 전용</div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>아이디 (이름)</label>
+      <input type="text" id="t-name" placeholder="예: 홍길동" autocomplete="username">
+    </div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label>비밀번호</label>
+      <input type="password" id="t-pw" placeholder="비밀번호 입력" autocomplete="current-password">
+    </div>
+    <button class="btn-login-full" id="t-loginBtn" onclick="loginTeacher()">로그인</button>
+    <div class="alert err" id="t-err" style="display:none; margin-top:14px;"></div>
+    <div class="login-footer-link">
+      계정 문의: 원장 | <a href="index.html">← 홈으로</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 포털 화면 ══════════ -->
+<div id="portalScreen">
+<div class="teacher-wrap">
+
+  <!-- 헤더 -->
+  <div class="teacher-header">
+    <div class="teacher-header-left">
+      <h1>선생님 포털</h1>
+      <p>주간성취도 · 월말보고서 · 누적테스트 입력</p>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <span class="badge-name" id="teacherBadge">선생님</span>
+      <button class="btn btn-outline btn-sm" onclick="logoutTeacher()">로그아웃</button>
+    </div>
+  </div>
+
+  <!-- 탭 -->
+  <div class="teacher-tabs">
+    <button class="teacher-tab active" onclick="switchTab('weekly',this)">📋 주간성취도</button>
+    <button class="teacher-tab" onclick="switchTab('monthly',this)">📝 월말보고서</button>
+    <button class="teacher-tab" onclick="switchTab('tests',this)">📊 누적테스트</button>
+  </div>
+
+  <!-- ══ 탭 1: 주간성취도 설문 ══ -->
+  <div class="tab-panel active" id="tab-weekly">
+
+    <!-- 설문 작성 -->
+    <div class="card">
+      <div class="card-title">✏️ 이번 주 성취도 입력
+        <span style="font-size:12px; color:var(--muted); font-weight:400;" id="weekLabel"></span>
+      </div>
+      <div class="alert ok" id="weekly-ok"></div>
+      <div class="alert err" id="weekly-err"></div>
+
+      <!-- 담당 학생 선택 -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label>담당 학생</label>
+          <select id="w-student">
+            <option value="">학생 선택...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>과목 / 단원</label>
+          <input type="text" id="w-topic" placeholder="예: 수1 · 지수함수">
+        </div>
+      </div>
+
+      <!-- 수업 참여도 -->
+      <div class="survey-item">
+        <div class="survey-label">수업 참여도 <span>이번 주 수업 태도 및 집중도</span></div>
+        <div class="rating-row" data-field="participation">
+          <button class="rating-btn" data-val="5" onclick="selectRating(this,'participation')">⭐ 매우 우수</button>
+          <button class="rating-btn" data-val="4" onclick="selectRating(this,'participation')">👍 우수</button>
+          <button class="rating-btn" data-val="3" onclick="selectRating(this,'participation')">😊 보통</button>
+          <button class="rating-btn" data-val="2" onclick="selectRating(this,'participation')">😕 미흡</button>
+          <button class="rating-btn" data-val="1" onclick="selectRating(this,'participation')">❌ 불량</button>
+        </div>
+      </div>
+
+      <!-- 과제 이행도 -->
+      <div class="survey-item">
+        <div class="survey-label">과제 이행도 <span>숙제 완료 여부 및 성실도</span></div>
+        <div class="rating-row" data-field="homework">
+          <button class="rating-btn" data-val="5" onclick="selectRating(this,'homework')">✅ 완벽 제출</button>
+          <button class="rating-btn" data-val="4" onclick="selectRating(this,'homework')">📚 대부분 제출</button>
+          <button class="rating-btn" data-val="3" onclick="selectRating(this,'homework')">📋 절반 제출</button>
+          <button class="rating-btn" data-val="2" onclick="selectRating(this,'homework')">😓 일부만</button>
+          <button class="rating-btn" data-val="1" onclick="selectRating(this,'homework')">❌ 미제출</button>
+        </div>
+      </div>
+
+      <!-- 이해도 -->
+      <div class="survey-item">
+        <div class="survey-label">개념 이해도 <span>이번 주 학습 내용 습득 수준</span></div>
+        <div class="rating-row" data-field="understanding">
+          <button class="rating-btn" data-val="5" onclick="selectRating(this,'understanding')">🏆 완전 이해</button>
+          <button class="rating-btn" data-val="4" onclick="selectRating(this,'understanding')">👌 대체로 이해</button>
+          <button class="rating-btn" data-val="3" onclick="selectRating(this,'understanding')">🤔 부분 이해</button>
+          <button class="rating-btn" data-val="2" onclick="selectRating(this,'understanding')">😵 어려워함</button>
+          <button class="rating-btn" data-val="1" onclick="selectRating(this,'understanding')">🆘 이해 안됨</button>
+        </div>
+      </div>
+
+      <!-- 오답 관리 -->
+      <div class="survey-item">
+        <div class="survey-label">오답 관리 <span>틀린 문제 복습 및 정리 여부</span></div>
+        <div class="rating-row" data-field="review">
+          <button class="rating-btn" data-val="5" onclick="selectRating(this,'review')">🎯 철저히 함</button>
+          <button class="rating-btn" data-val="4" onclick="selectRating(this,'review')">📝 대체로 함</button>
+          <button class="rating-btn" data-val="3" onclick="selectRating(this,'review')">🔄 일부 함</button>
+          <button class="rating-btn" data-val="2" onclick="selectRating(this,'review')">😬 거의 안함</button>
+          <button class="rating-btn" data-val="1" onclick="selectRating(this,'review')">❌ 전혀 안함</button>
+        </div>
+      </div>
+
+      <!-- 메모 -->
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>이번 주 특이사항 / 메모 <span style="text-transform:none; letter-spacing:0;">(선택)</span></label>
+          <textarea id="w-memo" placeholder="학부모께 전달할 내용, 다음 주 주의사항 등..."></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="submitWeekly()">제출하기</button>
+        <button class="btn btn-outline" onclick="resetWeekly()">초기화</button>
+      </div>
+    </div>
+
+    <!-- 제출 이력 -->
+    <div class="card">
+      <div class="card-title">🗂 최근 제출 이력</div>
+      <div id="weeklyHistory" class="history-list">
+        <div class="empty-state"><div class="icon">📭</div>아직 제출 이력이 없습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 탭 2: 월말보고서 ══ -->
+  <div class="tab-panel" id="tab-monthly">
+
+    <div class="card">
+      <div class="card-title">📝 월말보고서 작성
+        <span style="font-size:12px; color:var(--muted); font-weight:400;" id="monthLabel"></span>
+      </div>
+      <div class="alert ok" id="monthly-ok"></div>
+      <div class="alert err" id="monthly-err"></div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>보고 월</label>
+          <input type="month" id="m-month" style="color-scheme:dark;">
+        </div>
+        <div class="form-group">
+          <label>담당 반 / 학생 수</label>
+          <input type="text" id="m-classInfo" placeholder="예: 고2 수학 8명">
+        </div>
+      </div>
+
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>이달 수업 진도 요약</label>
+          <textarea id="m-progress" placeholder="예: 수1 지수·로그함수 완료, 수열 진입 (등차·등비수열까지)"></textarea>
+        </div>
+      </div>
+
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>학생 전체 성취 현황</label>
+          <textarea id="m-achievement" placeholder="예: 전반적으로 지수함수 개념 이해도 양호. 로그방정식에서 일부 학생 어려움 호소..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>관심 학생 / 주의 사항</label>
+          <textarea id="m-attention" placeholder="예: 홍길동 — 과제 미제출 3회. 학부모 상담 필요. / 김철수 — 성적 향상 뚜렷, 모의고사 대비 심화 권장"></textarea>
+        </div>
+      </div>
+
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>다음 달 계획</label>
+          <textarea id="m-plan" placeholder="예: 수열 심화 + 수학2 극한 도입. 중간고사 대비 기출 분석 예정"></textarea>
+        </div>
+      </div>
+
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>기타 건의사항 / 원장 공유 내용 (선택)</label>
+          <textarea id="m-etc" placeholder="수업 환경, 교재, 일정 관련 건의사항..."></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="submitMonthly()">보고서 제출</button>
+        <button class="btn btn-outline" onclick="resetMonthly()">초기화</button>
+      </div>
+    </div>
+
+    <!-- 제출된 보고서 목록 -->
+    <div class="card">
+      <div class="card-title">📁 제출된 보고서</div>
+      <div id="monthlyHistory" class="history-list">
+        <div class="empty-state"><div class="icon">📭</div>아직 제출된 보고서가 없습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 탭 3: 누적테스트 ══ -->
+  <div class="tab-panel" id="tab-tests">
+
+    <!-- 테스트 입력 -->
+    <div class="card">
+      <div class="card-title">➕ 테스트 결과 입력</div>
+      <div class="alert ok" id="test-ok"></div>
+      <div class="alert err" id="test-err"></div>
+
+      <div class="student-select-row">
+        <div class="form-group" style="flex:1; min-width:160px;">
+          <label>학생</label>
+          <select id="t-student">
+            <option value="">학생 선택...</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1; min-width:140px;">
+          <label>시험 일자</label>
+          <input type="date" id="t-date" style="color-scheme:dark;">
+        </div>
+        <div class="form-group" style="flex:1; min-width:140px;">
+          <label>시험 유형</label>
+          <select id="t-type">
+            <option value="단원테스트">단원테스트</option>
+            <option value="누적테스트">누적테스트</option>
+            <option value="모의고사">모의고사</option>
+            <option value="중간고사">중간고사</option>
+            <option value="기말고사">기말고사</option>
+            <option value="수시테스트">수시테스트</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>단원 / 범위</label>
+          <input type="text" id="t-topic" placeholder="예: 수1 지수·로그함수">
+        </div>
+        <div class="form-group">
+          <label>총점</label>
+          <input type="number" id="t-total" placeholder="100" min="0" max="300">
+        </div>
+        <div class="form-group">
+          <label>획득 점수</label>
+          <input type="number" id="t-score" placeholder="85" min="0" max="300">
+        </div>
+        <div class="form-group">
+          <label>문항 수</label>
+          <input type="number" id="t-questions" placeholder="20" min="1">
+        </div>
+      </div>
+
+      <div class="form-grid full">
+        <div class="form-group">
+          <label>틀린 유형 / 피드백</label>
+          <textarea id="t-feedback" placeholder="예: 로그방정식 계산 실수 2문제, 도함수 응용 개념 오류 1문제. 다음 주 집중 복습 예정."></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="submitTest()">입력하기</button>
+        <button class="btn btn-outline" onclick="resetTest()">초기화</button>
+      </div>
+    </div>
+
+    <!-- 테스트 기록 조회 -->
+    <div class="card">
+      <div class="card-title">📊 테스트 기록 조회</div>
+      <div class="student-select-row">
+        <div class="form-group" style="flex:1; min-width:160px;">
+          <label>학생 선택</label>
+          <select id="view-student" onchange="loadTestHistory()">
+            <option value="">전체 학생</option>
+          </select>
+        </div>
+        <div class="form-group" style="min-width:140px;">
+          <label>유형 필터</label>
+          <select id="view-type" onchange="loadTestHistory()">
+            <option value="">전체</option>
+            <option value="단원테스트">단원테스트</option>
+            <option value="누적테스트">누적테스트</option>
+            <option value="모의고사">모의고사</option>
+            <option value="중간고사">중간고사</option>
+            <option value="기말고사">기말고사</option>
+            <option value="수시테스트">수시테스트</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="test-table">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>학생</th>
+              <th>유형</th>
+              <th>범위</th>
+              <th>점수</th>
+              <th>비율</th>
+              <th>피드백</th>
+            </tr>
+          </thead>
+          <tbody id="testHistoryBody">
+            <tr><td colspan="7" class="empty-state" style="padding:30px 10px;">테스트 기록을 불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /teacher-wrap -->
+</div><!-- /portalScreen -->
+
+<!-- ══════════ Firebase + 로직 ══════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, collection, query, where, orderBy, deleteDoc, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD_eYNKzfa-aT41E3Dqt_HyJc6UeSR5ErA",
+  authDomain: "songmath.firebaseapp.com",
+  projectId: "songmath",
+  storageBucket: "songmath.firebasestorage.app",
+  messagingSenderId: "936295436575",
+  appId: "1:936295436575:web:d1e201508719850cfbe02a"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+let currentTeacher = null;
+let studentsCache  = [];
+
+// ── 주간 설문 상태 ──
+const weeklyRatings = { participation: null, homework: null, understanding: null, review: null };
+
+// ── 날짜 헬퍼 ──
+function getWeekLabel(d = new Date()) {
+  const y = d.getFullYear();
+  const start = new Date(y, 0, 1);
+  const w = Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
+  return `${y}년 ${w}주차`;
+}
+function getWeekKey(d = new Date()) {
+  const y = d.getFullYear();
+  const start = new Date(y, 0, 1);
+  const w = Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
+  return `${y}-W${String(w).padStart(2,'0')}`;
+}
+function getMonthLabel(d = new Date()) { return `${d.getFullYear()}년 ${d.getMonth()+1}월`; }
+function scoreBadge(score, total) {
+  const pct = total > 0 ? (score / total * 100) : 0;
+  if (pct >= 90) return `<span class="score-badge score-a">${score}/${total}</span>`;
+  if (pct >= 70) return `<span class="score-badge score-b">${score}/${total}</span>`;
+  if (pct >= 50) return `<span class="score-badge score-c">${score}/${total}</span>`;
+  return `<span class="score-badge score-d">${score}/${total}</span>`;
+}
+
+// ── 인증 상태 감시 ──
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    const tDoc = await getDoc(doc(db, 'teachers', user.uid));
+    if (!tDoc.exists()) { await signOut(auth); showLogin(); return; }
+    currentTeacher = { uid: user.uid, ...tDoc.data() };
+    showPortal();
+  } else {
+    showLogin();
+  }
+});
+
+function showLogin()  { document.getElementById('loginScreen').style.display='flex';  document.getElementById('portalScreen').style.display='none'; }
+function showPortal() {
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('portalScreen').style.display='block';
+  document.getElementById('teacherBadge').textContent = currentTeacher.name + ' 선생님';
+  document.getElementById('weekLabel').textContent = getWeekLabel();
+  document.getElementById('monthLabel').textContent = getMonthLabel();
+  const todayStr = new Date().toISOString().split('T')[0];
+  document.getElementById('t-date').value = todayStr;
+  const thisMonth = new Date().toISOString().slice(0,7);
+  document.getElementById('m-month').value = thisMonth;
+  loadStudents();
+}
+
+// ── 로그인 ──
+window.loginTeacher = async function() {
+  const name = document.getElementById('t-name').value.trim();
+  const pw   = document.getElementById('t-pw').value;
+  const err  = document.getElementById('t-err');
+  const btn  = document.getElementById('t-loginBtn');
+  if (!name || !pw) { showAlert(err,'이름과 비밀번호를 입력해주세요.','err'); return; }
+  btn.textContent = '로그인 중...'; btn.disabled = true;
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    await signInWithEmailAndPassword(auth, name + '@songmath.kr', pw);
+    err.style.display = 'none';
+  } catch(e) {
+    showAlert(err, '로그인 실패: 이름 또는 비밀번호를 확인해주세요.', 'err');
+    btn.textContent = '로그인'; btn.disabled = false;
+  }
+};
+window.logoutTeacher = async function() {
+  await signOut(auth);
+  currentTeacher = null; studentsCache = [];
+};
+
+// ── 학생 목록 로드 ──
+async function loadStudents() {
+  const snap = await getDocs(collection(db, 'students'));
+  studentsCache = [];
+  snap.forEach(d => {
+    const data = d.data();
+    // 같은 관(branch) 또는 전체
+    studentsCache.push({ id: d.id, ...data });
+  });
+  studentsCache.sort((a,b) => (a.name||'').localeCompare(b.name||'', 'ko'));
+  const opts = studentsCache.map(s =>
+    `<option value="${s.id}">${s.name} (${s.grade||''} / ${s.branch||''})</option>`
+  ).join('');
+  ['w-student','t-student','view-student'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const base = id === 'view-student' ? '<option value="">전체 학생</option>' : '<option value="">학생 선택...</option>';
+    el.innerHTML = base + opts;
+  });
+  loadTestHistory();
+  loadWeeklyHistory();
+  loadMonthlyHistory();
+}
+
+// ── 탭 전환 ──
+window.switchTab = function(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.teacher-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+};
+
+// ── 평점 선택 ──
+window.selectRating = function(btn, field) {
+  const row = document.querySelector(`.rating-row[data-field="${field}"]`);
+  row.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  weeklyRatings[field] = parseInt(btn.dataset.val);
+};
+
+// ── 알림 표시 ──
+function showAlert(el, msg, type) {
+  el.textContent = msg; el.className = `alert ${type}`; el.style.display = 'block';
+  setTimeout(() => { el.style.display='none'; }, 4000);
+}
+
+// ══ 주간성취도 제출 ══
+window.submitWeekly = async function() {
+  const studentId = document.getElementById('w-student').value;
+  const topic     = document.getElementById('w-topic').value.trim();
+  const memo      = document.getElementById('w-memo').value.trim();
+  const ok  = document.getElementById('weekly-ok');
+  const err = document.getElementById('weekly-err');
+
+  if (!studentId) { showAlert(err, '학생을 선택해주세요.', 'err'); return; }
+  const missing = Object.entries(weeklyRatings).filter(([,v]) => v === null).map(([k]) => k);
+  if (missing.length > 0) { showAlert(err, '모든 항목을 선택해주세요.', 'err'); return; }
+
+  const student = studentsCache.find(s => s.id === studentId);
+  const weekKey = getWeekKey();
+  try {
+    await setDoc(doc(db, 'weeklyReports', `${currentTeacher.uid}_${studentId}_${weekKey}`), {
+      teacherUid:  currentTeacher.uid,
+      teacherName: currentTeacher.name,
+      studentId, studentName: student?.name || '',
+      weekKey, weekLabel: getWeekLabel(),
+      topic, memo,
+      ratings: { ...weeklyRatings },
+      submittedAt: serverTimestamp()
+    });
+    showAlert(ok, `✅ ${student?.name} 학생의 주간성취도가 제출되었습니다.`, 'ok');
+    resetWeekly();
+    loadWeeklyHistory();
+  } catch(e) {
+    showAlert(err, '제출 오류: ' + e.message, 'err');
+  }
+};
+
+window.resetWeekly = function() {
+  document.getElementById('w-student').value = '';
+  document.getElementById('w-topic').value = '';
+  document.getElementById('w-memo').value = '';
+  Object.keys(weeklyRatings).forEach(k => weeklyRatings[k] = null);
+  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+};
+
+// ── 주간 이력 로드 ──
+async function loadWeeklyHistory() {
+  const el = document.getElementById('weeklyHistory');
+  try {
+    const q = query(
+      collection(db, 'weeklyReports'),
+      where('teacherUid', '==', currentTeacher.uid),
+      orderBy('submittedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) { el.innerHTML = '<div class="empty-state"><div class="icon">📭</div>아직 제출 이력이 없습니다.</div>'; return; }
+    const ratingLabel = {5:'매우 우수',4:'우수',3:'보통',2:'미흡',1:'불량'};
+    el.innerHTML = '';
+    snap.forEach(d => {
+      const data = d.data();
+      const r = data.ratings || {};
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = `
+        <div class="history-item-top">
+          <span class="history-week">${data.weekLabel} — ${data.studentName}</span>
+          <span class="history-date">${data.topic || ''}</span>
+        </div>
+        <div class="history-summary">
+          참여 ${ratingLabel[r.participation]||'-'} &nbsp;·&nbsp; 과제 ${ratingLabel[r.homework]||'-'} &nbsp;·&nbsp; 이해 ${ratingLabel[r.understanding]||'-'} &nbsp;·&nbsp; 오답 ${ratingLabel[r.review]||'-'}
+          ${data.memo ? `<br>📌 ${data.memo}` : ''}
+        </div>
+      `;
+      el.appendChild(div);
+    });
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state" style="color:#ff9090;">오류: ${e.message}<br>Firestore 인덱스가 필요할 수 있습니다.</div>`;
+  }
+}
+
+// ══ 월말보고서 제출 ══
+window.submitMonthly = async function() {
+  const month      = document.getElementById('m-month').value;
+  const classInfo  = document.getElementById('m-classInfo').value.trim();
+  const progress   = document.getElementById('m-progress').value.trim();
+  const achievement= document.getElementById('m-achievement').value.trim();
+  const attention  = document.getElementById('m-attention').value.trim();
+  const plan       = document.getElementById('m-plan').value.trim();
+  const etc        = document.getElementById('m-etc').value.trim();
+  const ok  = document.getElementById('monthly-ok');
+  const err = document.getElementById('monthly-err');
+
+  if (!month || !progress || !achievement || !plan) {
+    showAlert(err, '보고 월, 진도 요약, 성취 현황, 다음 달 계획은 필수입니다.', 'err'); return;
+  }
+  try {
+    await setDoc(doc(db, 'monthlyReports', `${currentTeacher.uid}_${month}`), {
+      teacherUid:  currentTeacher.uid,
+      teacherName: currentTeacher.name,
+      month, classInfo, progress, achievement, attention, plan, etc,
+      submittedAt: serverTimestamp()
+    });
+    showAlert(ok, `✅ ${month} 월말보고서가 제출되었습니다.`, 'ok');
+    resetMonthly();
+    loadMonthlyHistory();
+  } catch(e) {
+    showAlert(err, '제출 오류: ' + e.message, 'err');
+  }
+};
+
+window.resetMonthly = function() {
+  ['m-classInfo','m-progress','m-achievement','m-attention','m-plan','m-etc'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+};
+
+// ── 월말 이력 로드 ──
+async function loadMonthlyHistory() {
+  const el = document.getElementById('monthlyHistory');
+  try {
+    const q = query(
+      collection(db, 'monthlyReports'),
+      where('teacherUid', '==', currentTeacher.uid),
+      orderBy('submittedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) { el.innerHTML = '<div class="empty-state"><div class="icon">📭</div>아직 제출된 보고서가 없습니다.</div>'; return; }
+    el.innerHTML = '';
+    snap.forEach(d => {
+      const data = d.data();
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = `
+        <div class="history-item-top">
+          <span class="history-week">${data.month} 보고서</span>
+          <span class="history-date">${data.classInfo || ''}</span>
+        </div>
+        <div class="history-summary">${(data.progress || '').slice(0, 80)}${(data.progress||'').length > 80 ? '…' : ''}</div>
+      `;
+      el.appendChild(div);
+    });
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state" style="color:#ff9090;">오류: ${e.message}</div>`;
+  }
+}
+
+// ══ 테스트 입력 ══
+window.submitTest = async function() {
+  const studentId = document.getElementById('t-student').value;
+  const date      = document.getElementById('t-date').value;
+  const type      = document.getElementById('t-type').value;
+  const topic     = document.getElementById('t-topic').value.trim();
+  const total     = parseInt(document.getElementById('t-total').value) || 100;
+  const score     = parseInt(document.getElementById('t-score').value);
+  const questions = parseInt(document.getElementById('t-questions').value) || 0;
+  const feedback  = document.getElementById('t-feedback').value.trim();
+  const ok  = document.getElementById('test-ok');
+  const err = document.getElementById('test-err');
+
+  if (!studentId || !date || isNaN(score)) {
+    showAlert(err, '학생, 날짜, 점수는 필수입니다.', 'err'); return;
+  }
+  const student = studentsCache.find(s => s.id === studentId);
+  try {
+    await addDoc(collection(db, 'testRecords'), {
+      teacherUid:  currentTeacher.uid,
+      teacherName: currentTeacher.name,
+      studentId, studentName: student?.name || '',
+      date, type, topic, score, total, questions, feedback,
+      percentage: total > 0 ? Math.round(score / total * 100) : 0,
+      createdAt: serverTimestamp()
+    });
+    showAlert(ok, `✅ ${student?.name} 학생의 테스트 결과가 입력되었습니다.`, 'ok');
+    resetTest();
+    loadTestHistory();
+  } catch(e) {
+    showAlert(err, '입력 오류: ' + e.message, 'err');
+  }
+};
+
+window.resetTest = function() {
+  document.getElementById('t-student').value = '';
+  document.getElementById('t-topic').value = '';
+  document.getElementById('t-score').value = '';
+  document.getElementById('t-total').value = '';
+  document.getElementById('t-questions').value = '';
+  document.getElementById('t-feedback').value = '';
+};
+
+// ── 테스트 기록 조회 ──
+window.loadTestHistory = async function() {
+  const tbody     = document.getElementById('testHistoryBody');
+  const studentId = document.getElementById('view-student')?.value || '';
+  const typeFilter= document.getElementById('view-type')?.value || '';
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-state" style="padding:24px;">불러오는 중...</td></tr>';
+  try {
+    let q = query(
+      collection(db, 'testRecords'),
+      where('teacherUid', '==', currentTeacher.uid),
+      orderBy('date', 'desc')
+    );
+    const snap = await getDocs(q);
+    let rows = [];
+    snap.forEach(d => rows.push({ id: d.id, ...d.data() }));
+    if (studentId) rows = rows.filter(r => r.studentId === studentId);
+    if (typeFilter) rows = rows.filter(r => r.type === typeFilter);
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state" style="padding:24px;">조회된 기록이 없습니다.</td></tr>'; return; }
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.date || '-'}</td>
+        <td>${r.studentName || '-'}</td>
+        <td><span style="font-size:12px; background:rgba(255,255,255,0.07); padding:3px 8px; border-radius:6px;">${r.type||'-'}</span></td>
+        <td style="max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.topic||''}">${r.topic||'-'}</td>
+        <td>${scoreBadge(r.score, r.total)}</td>
+        <td style="font-size:12px; color:${r.percentage>=70?'var(--gold)':'#ff9090'};">${r.percentage}%</td>
+        <td style="max-width:180px; font-size:12px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${r.feedback||''}">${r.feedback||'-'}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color:#ff9090; padding:24px;">오류: ${e.message}<br>Firestore 인덱스가 필요할 수 있습니다.</td></tr>`;
+  }
+};
+
+// ── 엔터키 로그인 ──
+['t-name','t-pw'].forEach(id => {
+  document.getElementById(id)?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.loginTeacher();
+  });
+});
+</script>
+
+</body>
+</html>
