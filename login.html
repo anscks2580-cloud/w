@@ -105,11 +105,12 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
       <span>송우찬수학학원</span>
     </div>
     <div class="login-title">로그인</div>
-    <div class="login-sub">학생 또는 관리자로 로그인하세요</div>
+    <div class="login-sub">학생 · 선생님 · 관리자 로그인</div>
 
     <div class="login-tabs">
-      <button class="login-tab active" onclick="switchTab('student',this)">학생 로그인</button>
-      <button class="login-tab" onclick="switchTab('admin',this)">관리자 로그인</button>
+      <button class="login-tab active" onclick="switchTab('student',this)">학생</button>
+      <button class="login-tab" onclick="switchTab('teacher',this)">선생님</button>
+      <button class="login-tab" onclick="switchTab('admin',this)">관리자</button>
     </div>
 
     <!-- 학생 탭 -->
@@ -132,6 +133,26 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
       </div>
       <button class="btn-login" id="s-btn" onclick="loginStudent()">로그인</button>
       <div class="error-msg" id="s-err"></div>
+    </div>
+
+    <!-- 선생님 탭 -->
+    <div class="tab-form" id="form-teacher">
+      <div class="form-group">
+        <label>아이디 (이름)</label>
+        <input type="text" id="t-name" placeholder="예: 홍길동" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="t-pw" placeholder="비밀번호 입력" autocomplete="current-password">
+      </div>
+      <div class="login-options">
+        <label class="checkbox-label">
+          <input type="checkbox" id="t-autoLogin"> 자동 로그인
+        </label>
+        <span></span>
+      </div>
+      <button class="btn-login" id="t-btn" onclick="loginTeacher()">선생님 로그인</button>
+      <div class="error-msg" id="t-err"></div>
     </div>
 
     <!-- 관리자 탭 -->
@@ -226,6 +247,35 @@ window.loginStudent = async function() {
   }
 };
 
+// 선생님 로그인
+window.loginTeacher = async function() {
+  const name = document.getElementById('t-name').value.trim();
+  const pw   = document.getElementById('t-pw').value;
+  const autoLogin = document.getElementById('t-autoLogin').checked;
+  const btn  = document.getElementById('t-btn');
+
+  if (!name || !pw) { showErr('t-err', '이름과 비밀번호를 입력해주세요.'); return; }
+
+  btn.disabled = true; btn.textContent = '로그인 중...';
+
+  const persistence = autoLogin ? browserLocalPersistence : browserSessionPersistence;
+
+  try {
+    await setPersistence(auth, persistence);
+    const cred = await signInWithEmailAndPassword(auth, name + '@songmath.kr', pw);
+    const teacherDoc = await getDoc(doc(db, 'teachers', cred.user.uid));
+    if (!teacherDoc.exists()) {
+      showErr('t-err', '선생님 계정이 아닙니다. 원장님께 문의해주세요.');
+      btn.disabled = false; btn.textContent = '선생님 로그인';
+      return;
+    }
+    window.location.href = 'teacher.html';
+  } catch(e) {
+    showErr('t-err', '이름 또는 비밀번호가 올바르지 않습니다.');
+    btn.disabled = false; btn.textContent = '선생님 로그인';
+  }
+};
+
 // 관리자 로그인
 window.loginAdmin = async function() {
   const email = document.getElementById('a-email').value.trim();
@@ -263,6 +313,8 @@ function showErr(id, msg) {
 // 엔터키
 document.getElementById('s-name').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('s-pw').focus(); });
 document.getElementById('s-pw').addEventListener('keydown', e => { if(e.key==='Enter') loginStudent(); });
+document.getElementById('t-name').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('t-pw').focus(); });
+document.getElementById('t-pw').addEventListener('keydown', e => { if(e.key==='Enter') loginTeacher(); });
 document.getElementById('a-pw').addEventListener('keydown', e => { if(e.key==='Enter') loginAdmin(); });
 </script>
 </body>
