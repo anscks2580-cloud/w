@@ -996,7 +996,7 @@ function renderVideos() {
         <div class="assign-item" style="flex-wrap:wrap;gap:8px;">
           <span class="assign-title" style="min-width:160px;">${v.title}</span>
           <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date||''}</span>
-          <select id="tag-sel-${v.id}" style="padding:5px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;">
+          <select id="tag-sel-${v.id}" style="padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;color-scheme:dark;">
             ${optgroupHtml}
           </select>
           <button class="btn btn-secondary btn-sm" onclick="changeVideoTag('${v.id}')">변경</button>
