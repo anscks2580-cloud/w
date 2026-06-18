@@ -901,15 +901,16 @@ async function loadVideos() {
 
 // 카테고리 그룹 정의
 const VIDEO_GROUPS = [
-  { label: '중등',           tags: ['중1','중2','중3'] },
-  { label: '고등 — 고1',     tags: ['공통수학1','공통수학2'] },
-  { label: '고등 — 고2',     tags: ['대수','미적분','확통'] },
-  { label: '고등 — 고3',     tags: ['미적분2','기하'] },
-  { label: '기출해설 (미분류)', tags: ['기출해설'] },
-  { label: '기출해설 — 고1', tags: ['기출_공통수학1','기출_공통수학2'] },
-  { label: '기출해설 — 고2', tags: ['기출_대수','기출_미적분','기출_확통'] },
-  { label: '기출해설 — 고3', tags: ['기출_미적분2','기출_기하'] },
-  { label: '수리논술',        tags: ['수리논술'] },
+  { label: '중등',              tags: ['중1','중2','중3'] },
+  { label: '고등 — 고1',        tags: ['공통수학1','공통수학2'] },
+  { label: '고등 — 고2',        tags: ['대수','미적분','확통'] },
+  { label: '고등 — 고3',        tags: ['미적분2','기하'] },
+  { label: '기출해설 (미분류)',  tags: ['기출해설'] },
+  { label: '기출해설 — 고1',    tags: ['기출_공통수학1','기출_공통수학2'] },
+  { label: '기출해설 — 고2',    tags: ['기출_대수','기출_미적분','기출_확통'] },
+  { label: '기출해설 — 고3',    tags: ['기출_미적분2','기출_기하'] },
+  { label: '수리논술',           tags: ['수리논술'] },
+  { label: '⚠️ 태그 없음 (미분류)', tags: ['', null, undefined] },
 ];
 const VIDEO_CAT_TAGS = {
   '중등':    ['중1','중2','중3'],
@@ -975,10 +976,17 @@ function renderVideos() {
   }
 
   // 그룹별로 묶어서 렌더
+  const allKnownTags = VIDEO_GROUPS.flatMap(g => g.tags).filter(t => t);
   let html = '';
   VIDEO_GROUPS.forEach(group => {
     if (allowedTags && !group.tags.some(t => allowedTags.includes(t))) return;
-    const items = filtered.filter(v => group.tags.includes(v.tag));
+    let items;
+    if (group.tags.includes('') || group.tags.includes(null)) {
+      // 태그 없음 그룹: 알려진 태그 외의 것 전부
+      items = filtered.filter(v => !allKnownTags.includes(v.tag));
+    } else {
+      items = filtered.filter(v => group.tags.includes(v.tag));
+    }
     if (!items.length) return;
     html += `<div style="margin-bottom:20px;">
       <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;
