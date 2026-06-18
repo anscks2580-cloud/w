@@ -329,25 +329,25 @@ onAuthStateChanged(auth, async (user) => {
   const logoutBtn = document.getElementById('navLogoutBtn');
 
   if (user) {
-    // 학생 or 관리자 이름 가져오기
     const studentDoc = await getDoc(doc(db, 'students', user.uid));
-    const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-    let name, nameHtml;
+    const adminDoc   = await getDoc(doc(db, 'admins',   user.uid));
+    const teacherDoc = await getDoc(doc(db, 'teachers', user.uid));
+    let nameHtml;
     if (studentDoc.exists()) {
       const d = studentDoc.data();
       nameHtml = `${d.branch || ''} | ${d.grade || ''} <b style="color:var(--off-white);font-weight:700;">${d.name}</b> 학생`;
-      name = nameHtml;
     } else if (adminDoc.exists()) {
       nameHtml = '관리자';
-      name = nameHtml;
+    } else if (teacherDoc.exists()) {
+      const d = teacherDoc.data();
+      nameHtml = `${d.branch || ''} | <b style="color:var(--off-white);font-weight:700;">${d.name}</b> 선생님`;
     } else {
       nameHtml = user.email;
-      name = nameHtml;
     }
 
     loginBtn.style.display = 'none';
     userName.style.display = 'inline';
-    userName.innerHTML = name;
+    userName.innerHTML = nameHtml;
     logoutBtn.style.display = 'inline';
   } else {
     loginBtn.style.display = 'inline';

@@ -440,7 +440,7 @@ onAuthStateChanged(auth, async (user) => {
 
     // nav 표시
     const displayName = isAdmin   ? '관리자'
-                      : isTeacher ? (teacherDoc.data().name + ' 선생님')
+                      : isTeacher ? `${teacherDoc.data().branch || ''} | ${teacherDoc.data().name} 선생님`
                       : studentDoc.exists() ? studentDoc.data().name
                       : '사용자';
     updateNavUser(displayName, isAdmin, isTeacher);
