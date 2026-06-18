@@ -935,6 +935,36 @@ function renderVideos() {
     return;
   }
 
+  const TAG_OPTIONS = [
+    { group:'중등',           value:'중1' },
+    { group:'중등',           value:'중2' },
+    { group:'중등',           value:'중3' },
+    { group:'고등 — 고1',     value:'공통수학1' },
+    { group:'고등 — 고1',     value:'공통수학2' },
+    { group:'고등 — 고2',     value:'대수' },
+    { group:'고등 — 고2',     value:'미적분' },
+    { group:'고등 — 고2',     value:'확통' },
+    { group:'고등 — 고3',     value:'미적분2' },
+    { group:'고등 — 고3',     value:'기하' },
+    { group:'기출해설 — 고1', value:'기출_공통수학1' },
+    { group:'기출해설 — 고1', value:'기출_공통수학2' },
+    { group:'기출해설 — 고2', value:'기출_대수' },
+    { group:'기출해설 — 고2', value:'기출_미적분' },
+    { group:'기출해설 — 고2', value:'기출_확통' },
+    { group:'기출해설 — 고3', value:'기출_미적분2' },
+    { group:'기출해설 — 고3', value:'기출_기하' },
+    { group:'기타',           value:'수리논술' },
+  ];
+
+  // 그룹별 optgroup HTML 생성
+  const groups = [...new Set(TAG_OPTIONS.map(t => t.group))];
+  const optgroupHtml = groups.map(g => `
+    <optgroup label="${g}">
+      ${TAG_OPTIONS.filter(t => t.group === g).map(t =>
+        `<option value="${t.value}">${t.value}</option>`
+      ).join('')}
+    </optgroup>`).join('');
+
   // 필터 적용
   const allowedTags = currentVideoFilter ? VIDEO_CAT_TAGS[currentVideoFilter] : null;
   const filtered = allowedTags ? videosCache.filter(v => allowedTags.includes(v.tag)) : videosCache;
@@ -955,16 +985,38 @@ function renderVideos() {
         text-transform:uppercase;padding:6px 0;border-bottom:1px solid rgba(240,192,64,0.2);
         margin-bottom:8px;">${group.label} <span style="font-weight:400;color:var(--muted);">(${items.length}개)</span></div>
       ${items.map(v => `
-        <div class="assign-item">
-          <span class="assign-tag">${v.tag}</span>
-          <span class="assign-title">${v.title}</span>
-          <span style="font-size:11px;color:var(--muted);">${v.date||''}</span>
+        <div class="assign-item" style="flex-wrap:wrap;gap:8px;">
+          <span class="assign-title" style="min-width:160px;">${v.title}</span>
+          <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date||''}</span>
+          <select id="tag-sel-${v.id}" style="padding:5px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;">
+            ${optgroupHtml}
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="changeVideoTag('${v.id}')">변경</button>
           <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')">삭제</button>
         </div>`).join('')}
     </div>`;
   });
   el.innerHTML = html;
+
+  // 드롭다운 현재 태그로 초기화
+  filtered.forEach(v => {
+    const sel = document.getElementById('tag-sel-' + v.id);
+    if (sel) sel.value = v.tag;
+  });
 }
+
+window.changeVideoTag = async (id) => {
+  const sel = document.getElementById('tag-sel-' + id);
+  if (!sel) return;
+  const newTag = sel.value;
+  try {
+    await updateDoc(doc(db, 'videos', id), { tag: newTag });
+    showMsg('videoMsg', `✅ 태그가 "${newTag}"로 변경되었습니다.`, 'success');
+    await loadVideos();
+  } catch(e) {
+    showMsg('videoMsg', '오류: ' + e.message, 'error');
+  }
+};
 
 window.addVideo = async () => {
   const title = document.getElementById('v-title').value.trim();
