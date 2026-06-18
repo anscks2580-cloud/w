@@ -186,6 +186,7 @@
     <button class="teacher-tab active" onclick="switchTab('weekly',this)">📋 주간성취도</button>
     <button class="teacher-tab" onclick="switchTab('monthly',this)">📝 월말보고서</button>
     <button class="teacher-tab" onclick="switchTab('tests',this)">📊 누적테스트</button>
+    <button class="teacher-tab" onclick="switchTab('progress',this)">📍 반별 진도</button>
   </div>
 
   <!-- ══ 탭 1: 주간성취도 설문 ══ -->
@@ -456,6 +457,68 @@
     </div>
   </div>
 
+  <!-- ══ 탭 4: 반별 진도 ══ -->
+  <div class="tab-panel" id="tab-progress">
+
+    <!-- 진도 입력 -->
+    <div class="card">
+      <div class="card-title">📍 반별 진도 입력
+        <span style="font-size:12px; color:var(--muted); font-weight:400;" id="progressWeekLabel"></span>
+      </div>
+      <div class="alert ok" id="progress-ok"></div>
+      <div class="alert err" id="progress-err"></div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>반명 <span style="color:#ff9090;">*</span></label>
+          <input type="text" id="p-classname" placeholder="예: 고2 수학1반">
+        </div>
+        <div class="form-group">
+          <label>사용교재 <span style="color:#ff9090;">*</span></label>
+          <input type="text" id="p-textbook" placeholder="예: 수학의 정석 개념편">
+        </div>
+        <div class="form-group">
+          <label>현 진도 <span style="color:#ff9090;">*</span></label>
+          <input type="text" id="p-curprogress" placeholder="예: 수1 · 지수함수 3단원">
+        </div>
+        <div class="form-group">
+          <label>새 진도</label>
+          <input type="text" id="p-newprogress" placeholder="예: 수1 · 로그함수 1단원">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>현 진도 반복 단계</label>
+        <input type="text" id="p-repeatstep" placeholder="예: 1회독 / 2회독 / 심화 등">
+      </div>
+
+      <!-- 반별 성취도 -->
+      <div class="survey-item">
+        <div class="survey-label">반별 성취도 <span>이번 주 해당 반의 전반적인 성취도</span></div>
+        <div class="rating-row" data-field="classAchieve">
+          <button class="rating-btn" data-val="5" onclick="selectRating(this,'classAchieve')">상</button>
+          <button class="rating-btn" data-val="4" onclick="selectRating(this,'classAchieve')">중상</button>
+          <button class="rating-btn" data-val="3" onclick="selectRating(this,'classAchieve')">중</button>
+          <button class="rating-btn" data-val="2" onclick="selectRating(this,'classAchieve')">중하</button>
+          <button class="rating-btn" data-val="1" onclick="selectRating(this,'classAchieve')">하</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="submitProgress()">제출하기</button>
+        <button class="btn btn-outline" onclick="resetProgress()">초기화</button>
+      </div>
+    </div>
+
+    <!-- 제출 이력 -->
+    <div class="card">
+      <div class="card-title">🗂 반별 진도 제출 이력</div>
+      <div id="progressHistory" class="history-list">
+        <div class="empty-state"><div class="icon">📭</div>아직 제출 이력이 없습니다.</div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /teacher-wrap -->
 </div><!-- /portalScreen -->
 
@@ -615,6 +678,7 @@ async function loadStudents() {
   loadTestHistory();
   loadWeeklyHistory();
   loadMonthlyHistory();
+  loadProgressHistory();
 }
 
 // 요일 필터 적용해서 w-student 셀렉트 렌더
@@ -1054,6 +1118,141 @@ window.loadTestHistory = async function() {
     if (e.key === 'Enter') window.loginTeacher();
   });
 });
+
+// ══════════════════════════════════════
+// ── 반별 진도 ──
+// ══════════════════════════════════════
+
+let progressRatings = { classAchieve: null };
+
+// 탭 진입 시 주차 레이블 표시
+const origSwitchTab = window.switchTab;
+window.switchTab = function(id, btn) {
+  origSwitchTab(id, btn);
+  if (id === 'progress') {
+    const el = document.getElementById('progressWeekLabel');
+    if (el) el.textContent = getWeekLabel();
+  }
+};
+
+window.submitProgress = async function() {
+  const classname   = document.getElementById('p-classname').value.trim();
+  const textbook    = document.getElementById('p-textbook').value.trim();
+  const curprogress = document.getElementById('p-curprogress').value.trim();
+  const newprogress = document.getElementById('p-newprogress').value.trim();
+  const repeatstep  = document.getElementById('p-repeatstep').value.trim();
+  const ok  = document.getElementById('progress-ok');
+  const err = document.getElementById('progress-err');
+
+  if (!classname)   { showAlert(err, '반명을 입력해주세요.', 'err'); return; }
+  if (!textbook)    { showAlert(err, '사용교재를 입력해주세요.', 'err'); return; }
+  if (!curprogress) { showAlert(err, '현 진도를 입력해주세요.', 'err'); return; }
+  if (progressRatings.classAchieve === null) {
+    showAlert(err, '반별 성취도를 선택해주세요.', 'err'); return;
+  }
+
+  const ratingLabel = {5:'상', 4:'중상', 3:'중', 2:'중하', 1:'하'};
+  const weekKey = getWeekKey();
+
+  try {
+    await addDoc(collection(db, 'progressReports'), {
+      teacherUid:   currentTeacher.uid,
+      teacherName:  currentTeacher.name,
+      weekKey,
+      weekLabel:    getWeekLabel(),
+      classname, textbook, curprogress, newprogress, repeatstep,
+      classAchieve:      progressRatings.classAchieve,
+      classAchieveLabel: ratingLabel[progressRatings.classAchieve],
+      submittedAt: serverTimestamp()
+    });
+    showAlert(ok, `✅ "${classname}" 반 진도가 제출되었습니다.`, 'ok');
+    resetProgress();
+    loadProgressHistory();
+  } catch(e) {
+    showAlert(err, '제출 오류: ' + e.message, 'err');
+  }
+};
+
+window.resetProgress = function() {
+  document.getElementById('p-classname').value   = '';
+  document.getElementById('p-textbook').value    = '';
+  document.getElementById('p-curprogress').value = '';
+  document.getElementById('p-newprogress').value = '';
+  document.getElementById('p-repeatstep').value  = '';
+  progressRatings.classAchieve = null;
+  document.querySelectorAll('.rating-row[data-field="classAchieve"] .rating-btn')
+    .forEach(b => b.classList.remove('selected'));
+};
+
+async function loadProgressHistory() {
+  const el = document.getElementById('progressHistory');
+  if (!el) return;
+  try {
+    const q = query(
+      collection(db, 'progressReports'),
+      where('teacherUid', '==', currentTeacher.uid),
+      orderBy('submittedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">📭</div>아직 제출 이력이 없습니다.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    snap.forEach(d => {
+      const r = d.data();
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = `
+        <div class="history-item-top">
+          <span class="history-week">${r.weekLabel || r.weekKey}</span>
+          <span class="history-date">${r.classname}</span>
+        </div>
+        <div class="history-summary">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-bottom:6px;">
+            <span>📖 교재: <b style="color:var(--off-white);">${r.textbook||'-'}</b></span>
+            <span>📌 현 진도: <b style="color:var(--off-white);">${r.curprogress||'-'}</b></span>
+            ${r.newprogress ? `<span>➡ 새 진도: <b style="color:var(--off-white);">${r.newprogress}</b></span>` : ''}
+            ${r.repeatstep ? `<span>🔁 반복 단계: <b style="color:var(--off-white);">${r.repeatstep}</b></span>` : ''}
+            <span>📊 성취도: <b style="color:var(--gold);">${r.classAchieveLabel||'-'}</b></span>
+          </div>
+        </div>
+        <div style="text-align:right;margin-top:4px;">
+          <button onclick="deleteProgressReport('${d.id}')"
+            style="padding:4px 10px;font-size:11px;border-radius:6px;border:1px solid rgba(255,80,80,0.3);background:rgba(255,80,80,0.1);color:#ff9090;cursor:pointer;font-family:inherit;">
+            삭제
+          </button>
+        </div>
+      `;
+      el.appendChild(div);
+    });
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state" style="color:#ff9090;">오류: ${e.message}</div>`;
+  }
+}
+
+window.deleteProgressReport = async function(docId) {
+  if (!confirm('이 진도 기록을 삭제하시겠습니까?')) return;
+  try {
+    await deleteDoc(doc(db, 'progressReports', docId));
+    await loadProgressHistory();
+  } catch(e) {
+    alert('삭제 오류: ' + e.message);
+  }
+};
+
+// selectRating이 progressRatings도 처리하도록 확장
+const _origSelectRating = window.selectRating;
+window.selectRating = function(btn, field) {
+  if (field === 'classAchieve') {
+    document.querySelectorAll('.rating-row[data-field="classAchieve"] .rating-btn')
+      .forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    progressRatings.classAchieve = parseInt(btn.dataset.val);
+  } else {
+    _origSelectRating(btn, field);
+  }
+};
 </script>
 
 </body>
