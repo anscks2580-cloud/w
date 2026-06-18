@@ -397,6 +397,26 @@
       </div>
       <div class="msg" id="excelWeeklyMsg"></div>
     </div>
+    <!-- 반별 진도 엑셀 다운로드 -->
+    <div class="card">
+      <h3>📍 반별 진도 엑셀 다운로드</h3>
+      <div class="form-row" style="max-width:500px;margin-bottom:16px;">
+        <div class="form-group">
+          <label>조회 주차</label>
+          <input type="week" id="progressWeek" style="color-scheme:dark;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:14px;font-family:inherit;outline:none;">
+        </div>
+        <div class="form-group">
+          <label>선생님 필터</label>
+          <select id="progressTeacher">
+            <option value="">전체 선생님</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="downloadProgressExcel()">📊 엑셀 다운로드</button>
+      </div>
+      <div class="msg" id="progressExcelMsg"></div>
+    </div>
   </div>
 
   <!-- 월말보고서 -->
@@ -926,21 +946,31 @@ function renderTeacherSelect() {
     nSel.innerHTML = '<option value="">선생님 선택...</option>' +
       teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
   }
-  // 엑셀 다운로드용
+  // 주간성취도 엑셀 다운로드용
   const exSel = document.getElementById('excelTeacher');
   if (exSel) {
     exSel.innerHTML = '<option value="">전체 선생님</option>' +
       teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
   }
-  // 이번 주 기본값 설정
-  const weekInput = document.getElementById('excelWeek');
-  if (weekInput && !weekInput.value) {
-    const now = new Date();
-    const y = now.getFullYear();
-    const start = new Date(y, 0, 1);
-    const w = Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
-    weekInput.value = `${y}-W${String(w).padStart(2,'0')}`;
+  // 반별 진도 엑셀 다운로드용
+  const prSel = document.getElementById('progressTeacher');
+  if (prSel) {
+    prSel.innerHTML = '<option value="">전체 선생님</option>' +
+      teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
   }
+  // 이번 주 기본값 설정 (공통 유틸)
+  function setThisWeek(inputId) {
+    const el = document.getElementById(inputId);
+    if (el && !el.value) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const start = new Date(y, 0, 1);
+      const w = Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
+      el.value = `${y}-W${String(w).padStart(2,'0')}`;
+    }
+  }
+  setThisWeek('excelWeek');
+  setThisWeek('progressWeek');
 }
 
 // ── 선생님 엑셀 일괄 등록 ──
@@ -1258,7 +1288,86 @@ window.downloadWeeklyExcel = async () => {
   }
 };
 
-// ── 전체 PDF ZIP 다운로드 (기존 선생님 관리 탭용, 유지) ──
+// ── 반별 진도 엑셀 다운로드 ──
+window.downloadProgressExcel = async () => {
+  const weekVal    = document.getElementById('progressWeek').value;
+  const teacherUid = document.getElementById('progressTeacher').value;
+
+  if (!weekVal) { showMsg('progressExcelMsg', '조회할 주차를 선택해주세요.', 'error'); return; }
+
+  const [yearStr, weekStr] = weekVal.split('-W');
+  const weekKey   = `${yearStr}-W${weekStr}`;
+  const weekLabel = `${yearStr}년 ${parseInt(weekStr)}주차`;
+
+  showMsg('progressExcelMsg', '데이터 조회 중...', 'success');
+
+  try {
+    let q;
+    if (teacherUid) {
+      q = query(collection(db, 'progressReports'),
+        where('weekKey', '==', weekKey),
+        where('teacherUid', '==', teacherUid));
+    } else {
+      q = query(collection(db, 'progressReports'),
+        where('weekKey', '==', weekKey));
+    }
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      showMsg('progressExcelMsg', `${weekLabel} 제출된 반별 진도가 없습니다.`, 'error');
+      return;
+    }
+
+    const rows = [];
+    snap.forEach(d => {
+      const r = d.data();
+      rows.push({
+        선생님:         r.teacherName || '',
+        반명:           r.classname || '',
+        사용교재:       r.textbook || '',
+        현진도:         r.curprogress || '',
+        새진도:         r.newprogress || '',
+        현진도반복단계: r.repeatstep || '',
+        반별성취도:     r.classAchieveLabel || '',
+        제출일시:       r.submittedAt?.toDate?.()?.toLocaleDateString('ko-KR') || '',
+      });
+    });
+
+    // 선생님 → 반명 순 정렬
+    rows.sort((a, b) => {
+      if (a.선생님 !== b.선생님) return a.선생님.localeCompare(b.선생님, 'ko');
+      return a.반명.localeCompare(b.반명, 'ko');
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows, {
+      header: ['선생님','반명','사용교재','현진도','새진도','현진도반복단계','반별성취도','제출일시']
+    });
+    ws['!cols'] = [
+      {wch:10},{wch:14},{wch:18},{wch:20},{wch:20},{wch:14},{wch:10},{wch:12}
+    ];
+
+    // 헤더 스타일
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const addr = XLSX.utils.encode_cell({r:0, c});
+      if (!ws[addr]) continue;
+      ws[addr].s = {
+        font: { bold: true, color: { rgb: '1A1230' } },
+        fill: { fgColor: { rgb: 'F0C040' } },
+        alignment: { horizontal: 'center' }
+      };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, weekLabel);
+    const teacherName = teacherUid ? (teachersCache.find(t => t.id === teacherUid)?.name || '') + '_' : '';
+    XLSX.writeFile(wb, `반별진도_${weekLabel}_${teacherName}${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`);
+
+    showMsg('progressExcelMsg', `✅ ${rows.length}건 데이터 다운로드 완료!`, 'success');
+  } catch(e) {
+    showMsg('progressExcelMsg', '오류: ' + e.message, 'error');
+  }
+};
 window.downloadAllZip = async () => {
   if (!monthlyDocsCache.length) return;
   const btn = document.getElementById('zipBtn');
