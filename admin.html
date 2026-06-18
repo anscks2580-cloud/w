@@ -484,18 +484,40 @@
       <div class="form-row">
         <div class="form-group"><label>카테고리</label>
           <select id="v-tag">
-            <option value="중1">중1</option>
-            <option value="중2">중2</option>
-            <option value="중3">중3</option>
-            <option value="공통수학1">공통수학1</option>
-            <option value="공통수학2">공통수학2</option>
-            <option value="대수">대수</option>
-            <option value="미적분">미적분</option>
-            <option value="확통">확통</option>
-            <option value="미적분2">미적분2</option>
-            <option value="기하">기하</option>
-            <option value="기출해설">기출해설</option>
-            <option value="수리논술">수리논술</option>
+            <optgroup label="중등">
+              <option value="중1">중1</option>
+              <option value="중2">중2</option>
+              <option value="중3">중3</option>
+            </optgroup>
+            <optgroup label="고등 — 고1">
+              <option value="공통수학1">공통수학1</option>
+              <option value="공통수학2">공통수학2</option>
+            </optgroup>
+            <optgroup label="고등 — 고2">
+              <option value="대수">대수</option>
+              <option value="미적분">미적분</option>
+              <option value="확통">확통</option>
+            </optgroup>
+            <optgroup label="고등 — 고3">
+              <option value="미적분2">미적분2</option>
+              <option value="기하">기하</option>
+            </optgroup>
+            <optgroup label="기출해설 — 고1">
+              <option value="기출_공통수학1">기출_공통수학1</option>
+              <option value="기출_공통수학2">기출_공통수학2</option>
+            </optgroup>
+            <optgroup label="기출해설 — 고2">
+              <option value="기출_대수">기출_대수</option>
+              <option value="기출_미적분">기출_미적분</option>
+              <option value="기출_확통">기출_확통</option>
+            </optgroup>
+            <optgroup label="기출해설 — 고3">
+              <option value="기출_미적분2">기출_미적분2</option>
+              <option value="기출_기하">기출_기하</option>
+            </optgroup>
+            <optgroup label="기타">
+              <option value="수리논술">수리논술</option>
+            </optgroup>
           </select>
         </div>
         <div class="form-group"><label>날짜</label><input type="text" id="v-date" placeholder="2025.06"></div>

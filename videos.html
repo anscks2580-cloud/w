@@ -344,23 +344,63 @@
         <button class="filter-btn" onclick="selectMain('기출해설',this)">기출해설</button>
         <button class="filter-btn" onclick="selectMain('수리논술',this)">수리논술</button>
       </div>
-      <!-- 2단계: 중등 서브 -->
+
+      <!-- 2단계: 중등 서브 (학년) -->
       <div class="filter-sub" id="sub-중등">
         <button class="filter-btn active" onclick="selectSub('중등-all',this,'중등')">전체</button>
         <button class="filter-btn" onclick="selectSub('중1',this,'중등')">중1</button>
         <button class="filter-btn" onclick="selectSub('중2',this,'중등')">중2</button>
         <button class="filter-btn" onclick="selectSub('중3',this,'중등')">중3</button>
       </div>
-      <!-- 2단계: 고등 서브 -->
+
+      <!-- 2단계: 고등 서브 (학년) -->
       <div class="filter-sub" id="sub-고등">
-        <button class="filter-btn active" onclick="selectSub('고등-all',this,'고등')">전체</button>
-        <button class="filter-btn" onclick="selectSub('공통수학1',this,'고등')">공통수학1</button>
-        <button class="filter-btn" onclick="selectSub('공통수학2',this,'고등')">공통수학2</button>
-        <button class="filter-btn" onclick="selectSub('대수',this,'고등')">대수</button>
-        <button class="filter-btn" onclick="selectSub('미적분',this,'고등')">미적분</button>
-        <button class="filter-btn" onclick="selectSub('확통',this,'고등')">확통</button>
-        <button class="filter-btn" onclick="selectSub('미적분2',this,'고등')">미적분2</button>
-        <button class="filter-btn" onclick="selectSub('기하',this,'고등')">기하</button>
+        <button class="filter-btn active" onclick="selectGrade('고등-all',this,'고등')">전체</button>
+        <button class="filter-btn" onclick="selectGrade('고1',this,'고등')">고1</button>
+        <button class="filter-btn" onclick="selectGrade('고2',this,'고등')">고2</button>
+        <button class="filter-btn" onclick="selectGrade('고3',this,'고등')">고3</button>
+      </div>
+      <!-- 3단계: 고등 과목 서브 -->
+      <div class="filter-sub" id="sub-고1">
+        <button class="filter-btn active" onclick="selectSub('고1-all',this,'고1')">전체</button>
+        <button class="filter-btn" onclick="selectSub('공통수학1',this,'고1')">공통수학1</button>
+        <button class="filter-btn" onclick="selectSub('공통수학2',this,'고1')">공통수학2</button>
+      </div>
+      <div class="filter-sub" id="sub-고2">
+        <button class="filter-btn active" onclick="selectSub('고2-all',this,'고2')">전체</button>
+        <button class="filter-btn" onclick="selectSub('대수',this,'고2')">대수</button>
+        <button class="filter-btn" onclick="selectSub('미적분',this,'고2')">미적분</button>
+        <button class="filter-btn" onclick="selectSub('확통',this,'고2')">확통</button>
+      </div>
+      <div class="filter-sub" id="sub-고3">
+        <button class="filter-btn active" onclick="selectSub('고3-all',this,'고3')">전체</button>
+        <button class="filter-btn" onclick="selectSub('미적분2',this,'고3')">미적분2</button>
+        <button class="filter-btn" onclick="selectSub('기하',this,'고3')">기하</button>
+      </div>
+
+      <!-- 2단계: 기출해설 서브 (학년) -->
+      <div class="filter-sub" id="sub-기출해설">
+        <button class="filter-btn active" onclick="selectGrade('기출해설-all',this,'기출해설')">전체</button>
+        <button class="filter-btn" onclick="selectGrade('기출-고1',this,'기출해설')">고1</button>
+        <button class="filter-btn" onclick="selectGrade('기출-고2',this,'기출해설')">고2</button>
+        <button class="filter-btn" onclick="selectGrade('기출-고3',this,'기출해설')">고3</button>
+      </div>
+      <!-- 3단계: 기출해설 과목 서브 -->
+      <div class="filter-sub" id="sub-기출-고1">
+        <button class="filter-btn active" onclick="selectSub('기출-고1-all',this,'기출-고1')">전체</button>
+        <button class="filter-btn" onclick="selectSub('기출_공통수학1',this,'기출-고1')">공통수학1</button>
+        <button class="filter-btn" onclick="selectSub('기출_공통수학2',this,'기출-고1')">공통수학2</button>
+      </div>
+      <div class="filter-sub" id="sub-기출-고2">
+        <button class="filter-btn active" onclick="selectSub('기출-고2-all',this,'기출-고2')">전체</button>
+        <button class="filter-btn" onclick="selectSub('기출_대수',this,'기출-고2')">대수</button>
+        <button class="filter-btn" onclick="selectSub('기출_미적분',this,'기출-고2')">미적분</button>
+        <button class="filter-btn" onclick="selectSub('기출_확통',this,'기출-고2')">확통</button>
+      </div>
+      <div class="filter-sub" id="sub-기출-고3">
+        <button class="filter-btn active" onclick="selectSub('기출-고3-all',this,'기출-고3')">전체</button>
+        <button class="filter-btn" onclick="selectSub('기출_미적분2',this,'기출-고3')">미적분2</button>
+        <button class="filter-btn" onclick="selectSub('기출_기하',this,'기출-고3')">기하</button>
       </div>
     </div>
 
@@ -495,58 +535,97 @@ function showLoginPrompt() {
   `;
 }
 
-// 메인 카테고리 → Firestore tag 매핑
+// 카테고리 → tag 매핑
 const MAIN_TAGS = {
-  '중등': ['중1','중2','중3'],
-  '고등': ['공통수학1','공통수학2','대수','미적분','확통','미적분2','기하'],
-  '기출해설': ['기출해설'],
-  '수리논술': ['수리논술'],
+  '중등':    ['중1','중2','중3'],
+  '고등':    ['공통수학1','공통수학2','대수','미적분','확통','미적분2','기하'],
+  '기출해설':['기출_공통수학1','기출_공통수학2','기출_대수','기출_미적분','기출_확통','기출_미적분2','기출_기하'],
+  '수리논술':['수리논술'],
+};
+const GRADE_TAGS = {
+  '고1':    ['공통수학1','공통수학2'],
+  '고2':    ['대수','미적분','확통'],
+  '고3':    ['미적분2','기하'],
+  '기출-고1':['기출_공통수학1','기출_공통수학2'],
+  '기출-고2':['기출_대수','기출_미적분','기출_확통'],
+  '기출-고3':['기출_미적분2','기출_기하'],
 };
 
-let currentMain = 'all';
-let currentSub = null; // null = 서브 전체
+let currentMain  = 'all';
+let currentGrade = null; // 학년 선택 (고1/고2/고3 등)
+let currentSub   = null; // 최하위 과목 선택
 
+// 모든 서브 패널 닫기
+function closeAllSubs() {
+  document.querySelectorAll('.filter-sub').forEach(el => el.classList.remove('open'));
+}
+
+// 1단계: 메인 카테고리
 window.selectMain = function(main, btn) {
-  // 메인 버튼 active
   document.querySelectorAll('#filterMain .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  currentMain = main;
-  currentSub = null;
+  currentMain  = main;
+  currentGrade = null;
+  currentSub   = null;
+  closeAllSubs();
+  const subEl = document.getElementById('sub-' + main);
+  if (subEl) {
+    subEl.classList.add('open');
+    subEl.querySelectorAll('.filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  }
+  renderVideos();
+};
 
-  // 서브 패널 열고 닫기
-  document.querySelectorAll('.filter-sub').forEach(el => el.classList.remove('open'));
-  if (main === '중등' || main === '고등') {
-    const subEl = document.getElementById('sub-' + main);
-    if (subEl) {
-      subEl.classList.add('open');
-      // 서브 '전체' 버튼 active 초기화
-      subEl.querySelectorAll('.filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+// 2단계: 학년 선택 (고등/기출해설 전용)
+window.selectGrade = function(grade, btn, main) {
+  const mainSub = document.getElementById('sub-' + main);
+  if (mainSub) mainSub.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // 이전 3단계 서브 닫기
+  ['고1','고2','고3','기출-고1','기출-고2','기출-고3'].forEach(g => {
+    const el = document.getElementById('sub-' + g);
+    if (el) el.classList.remove('open');
+  });
+
+  if (grade.endsWith('-all')) {
+    currentGrade = null;
+    currentSub   = null;
+  } else {
+    currentGrade = grade;
+    currentSub   = null;
+    const gradeEl = document.getElementById('sub-' + grade);
+    if (gradeEl) {
+      gradeEl.classList.add('open');
+      gradeEl.querySelectorAll('.filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
     }
   }
   renderVideos();
 };
 
-window.selectSub = function(sub, btn, main) {
-  const subEl = document.getElementById('sub-' + main);
-  subEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+// 3단계: 과목 선택
+window.selectSub = function(sub, btn, grade) {
+  const gradeEl = document.getElementById('sub-' + grade);
+  if (gradeEl) gradeEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   currentSub = sub.endsWith('-all') ? null : sub;
   renderVideos();
 };
 
-window.filterVideos = function() {}; // legacy 호환용 빈 함수
+window.filterVideos = function() {}; // legacy 호환
 
 function renderVideos() {
   const grid = document.getElementById('videoGrid');
-
   let list;
+
   if (currentMain === 'all') {
     list = myVideos;
   } else if (currentSub) {
-    // 서브 카테고리 선택
     list = myVideos.filter(v => v.tag === currentSub);
+  } else if (currentGrade) {
+    const tags = GRADE_TAGS[currentGrade] || [];
+    list = myVideos.filter(v => tags.includes(v.tag));
   } else {
-    // 메인 카테고리 전체 (서브 all)
     const tags = MAIN_TAGS[currentMain] || [currentMain];
     list = myVideos.filter(v => tags.includes(v.tag));
   }
@@ -558,7 +637,7 @@ function renderVideos() {
     return;
   }
   grid.innerHTML = list.map(v => `
-    <div class="video-card" onclick="openModal('${v.vimeoId}','${v.title}')">
+    <div class="video-card" onclick="openModal('${v.vimeoId}','${(v.title||'').replace(/'/g,"\\'")}')">
       <div class="video-thumb">
         <img src="https://vumbnail.com/${v.vimeoId}.jpg" alt="${v.title}" loading="lazy"
              onerror="this.src='https://i.vimeocdn.com/video/${v.vimeoId}_640.jpg'">
