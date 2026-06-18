@@ -430,26 +430,32 @@ let isLoggedIn = false;
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     isLoggedIn = true;
-    // 학생 정보 가져오기
+    // 학생 / 관리자 / 선생님 확인
     const studentDoc = await getDoc(doc(db, 'students', user.uid));
-    const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+    const adminDoc   = await getDoc(doc(db, 'admins',   user.uid));
+    const teacherDoc = await getDoc(doc(db, 'teachers', user.uid));
 
-    // nav에 학생 이름 + 로그아웃 표시
-    const isAdmin = adminDoc.exists();
-    updateNavUser(studentDoc.exists() ? studentDoc.data().name : '관리자', isAdmin);
+    const isAdmin   = adminDoc.exists();
+    const isTeacher = teacherDoc.exists();
 
-    // 전체 영상 목록 실시간 리스너
+    // nav 표시
+    const displayName = isAdmin   ? '관리자'
+                      : isTeacher ? (teacherDoc.data().name + ' 선생님')
+                      : studentDoc.exists() ? studentDoc.data().name
+                      : '사용자';
+    updateNavUser(displayName, isAdmin, isTeacher);
+
     const { onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-    const assigned = isAdmin ? null : (studentDoc.exists() ? studentDoc.data().assignedVideos || [] : []);
+
+    // 관리자·선생님은 전체, 학생은 배정된 것만
+    const assigned = (isAdmin || isTeacher)
+      ? null
+      : (studentDoc.exists() ? studentDoc.data().assignedVideos || [] : []);
 
     onSnapshot(collection(db, 'videos'), (snap) => {
       allVideos = [];
       snap.forEach(d => allVideos.push({id: d.id, ...d.data()}));
-      if (isAdmin) {
-        myVideos = allVideos;
-      } else {
-        myVideos = allVideos.filter(v => assigned.includes(v.id));
-      }
+      myVideos = (isAdmin || isTeacher) ? allVideos : allVideos.filter(v => assigned.includes(v.id));
       renderVideos();
     });
   } else {
@@ -459,14 +465,15 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-function updateNavUser(name, isAdmin) {
+function updateNavUser(name, isAdmin, isTeacher) {
   const navEl = document.getElementById('navUserArea');
   const loginBtn = document.getElementById('navLoginBtn');
   if (loginBtn) loginBtn.style.display = 'none';
   if (!navEl) return;
   navEl.innerHTML = `
     <span style="font-size:13px;color:var(--muted);">${name} 님</span>
-    ${isAdmin ? '<a href="admin.html" style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">관리자</a>' : ''}
+    ${isAdmin   ? '<a href="admin.html"   style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">관리자</a>' : ''}
+    ${isTeacher ? '<a href="teacher.html" style="font-size:12px;color:var(--gold);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;">선생님 포털</a>' : ''}
     <button onclick="doLogout()" style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.06);border:1px solid var(--border-soft);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:inherit;">로그아웃</button>
   `;
 }
