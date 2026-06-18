@@ -997,26 +997,29 @@ window.loadReports = async () => {
   zipBtn.style.display = 'none';
   monthlyDocsCache = [];
 
+  const collName = type === 'weekly' ? 'weeklyReports' : 'monthlyReports';
+
   try {
-    const collName = 'weeklyReports' ? (type === 'weekly' ? 'weeklyReports' : 'monthlyReports') : 'monthlyReports';
-    let q;
-    if (teacherUid) {
-      q = query(collection(db, type === 'weekly' ? 'weeklyReports' : 'monthlyReports'),
-        where('teacherUid','==',teacherUid), orderBy('submittedAt','desc'));
-    } else {
-      q = query(collection(db, type === 'weekly' ? 'weeklyReports' : 'monthlyReports'),
-        orderBy('submittedAt','desc'));
-    }
+    // ── orderBy 단독 사용 (복합 인덱스 불필요) ──
+    // teacherUid 필터를 Firestore 쿼리가 아닌 클라이언트에서 처리하여
+    // 복합 인덱스 미생성으로 인한 쿼리 실패를 방지합니다.
+    const q = query(collection(db, collName), orderBy('submittedAt', 'desc'));
     const snap = await getDocs(q);
 
-    if (snap.empty) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;">제출된 보고서가 없습니다.</div>'; return; }
+    // teacherUid 클라이언트 필터
+    let docs = [];
+    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    if (teacherUid) docs = docs.filter(d => d.teacherUid === teacherUid);
 
-    const ratingLabel = {5:'상',4:'중상',3:'중',2:'중하',1:'하'};
+    if (!docs.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px;">제출된 보고서가 없습니다.</div>';
+      return;
+    }
+
     let html = '';
 
     if (type === 'weekly') {
-      snap.forEach(d => {
-        const data = d.data();
+      docs.forEach(data => {
         const rl = data.ratingsLabel || {};
         html += `
           <div class="student-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
@@ -1032,10 +1035,14 @@ window.loadReports = async () => {
       });
     } else {
       // 월말 PDF
-      snap.forEach(d => {
-        const data = d.data();
+      docs.forEach(data => {
         monthlyDocsCache.push(data);
         const size = data.fileSize ? `(${(data.fileSize/1024/1024).toFixed(1)}MB)` : '';
+        // ── 다운로드: fetch→blob 방식 (Firebase Storage CORS 우회) ──
+        const safeURL      = (data.downloadURL||'').replace(/'/g, "\\'");
+        const safeName     = (data.teacherName||'').replace(/'/g, "\\'");
+        const safeMonth    = (data.month||'').replace(/'/g, "\\'");
+        const safeFileName = (data.fileName||'report.pdf').replace(/'/g, "\\'");
         html += `
           <div class="student-item" style="flex-wrap:wrap;gap:10px;">
             <div style="flex:1;min-width:180px;">
@@ -1043,10 +1050,10 @@ window.loadReports = async () => {
               <div style="font-size:12px;color:var(--muted);">📄 ${data.fileName||''} ${size}</div>
               ${data.memo ? `<div style="font-size:12px;color:var(--muted);">${data.memo}</div>` : ''}
             </div>
-            <a href="${data.downloadURL}" target="_blank" download
-              style="align-self:center;font-size:12px;color:var(--gold);text-decoration:none;padding:6px 14px;border:1px solid rgba(240,192,64,0.4);border-radius:6px;white-space:nowrap;">
+            <button onclick="downloadPDF('${safeURL}','${safeName}','${safeMonth}','${safeFileName}')"
+              style="align-self:center;font-size:12px;color:var(--gold);background:none;padding:6px 14px;border:1px solid rgba(240,192,64,0.4);border-radius:6px;white-space:nowrap;cursor:pointer;font-family:inherit;">
               ⬇ 다운로드
-            </a>
+            </button>
           </div>`;
       });
       if (monthlyDocsCache.length > 0) zipBtn.style.display = 'inline-flex';
@@ -1054,7 +1061,23 @@ window.loadReports = async () => {
 
     el.innerHTML = html;
   } catch(e) {
-    el.innerHTML = `<div style="color:#ff9090;font-size:13px;">오류: ${e.message}<br>Firestore 인덱스가 필요할 수 있습니다.</div>`;
+    el.innerHTML = `<div style="color:#ff9090;font-size:13px;">오류: ${e.message}</div>`;
+  }
+};
+
+// ── 개별 PDF 다운로드 (fetch→blob, CORS 우회) ──
+window.downloadPDF = async (url, teacherName, month, fileName) => {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`서버 응답 오류 (${resp.status})`);
+    const blob = await resp.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${teacherName}_${month}_${fileName}`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch(e) {
+    alert('다운로드 실패: ' + e.message + '\n\n브라우저에서 직접 열어보시려면 새 탭에서 URL을 여세요.');
   }
 };
 
