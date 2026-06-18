@@ -187,6 +187,7 @@
     <button class="teacher-tab" onclick="switchTab('monthly',this)">📝 월말보고서</button>
     <button class="teacher-tab" onclick="switchTab('tests',this)">📊 누적테스트</button>
     <button class="teacher-tab" onclick="switchTab('progress',this)">📍 반별 진도</button>
+    <button class="teacher-tab" onclick="switchTab('videos',this);loadTeacherVideos()">🎬 강의 목록</button>
   </div>
 
   <!-- ══ 탭 1: 주간성취도 설문 ══ -->
@@ -515,6 +516,46 @@
       <div class="card-title">🗂 반별 진도 제출 이력</div>
       <div id="progressHistory" class="history-list">
         <div class="empty-state"><div class="icon">📭</div>아직 제출 이력이 없습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 탭 5: 강의 목록 ══ -->
+  <div class="tab-panel" id="tab-videos">
+    <div class="card">
+      <div class="card-title">🎬 강의 목록</div>
+
+      <!-- 카테고리 필터 -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+        <button class="rating-btn selected" data-cat="" onclick="filterVideosCat('',this)">전체</button>
+        <button class="rating-btn" data-cat="중1" onclick="filterVideosCat('중1',this)">중1</button>
+        <button class="rating-btn" data-cat="중2" onclick="filterVideosCat('중2',this)">중2</button>
+        <button class="rating-btn" data-cat="중3" onclick="filterVideosCat('중3',this)">중3</button>
+        <button class="rating-btn" data-cat="공통수학1" onclick="filterVideosCat('공통수학1',this)">공통수학1</button>
+        <button class="rating-btn" data-cat="공통수학2" onclick="filterVideosCat('공통수학2',this)">공통수학2</button>
+        <button class="rating-btn" data-cat="대수" onclick="filterVideosCat('대수',this)">대수</button>
+        <button class="rating-btn" data-cat="미적분" onclick="filterVideosCat('미적분',this)">미적분</button>
+        <button class="rating-btn" data-cat="확통" onclick="filterVideosCat('확통',this)">확통</button>
+        <button class="rating-btn" data-cat="미적분2" onclick="filterVideosCat('미적분2',this)">미적분2</button>
+        <button class="rating-btn" data-cat="기하" onclick="filterVideosCat('기하',this)">기하</button>
+        <button class="rating-btn" data-cat="기출해설" onclick="filterVideosCat('기출해설',this)">기출해설</button>
+        <button class="rating-btn" data-cat="수리논술" onclick="filterVideosCat('수리논술',this)">수리논술</button>
+      </div>
+
+      <div id="teacherVideoList" style="color:var(--muted);font-size:13px;">불러오는 중...</div>
+    </div>
+
+    <!-- Vimeo 플레이어 모달 -->
+    <div id="videoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
+      <div style="position:relative;width:90%;max-width:900px;">
+        <button onclick="closeVideoModal()"
+          style="position:absolute;top:-40px;right:0;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;">✕</button>
+        <div style="padding-top:56.25%;position:relative;background:#000;border-radius:10px;overflow:hidden;">
+          <iframe id="vimeoFrame" src="" frameborder="0"
+            allow="autoplay; fullscreen; picture-in-picture"
+            style="position:absolute;inset:0;width:100%;height:100%;" allowfullscreen></iframe>
+        </div>
+        <div id="videoModalTitle" style="margin-top:12px;font-size:15px;font-weight:600;color:#fff;text-align:center;"></div>
       </div>
     </div>
   </div>
@@ -1111,6 +1152,91 @@ window.loadTestHistory = async function() {
     tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color:#ff9090; padding:24px;">오류: ${e.message}<br>Firestore 인덱스가 필요할 수 있습니다.</td></tr>`;
   }
 };
+
+// ══════════════════════════════════════
+// ── 강의 목록 ──
+// ══════════════════════════════════════
+
+let allVideosCache = [];
+let currentVideoCat = '';
+let videosLoaded = false;
+
+window.loadTeacherVideos = async function() {
+  if (videosLoaded) return; // 이미 로드했으면 스킵
+  const el = document.getElementById('teacherVideoList');
+  try {
+    const snap = await getDocs(collection(db, 'videos'));
+    allVideosCache = [];
+    snap.forEach(d => allVideosCache.push({ id: d.id, ...d.data() }));
+    // 날짜 최신순 정렬
+    allVideosCache.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    videosLoaded = true;
+    renderTeacherVideos();
+  } catch(e) {
+    el.innerHTML = `<div style="color:#ff9090;">오류: ${e.message}</div>`;
+  }
+};
+
+window.filterVideosCat = function(cat, btn) {
+  currentVideoCat = cat;
+  document.querySelectorAll('#tab-videos .rating-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  renderTeacherVideos();
+};
+
+function renderTeacherVideos() {
+  const el = document.getElementById('teacherVideoList');
+  const filtered = currentVideoCat
+    ? allVideosCache.filter(v => v.tag === currentVideoCat)
+    : allVideosCache;
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">해당 카테고리의 강의가 없습니다.</div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(v => `
+    <div onclick="openVideoModal('${v.vimeoId}','${(v.title||'').replace(/'/g,"\\'")}')"
+      style="display:flex;align-items:center;gap:14px;padding:14px 16px;
+      background:rgba(255,255,255,0.03);border:1px solid var(--border-soft);
+      border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.18s;"
+      onmouseover="this.style.borderColor='rgba(240,192,64,0.4)';this.style.background='rgba(240,192,64,0.05)'"
+      onmouseout="this.style.borderColor='var(--border-soft)';this.style.background='rgba(255,255,255,0.03)'">
+      <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#000;">
+        <img src="https://vumbnail.com/${v.vimeoId}.jpg" alt=""
+          style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:600;color:var(--off-white);margin-bottom:4px;
+          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title || '-'}</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:11px;background:rgba(240,192,64,0.1);color:var(--gold);
+            padding:2px 8px;border-radius:4px;">${v.tag || ''}</span>
+          ${v.date ? `<span style="font-size:11px;color:var(--muted);">${v.date}</span>` : ''}
+        </div>
+      </div>
+      <div style="color:var(--gold);font-size:20px;flex-shrink:0;">▶</div>
+    </div>`).join('');
+}
+
+window.openVideoModal = function(vimeoId, title) {
+  document.getElementById('vimeoFrame').src = `https://player.vimeo.com/video/${vimeoId}?autoplay=1`;
+  document.getElementById('videoModalTitle').textContent = title;
+  const modal = document.getElementById('videoModal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeVideoModal = function() {
+  document.getElementById('vimeoFrame').src = '';
+  document.getElementById('videoModal').style.display = 'none';
+  document.body.style.overflow = '';
+};
+
+// 모달 바깥 클릭 시 닫기
+document.getElementById('videoModal').addEventListener('click', function(e) {
+  if (e.target === this) closeVideoModal();
+});
 
 // ── 엔터키 로그인 ──
 ['t-name','t-pw'].forEach(id => {
