@@ -1378,8 +1378,7 @@ window.downloadAllZip = async () => {
 
   for (const data of monthlyDocsCache) {
     try {
-      const resp = await fetch(data.downloadURL);
-      const blob = await resp.blob();
+      const blob = await fetchBlob(data.downloadURL);
       const safeName = `${data.teacherName}_${data.month}_${data.fileName||'report.pdf'}`;
       folder.file(safeName, blob);
     } catch(e) {
