@@ -546,6 +546,28 @@
       <div class="msg" id="videoMsg"></div>
     </div>
     <div class="card">
+      <h3>🔄 Vimeo 동기화</h3>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7;">
+        Vimeo에 올린 영상의 <b style="color:var(--gold);">태그</b>를 카테고리명과 동일하게 달아두면 자동으로 분류됩니다.<br>
+        예: <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">공통수학1</code>
+        <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">기출_고2_2024</code>
+        <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">보충_평촌_송문찬T</code>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="syncVimeo()">📥 Vimeo에서 불러오기</button>
+        <span id="syncStatus" style="font-size:13px;color:var(--muted);"></span>
+      </div>
+      <div id="syncPreview" style="margin-top:16px;display:none;">
+        <div style="font-size:12px;color:var(--gold);margin-bottom:10px;" id="syncPreviewTitle"></div>
+        <div id="syncPreviewList" style="max-height:320px;overflow-y:auto;"></div>
+        <div style="margin-top:12px;display:flex;gap:10px;">
+          <button class="btn btn-primary" onclick="syncSaveAll()">✅ 전체 저장</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('syncPreview').style.display='none'">취소</button>
+        </div>
+      </div>
+      <div class="msg" id="syncMsg"></div>
+    </div>
+    <div class="card">
       <h3>📹 전체 강의 목록 (<span id="videoCount">0</span>개)</h3>
       <!-- 카테고리 필터 -->
       <div id="videoFilterBtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
@@ -1086,6 +1108,144 @@ window.changeVideoTag = async (id) => {
   } catch(e) {
     showMsg('videoMsg', '오류: ' + e.message, 'error');
   }
+};
+
+// ── Vimeo 동기화 ──
+const VIMEO_TOKEN = '91f67f8f7f387216004dd35ec5136f8e';
+
+// 알려진 카테고리 태그 목록 (Vimeo 태그와 매칭용)
+const EXAM_YEARS_SYNC = ['2025','2024','2023','2022','2021','2026'];
+const KNOWN_TAGS = [
+  '중1','중2','중3',
+  '공통수학1','공통수학2','대수','미적분','확통','미적분2','기하',
+  ...EXAM_YEARS_SYNC.flatMap(y => ['고1','고2','고3'].map(g => `기출_${g}_${y}`)),
+  '수리논술',
+  '보충_평촌_송우찬T','보충_평촌_송문찬T','보충_평촌_김영진T','보충_평촌_신민훈T',
+  '보충_산본_송우찬T','보충_산본_송문찬T','보충_산본_공민정T','보충_산본_장미현T',
+];
+
+let syncCandidates = []; // 저장 대기 영상 목록
+
+async function fetchAllVimeoVideos() {
+  let videos = [];
+  let url = 'https://api.vimeo.com/me/videos?fields=uri,name,tags,created_time&per_page=100&page=1';
+  while (url) {
+    const res = await fetch(url, {
+      headers: { Authorization: `bearer ${VIMEO_TOKEN}` }
+    });
+    if (!res.ok) throw new Error(`Vimeo API 오류: ${res.status}`);
+    const data = await res.json();
+    videos = videos.concat(data.data);
+    url = data.paging?.next ? `https://api.vimeo.com${data.paging.next}` : null;
+  }
+  return videos;
+}
+
+window.syncVimeo = async () => {
+  const statusEl = document.getElementById('syncStatus');
+  const previewEl = document.getElementById('syncPreview');
+  previewEl.style.display = 'none';
+  statusEl.textContent = '⏳ Vimeo에서 영상 목록 불러오는 중...';
+
+  try {
+    // Vimeo 전체 영상 불러오기
+    const vimeoVideos = await fetchAllVimeoVideos();
+    statusEl.textContent = `Vimeo 영상 ${vimeoVideos.length}개 확인됨. Firebase 비교 중...`;
+
+    // Firebase 기존 영상 ID 목록
+    const existingIds = new Set(videosCache.map(v => v.vimeoId));
+
+    // 신규 영상 + 태그 매칭
+    syncCandidates = [];
+    for (const v of vimeoVideos) {
+      const vimeoId = v.uri.replace('/videos/', '');
+      if (existingIds.has(vimeoId)) continue; // 이미 등록된 영상 제외
+
+      // Vimeo 태그에서 카테고리 찾기
+      const vimeoTags = (v.tags || []).map(t => t.tag || t.name || '');
+      const matchedTag = vimeoTags.find(t => KNOWN_TAGS.includes(t)) || '';
+
+      const date = v.created_time ? v.created_time.slice(0, 7).replace('-', '.') : '';
+      syncCandidates.push({ vimeoId, title: v.name, tag: matchedTag, date });
+    }
+
+    if (!syncCandidates.length) {
+      statusEl.textContent = `✅ 새로 추가할 영상이 없습니다. (Vimeo ${vimeoVideos.length}개 전체 이미 등록됨)`;
+      return;
+    }
+
+    // 미리보기 렌더
+    statusEl.textContent = '';
+    renderSyncPreview();
+
+  } catch(e) {
+    statusEl.textContent = '';
+    showMsg('syncMsg', '오류: ' + e.message, 'error');
+  }
+};
+
+function renderSyncPreview() {
+  const previewEl  = document.getElementById('syncPreview');
+  const titleEl    = document.getElementById('syncPreviewTitle');
+  const listEl     = document.getElementById('syncPreviewList');
+
+  const noTag = syncCandidates.filter(v => !v.tag).length;
+  titleEl.innerHTML = `신규 영상 <b>${syncCandidates.length}개</b> 발견
+    ${noTag ? `<span style="color:#ff9090;margin-left:8px;">⚠️ 태그 미매칭 ${noTag}개 (저장 전 태그 선택 필요)</span>` : ''}`;
+
+  // optgroup html 재활용
+  const tagOptHtml = KNOWN_TAGS.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  listEl.innerHTML = syncCandidates.map((v, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;">
+      <span style="font-size:12px;color:var(--muted);min-width:16px;">${i+1}</span>
+      <span style="flex:1;font-size:13px;min-width:160px;">${v.title}</span>
+      <span style="font-size:11px;color:var(--muted);">${v.date}</span>
+      <select id="sync-tag-${i}" style="padding:4px 8px;background:#1A1230;border:1px solid ${v.tag ? 'rgba(255,255,255,0.15)' : '#ff6060'};border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
+        <option value="">-- 태그 선택 --</option>
+        ${tagOptHtml}
+      </select>
+    </div>
+  `).join('');
+
+  // 태그 초기값 세팅
+  syncCandidates.forEach((v, i) => {
+    const sel = document.getElementById(`sync-tag-${i}`);
+    if (sel && v.tag) sel.value = v.tag;
+  });
+
+  previewEl.style.display = 'block';
+}
+
+window.syncSaveAll = async () => {
+  const today = new Date().toISOString().slice(0,7).replace('-','.');
+  let saved = 0, skipped = 0;
+
+  for (let i = 0; i < syncCandidates.length; i++) {
+    const v = syncCandidates[i];
+    const sel = document.getElementById(`sync-tag-${i}`);
+    const tag = sel ? sel.value : v.tag;
+    if (!tag) { skipped++; continue; }
+
+    try {
+      await setDoc(doc(db, 'videos', v.vimeoId), {
+        vimeoId: v.vimeoId,
+        title: v.title,
+        tag,
+        date: v.date || today,
+        order: null,
+        createdAt: new Date().toISOString(),
+      });
+      saved++;
+    } catch(e) {
+      console.error('저장 실패:', v.title, e);
+    }
+  }
+
+  document.getElementById('syncPreview').style.display = 'none';
+  document.getElementById('syncStatus').textContent = '';
+  showMsg('syncMsg', `✅ ${saved}개 저장 완료${skipped ? ` / 태그 없는 ${skipped}개 건너뜀` : ''}`, 'success');
+  await loadVideos();
 };
 
 window.addVideo = async () => {
