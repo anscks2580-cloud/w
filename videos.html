@@ -569,7 +569,7 @@ onAuthStateChanged(auth, async (user) => {
     if (!isAdmin && !isTeacher && studentDoc.exists()) {
       const sd = studentDoc.data();
       const grade = sd.grade || '';
-      const branch = sd.branch || '';
+      const branch = sd.branch || sd.Branch || '';
       const teacherName = sd.teacherName || '';
 
       // 기본 과목 태그
@@ -581,11 +581,21 @@ onAuthStateChanged(auth, async (user) => {
       // 수리논술 (고3/N수만)
       const extraTags = (grade === '고3' || grade === 'N수') ? ['수리논술'] : [];
 
-      // 담임 선생님 보충강의실 태그
-      const branchShort = branch === '평촌관' ? '평촌' : branch === '산본관' ? '산본' : '';
-      const teacherTag = (branchShort && teacherName) ? `보충_${branchShort}_${teacherName}T` : null;
+      // 담임 선생님 보충강의실 태그 — branch 없으면 평촌/산본 둘 다 허용
+      let teacherTags = [];
+      if (teacherName) {
+        if (branch === '평촌관') {
+          teacherTags = [`보충_평촌_${teacherName}T`];
+        } else if (branch === '산본관') {
+          teacherTags = [`보충_산본_${teacherName}T`];
+        } else {
+          // branch 정보 없으면 두 관 모두 허용
+          teacherTags = [`보충_평촌_${teacherName}T`, `보충_산본_${teacherName}T`];
+        }
+      }
 
-      allowedTags = { baseTags, examPrefix, extraTags, teacherTag, grade };
+      console.log('[videos] 학생 정보:', { grade, branch, teacherName, baseTags, examPrefix, extraTags, teacherTags });
+      allowedTags = { baseTags, examPrefix, extraTags, teacherTags, grade };
     }
 
     onSnapshot(collection(db, 'videos'), (snap) => {
@@ -600,9 +610,10 @@ onAuthStateChanged(auth, async (user) => {
           if (allowedTags.baseTags.includes(tag)) return true;
           if (allowedTags.examPrefix && tag.startsWith(allowedTags.examPrefix)) return true;
           if (allowedTags.extraTags.includes(tag)) return true;
-          if (allowedTags.teacherTag && tag === allowedTags.teacherTag) return true;
+          if (allowedTags.teacherTags && allowedTags.teacherTags.includes(tag)) return true;
           return false;
         });
+        console.log('[videos] myVideos 수:', myVideos.length, '/ 전체:', allVideos.length);
       } else {
         myVideos = [];
       }
