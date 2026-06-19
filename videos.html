@@ -335,6 +335,35 @@
       </div>
     </div>
 
+    <!-- 검색 -->
+    <div style="margin-bottom:16px;position:relative;">
+      <input
+        id="videoSearch"
+        type="text"
+        placeholder="강의 제목 검색..."
+        oninput="onSearch()"
+        style="
+          width:100%; box-sizing:border-box;
+          padding:11px 44px 11px 18px;
+          background:rgba(255,255,255,0.04);
+          border:1px solid var(--border-soft);
+          border-radius:100px;
+          color:var(--off-white);
+          font-size:14px; font-family:inherit;
+          outline:none; transition:border-color 0.2s;
+        "
+        onfocus="this.style.borderColor='var(--gold)'"
+        onblur="this.style.borderColor=''"
+      >
+      <span id="searchClearBtn" onclick="clearSearch()" style="
+        display:none; position:absolute; right:16px; top:50%; transform:translateY(-50%);
+        color:var(--muted); cursor:pointer; font-size:16px; line-height:1;
+      ">✕</span>
+      <svg style="position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none;display:none;" id="searchIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </div>
+    <!-- 검색 결과 안내 -->
+    <div id="searchResultInfo" style="display:none;font-size:12px;color:var(--gold);margin-bottom:12px;padding:0 4px;"></div>
+
     <div class="filter-wrap">
       <!-- 1단계: 메인 카테고리 -->
       <div class="filter-bar" id="filterMain">
@@ -572,6 +601,23 @@ const EXAM_GRADE_YEAR_TAGS = {};
 let currentMain  = 'all';
 let currentGrade = null; // 학년 선택 (고1/고2/고3 등)
 let currentSub   = null; // 최하위 과목 선택
+let currentSearch = '';  // 검색어
+
+// 검색 핸들러
+window.onSearch = function() {
+  const val = document.getElementById('videoSearch').value.trim();
+  currentSearch = val;
+  document.getElementById('searchClearBtn').style.display = val ? 'block' : 'none';
+  renderVideos();
+};
+
+window.clearSearch = function() {
+  document.getElementById('videoSearch').value = '';
+  currentSearch = '';
+  document.getElementById('searchClearBtn').style.display = 'none';
+  renderVideos();
+  document.getElementById('videoSearch').focus();
+};
 
 // 모든 서브 패널 닫기 (메인 카테고리 변경 시)
 function closeAllSubs() {
@@ -644,12 +690,12 @@ window.filterVideos = function() {}; // legacy 호환
 
 function renderVideos() {
   const grid = document.getElementById('videoGrid');
+  const infoEl = document.getElementById('searchResultInfo');
   let list;
 
   if (currentMain === 'all') {
     list = myVideos;
   } else if (currentSub) {
-    // 기출해설 년도 선택: e.g. currentSub = '기출-고1-2025'
     const examYearMatch = currentSub.match(/^기출-(고[123])-(\d{4})$/);
     if (examYearMatch) {
       const tag = `기출_${examYearMatch[1]}_${examYearMatch[2]}`;
@@ -665,12 +711,33 @@ function renderVideos() {
     list = myVideos.filter(v => tags.includes(v.tag));
   }
 
+  // 검색어 필터
+  const q = currentSearch.toLowerCase();
+  if (q) {
+    list = list.filter(v => (v.title || '').toLowerCase().includes(q));
+    infoEl.style.display = 'block';
+    infoEl.textContent = `"${currentSearch}" 검색 결과 ${list.length}개`;
+  } else {
+    infoEl.style.display = 'none';
+  }
+
   if (!list.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--muted);">
-      ${isLoggedIn ? '등록된 강의가 없습니다.' : ''}
+      ${isLoggedIn ? (q ? `"${currentSearch}"에 해당하는 강의가 없습니다.` : '등록된 강의가 없습니다.') : ''}
     </div>`;
     return;
   }
+
+  // 검색어 하이라이트 함수
+  function highlight(text) {
+    if (!q) return text;
+    const idx = text.toLowerCase().indexOf(q);
+    if (idx === -1) return text;
+    return text.slice(0, idx)
+      + `<mark style="background:rgba(240,192,64,0.35);color:var(--gold);border-radius:2px;padding:0 1px;">${text.slice(idx, idx + q.length)}</mark>`
+      + text.slice(idx + q.length);
+  }
+
   grid.innerHTML = list.map(v => `
     <div class="video-card" onclick="openModal('${v.vimeoId}','${(v.title||'').replace(/'/g,"\\'")}')">
       <div class="video-thumb">
@@ -680,7 +747,7 @@ function renderVideos() {
       </div>
       <div class="video-info">
         <span class="video-tag">${v.tag}</span>
-        <div class="video-title">${v.title}</div>
+        <div class="video-title">${highlight(v.title || '')}</div>
         <div class="video-date">${v.date || ''}</div>
       </div>
     </div>
