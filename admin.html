@@ -1158,18 +1158,25 @@ let syncCandidates = [];
 
 // Vimeo 폴더(folder) 목록 가져오기
 async function fetchVimeoFolders() {
-  const res = await fetch('https://api.vimeo.com/me/folders?per_page=100', {
-    headers: { Authorization: `bearer ${VIMEO_TOKEN}` }
-  });
-  if (!res.ok) throw new Error(`Vimeo API 오류: ${res.status}`);
-  const data = await res.json();
-  return data.data || [];
+  let folders = [];
+  let url = 'https://api.vimeo.com/me/projects?per_page=100&page=1';
+  while (url) {
+    const res = await fetch(url, {
+      headers: { Authorization: `bearer ${VIMEO_TOKEN}` }
+    });
+    if (!res.ok) throw new Error(`Vimeo API 오류: ${res.status} - ${await res.text()}`);
+    const data = await res.json();
+    folders = folders.concat(data.data || []);
+    url = data.paging?.next ? `https://api.vimeo.com${data.paging.next}` : null;
+  }
+  return folders;
 }
 
 // 특정 폴더의 영상 목록 가져오기
-async function fetchFolderVideos(folderId) {
+async function fetchFolderVideos(folderUri) {
   let videos = [];
-  let url = `https://api.vimeo.com/me/folders/${folderId}/videos?fields=uri,name,created_time&per_page=100&page=1`;
+  // folderUri 예: /users/12345678/projects/9876543
+  let url = `https://api.vimeo.com${folderUri}/videos?fields=uri,name,created_time&per_page=100&page=1`;
   while (url) {
     const res = await fetch(url, {
       headers: { Authorization: `bearer ${VIMEO_TOKEN}` }
@@ -1203,9 +1210,8 @@ window.syncVimeo = async () => {
     let total = 0;
 
     for (const folder of matchedFolders) {
-      const folderId = folder.uri.replace('/users/', '').replace('/projects/', '').split('/').pop();
       statusEl.textContent = `⏳ "${folder.name}" 폴더 확인 중...`;
-      const videos = await fetchFolderVideos(folderId);
+      const videos = await fetchFolderVideos(folder.uri);
 
       for (const v of videos) {
         const vimeoId = v.uri.replace('/videos/', '');
