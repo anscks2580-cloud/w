@@ -374,6 +374,7 @@
         <button class="filter-btn" onclick="selectMain('고등',this)">고등</button>
         <button class="filter-btn" onclick="selectMain('기출해설',this)">기출해설</button>
         <button class="filter-btn" onclick="selectMain('수리논술',this)">수리논술</button>
+        <button class="filter-btn" onclick="selectMain('보충강의실',this)">보충강의실</button>
       </div>
 
       <!-- 2단계: 중등 서브 (학년) -->
@@ -441,9 +442,28 @@
         <button class="filter-btn" onclick="selectYear('기출-고3-2022',this,'기출-고3')">2022</button>
         <button class="filter-btn" onclick="selectYear('기출-고3-2021',this,'기출-고3')">2021</button>
       </div>
+      <!-- 2단계: 보충강의실 서브 (관 선택) -->
+      <div class="filter-sub" id="sub-보충강의실">
+        <button class="filter-btn active" onclick="selectGrade('보충강의실-all',this,'보충강의실')">전체</button>
+        <button class="filter-btn" onclick="selectGrade('보충-평촌관',this,'보충강의실')">평촌관</button>
+        <button class="filter-btn" onclick="selectGrade('보충-산본관',this,'보충강의실')">산본관</button>
+      </div>
+      <!-- 3단계: 보충강의실 선생님 서브 -->
+      <div class="filter-sub filter-sub-teacher" id="sub-보충-평촌관">
+        <button class="filter-btn active" onclick="selectTeacher('보충-평촌관-all',this,'보충-평촌관')">전체</button>
+        <button class="filter-btn" onclick="selectTeacher('보충-평촌관-송우찬T',this,'보충-평촌관')">송우찬T</button>
+        <button class="filter-btn" onclick="selectTeacher('보충-평촌관-송문찬T',this,'보충-평촌관')">송문찬T</button>
+        <button class="filter-btn" onclick="selectTeacher('보충-평촌관-김영진T',this,'보충-평촌관')">김영진T</button>
+        <button class="filter-btn" onclick="selectTeacher('보충-평촌관-신민훈T',this,'보충-평촌관')">신민훈T</button>
+      </div>
+      <div class="filter-sub filter-sub-teacher" id="sub-보충-산본관">
+        <button class="filter-btn active" onclick="selectTeacher('보충-산본관-all',this,'보충-산본관')">전체</button>
+        <button class="filter-btn" onclick="selectTeacher('보충-산본관-송우찬T',this,'보충-산본관')">송우찬T</button>
+        <button class="filter-btn" onclick="selectTeacher('보충-산본관-송문찬T',this,'보충-산본관')">송문찬T</button>
+        <button class="filter-btn" onclick="selectTeacher('보충-산본관-공민정T',this,'보충-산본관')">공민정T</button>
+        <button class="filter-btn" onclick="selectTeacher('보충-산본관-장미현T',this,'보충-산본관')">장미현T</button>
+      </div>
     </div>
-
-    <div class="video-grid" id="videoGrid"></div>
 
   </div>
 </div>
@@ -577,11 +597,20 @@ function showLoginPrompt() {
 // 카테고리 → tag 매핑
 const EXAM_YEARS = ['2025','2024','2023','2022','2021'];
 
+const TEACHERS = {
+  '평촌관': ['송우찬T','송문찬T','김영진T','신민훈T'],
+  '산본관': ['송우찬T','송문찬T','공민정T','장미현T'],
+};
+
 const MAIN_TAGS = {
   '중등':    ['중1','중2','중3'],
   '고등':    ['공통수학1','공통수학2','대수','미적분','확통','미적분2','기하'],
   '기출해설': EXAM_YEARS.flatMap(y => ['고1','고2','고3'].map(g => `기출_${g}_${y}`)),
   '수리논술':['수리논술'],
+  '보충강의실': [
+    ...TEACHERS['평촌관'].map(t => `보충_평촌_${t}`),
+    ...TEACHERS['산본관'].map(t => `보충_산본_${t}`),
+  ],
 };
 const GRADE_TAGS = {
   '고1':    ['공통수학1','공통수학2'],
@@ -591,6 +620,9 @@ const GRADE_TAGS = {
   '기출-고1': EXAM_YEARS.map(y => `기출_고1_${y}`),
   '기출-고2': EXAM_YEARS.map(y => `기출_고2_${y}`),
   '기출-고3': EXAM_YEARS.map(y => `기출_고3_${y}`),
+  // 보충강의실 관별 전체
+  '보충-평촌관': TEACHERS['평촌관'].map(t => `보충_평촌_${t}`),
+  '보충-산본관': TEACHERS['산본관'].map(t => `보충_산본_${t}`),
 };
 // 기출해설 학년+년도 태그 (3단계 선택용)
 const EXAM_GRADE_YEAR_TAGS = {};
@@ -644,16 +676,15 @@ window.selectMain = function(main, btn) {
   renderVideos();
 };
 
-// 2단계: 학년 선택 (고등/기출해설 전용)
+// 2단계: 학년/관 선택
 window.selectGrade = function(grade, btn, main) {
-  // 같은 학년 바 안에서만 active 토글 (바 자체는 유지)
   const mainSub = document.getElementById('sub-' + main);
   if (mainSub) mainSub.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  // 기출해설: 년도 서브만 닫기 / 고등: 과목 서브만 닫기
   document.querySelectorAll('.filter-sub-year').forEach(el => el.classList.remove('open'));
   document.querySelectorAll('.filter-sub-subject').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.filter-sub-teacher').forEach(el => el.classList.remove('open'));
 
   if (grade.endsWith('-all')) {
     currentGrade = null;
@@ -679,6 +710,15 @@ window.selectYear = function(yearKey, btn, gradeKey) {
   renderVideos();
 };
 
+// 3단계: 선생님 선택 (보충강의실 전용)
+window.selectTeacher = function(teacherKey, btn, branchKey) {
+  const branchEl = document.getElementById('sub-' + branchKey);
+  if (branchEl) branchEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSub = teacherKey.endsWith('-all') ? null : teacherKey;
+  renderVideos();
+};
+
 // 3단계: 과목 선택
 window.selectSub = function(sub, btn, grade) {
   const gradeEl = document.getElementById('sub-' + grade);
@@ -699,8 +739,13 @@ function renderVideos() {
     list = myVideos;
   } else if (currentSub) {
     const examYearMatch = currentSub.match(/^기출-(고[123])-(\d{4})$/);
+    const teacherMatch  = currentSub.match(/^보충-(평촌관|산본관)-(.+)$/);
     if (examYearMatch) {
       const tag = `기출_${examYearMatch[1]}_${examYearMatch[2]}`;
+      list = myVideos.filter(v => v.tag === tag);
+    } else if (teacherMatch) {
+      const branch = teacherMatch[1] === '평촌관' ? '평촌' : '산본';
+      const tag = `보충_${branch}_${teacherMatch[2]}`;
       list = myVideos.filter(v => v.tag === tag);
     } else {
       list = myVideos.filter(v => v.tag === currentSub);

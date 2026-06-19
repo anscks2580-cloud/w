@@ -526,6 +526,18 @@
             <optgroup label="기타">
               <option value="수리논술">수리논술</option>
             </optgroup>
+            <optgroup label="보충강의실 — 평촌관">
+              <option value="보충_평촌_송우찬T">보충_평촌_송우찬T</option>
+              <option value="보충_평촌_송문찬T">보충_평촌_송문찬T</option>
+              <option value="보충_평촌_김영진T">보충_평촌_김영진T</option>
+              <option value="보충_평촌_신민훈T">보충_평촌_신민훈T</option>
+            </optgroup>
+            <optgroup label="보충강의실 — 산본관">
+              <option value="보충_산본_송우찬T">보충_산본_송우찬T</option>
+              <option value="보충_산본_송문찬T">보충_산본_송문찬T</option>
+              <option value="보충_산본_공민정T">보충_산본_공민정T</option>
+              <option value="보충_산본_장미현T">보충_산본_장미현T</option>
+            </optgroup>
           </select>
         </div>
         <div class="form-group"><label>날짜</label><input type="text" id="v-date" placeholder="2025.06"></div>
@@ -542,6 +554,7 @@
         <button class="btn btn-secondary btn-sm" data-vcat="고등" onclick="filterAdminVideos('고등',this)">고등</button>
         <button class="btn btn-secondary btn-sm" data-vcat="기출해설" onclick="filterAdminVideos('기출해설',this)">기출해설</button>
         <button class="btn btn-secondary btn-sm" data-vcat="수리논술" onclick="filterAdminVideos('수리논술',this)">수리논술</button>
+        <button class="btn btn-secondary btn-sm" data-vcat="보충강의실" onclick="filterAdminVideos('보충강의실',this)">보충강의실</button>
       </div>
       <div id="videoAdminList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
     </div>
@@ -909,6 +922,10 @@ async function loadVideos() {
 
 // 카테고리 그룹 정의
 const EXAM_YEARS = ['2025','2024','2023','2022','2021'];
+const TEACHERS_ADMIN = {
+  '평촌관': ['송우찬T','송문찬T','김영진T','신민훈T'],
+  '산본관': ['송우찬T','송문찬T','공민정T','장미현T'],
+};
 const VIDEO_GROUPS = [
   { label: '중등',              tags: ['중1','중2','중3'] },
   { label: '고등 — 고1',        tags: ['공통수학1','공통수학2'] },
@@ -917,9 +934,10 @@ const VIDEO_GROUPS = [
   ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고1 (${y})`, tags: [`기출_고1_${y}`] })),
   ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고2 (${y})`, tags: [`기출_고2_${y}`] })),
   ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고3 (${y})`, tags: [`기출_고3_${y}`] })),
-  // 구형 태그 호환
   { label: '기출해설 (구형 태그)', tags: ['기출_공통수학1','기출_공통수학2','기출_대수','기출_미적분','기출_확통','기출_미적분2','기출_기하','기출해설'] },
   { label: '수리논술',           tags: ['수리논술'] },
+  ...TEACHERS_ADMIN['평촌관'].map(t => ({ label: `보충강의실 — 평촌관 ${t}`, tags: [`보충_평촌_${t}`] })),
+  ...TEACHERS_ADMIN['산본관'].map(t => ({ label: `보충강의실 — 산본관 ${t}`, tags: [`보충_산본_${t}`] })),
   { label: '⚠️ 태그 없음 (미분류)', tags: ['', null, undefined] },
 ];
 const VIDEO_CAT_TAGS = {
@@ -927,10 +945,13 @@ const VIDEO_CAT_TAGS = {
   '고등':    ['공통수학1','공통수학2','대수','미적분','확통','미적분2','기하'],
   '기출해설': [
     ...EXAM_YEARS.flatMap(y => ['고1','고2','고3'].map(g => `기출_${g}_${y}`)),
-    // 구형 태그도 기출해설 필터에 포함
     '기출해설','기출_공통수학1','기출_공통수학2','기출_대수','기출_미적분','기출_확통','기출_미적분2','기출_기하',
   ],
   '수리논술':['수리논술'],
+  '보충강의실': [
+    ...TEACHERS_ADMIN['평촌관'].map(t => `보충_평촌_${t}`),
+    ...TEACHERS_ADMIN['산본관'].map(t => `보충_산본_${t}`),
+  ],
 };
 let currentVideoFilter = ''; // '' = 전체
 
@@ -967,6 +988,8 @@ function renderVideos() {
       { group:`기출해설 — 고3 (${y})`, value:`기출_고3_${y}` },
     ]),
     { group:'기타',           value:'수리논술' },
+    ...TEACHERS_ADMIN['평촌관'].map(t => ({ group:'보충강의실 — 평촌관', value:`보충_평촌_${t}` })),
+    ...TEACHERS_ADMIN['산본관'].map(t => ({ group:'보충강의실 — 산본관', value:`보충_산본_${t}` })),
   ];
 
   // 그룹별 optgroup HTML 생성
