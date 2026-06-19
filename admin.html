@@ -1110,73 +1110,120 @@ window.changeVideoTag = async (id) => {
   }
 };
 
-// ── Vimeo 동기화 ──
+// ── Vimeo 동기화 (폴더 기준) ──
 const VIMEO_TOKEN = '91f67f8f7f387216004dd35ec5136f8e';
 
-// 알려진 카테고리 태그 목록 (Vimeo 태그와 매칭용)
-const EXAM_YEARS_SYNC = ['2025','2024','2023','2022','2021','2026'];
-const KNOWN_TAGS = [
+const KNOWN_TAGS_SYNC = [
   '중1','중2','중3',
-  '공통수학1','공통수학2','대수','미적분','확통','미적분2','기하',
-  ...EXAM_YEARS_SYNC.flatMap(y => ['고1','고2','고3'].map(g => `기출_${g}_${y}`)),
+  // 공통수학1
+  '공통수학1_세쌍둥이개념_송우찬 원장T','공통수학1_세쌍둥이개념_송문찬 원장T','공통수학1_세쌍둥이개념_공민정T',
+  '공통수학1_세쌍둥이심화_송우찬 원장T','공통수학1_세쌍둥이심화_송문찬 원장T','공통수학1_세쌍둥이심화_공민정T',
+  '공통수학1_세쌍둥이라이트_송우찬 원장T','공통수학1_세쌍둥이라이트_송문찬 원장T','공통수학1_세쌍둥이라이트_공민정T',
+  '공통수학1_세쌍둥이파이널',
+  // 공통수학2
+  '공통수학2_세쌍둥이개념_송우찬 원장T','공통수학2_세쌍둥이개념_송문찬 원장T','공통수학2_세쌍둥이개념_공민정T',
+  '공통수학2_세쌍둥이심화_송우찬 원장T','공통수학2_세쌍둥이심화_송문찬 원장T','공통수학2_세쌍둥이심화_공민정T',
+  '공통수학2_세쌍둥이라이트_송우찬 원장T','공통수학2_세쌍둥이라이트_송문찬 원장T','공통수학2_세쌍둥이라이트_공민정T',
+  '공통수학2_세쌍둥이파이널',
+  // 대수
+  '대수_세쌍둥이개념_송우찬 원장T','대수_세쌍둥이개념_송문찬 원장T',
+  '대수_세쌍둥이심화_송우찬 원장T','대수_세쌍둥이심화_송문찬 원장T',
+  '대수_세쌍둥이라이트_송우찬 원장T','대수_세쌍둥이라이트_송문찬 원장T',
+  '대수_세쌍둥이파이널',
+  // 미적분
+  '미적분_세쌍둥이개념_송우찬 원장T','미적분_세쌍둥이개념_송문찬 원장T',
+  '미적분_세쌍둥이심화_송우찬 원장T','미적분_세쌍둥이심화_송문찬 원장T',
+  '미적분_세쌍둥이라이트_송우찬 원장T','미적분_세쌍둥이라이트_송문찬 원장T',
+  '미적분_세쌍둥이파이널',
+  // 확통
+  '확통_세쌍둥이개념_송우찬 원장T','확통_세쌍둥이개념_송문찬 원장T',
+  '확통_세쌍둥이파이널',
+  // 미적분2
+  '미적분2_세쌍둥이개념_송우찬 원장T','미적분2_세쌍둥이개념_송문찬 원장T',
+  '미적분2_세쌍둥이심화_송우찬 원장T','미적분2_세쌍둥이심화_송문찬 원장T',
+  '미적분2_세쌍둥이라이트_송우찬 원장T','미적분2_세쌍둥이라이트_송문찬 원장T',
+  '미적분2_세쌍둥이파이널',
+  // 기하
+  '기하_세쌍둥이개념_송우찬 원장T','기하_세쌍둥이개념_송문찬 원장T',
+  '기하_세쌍둥이파이널',
+  // 기출해설
+  '기출_고1_2025','기출_고1_2024','기출_고1_2023','기출_고1_2022','기출_고1_2021',
+  '기출_고2_2025','기출_고2_2024','기출_고2_2023','기출_고2_2022','기출_고2_2021',
+  '기출_고3_2025','기출_고3_2024','기출_고3_2023','기출_고3_2022','기출_고3_2021',
   '수리논술',
-  '보충_평촌_송우찬T','보충_평촌_송문찬T','보충_평촌_김영진T','보충_평촌_신민훈T',
-  '보충_산본_송우찬T','보충_산본_송문찬T','보충_산본_공민정T','보충_산본_장미현T',
+  '보충_평촌_송우찬 원장T','보충_평촌_송문찬 원장T','보충_평촌_김영진T','보충_평촌_신민훈T',
+  '보충_산본_송우찬 원장T','보충_산본_송문찬 원장T','보충_산본_공민정T','보충_산본_장미현T',
 ];
 
-let syncCandidates = []; // 저장 대기 영상 목록
+let syncCandidates = [];
 
-async function fetchAllVimeoVideos() {
+// Vimeo 폴더(folder) 목록 가져오기
+async function fetchVimeoFolders() {
+  const res = await fetch('https://api.vimeo.com/me/folders?per_page=100', {
+    headers: { Authorization: `bearer ${VIMEO_TOKEN}` }
+  });
+  if (!res.ok) throw new Error(`Vimeo API 오류: ${res.status}`);
+  const data = await res.json();
+  return data.data || [];
+}
+
+// 특정 폴더의 영상 목록 가져오기
+async function fetchFolderVideos(folderId) {
   let videos = [];
-  let url = 'https://api.vimeo.com/me/videos?fields=uri,name,tags,created_time&per_page=100&page=1';
+  let url = `https://api.vimeo.com/me/folders/${folderId}/videos?fields=uri,name,created_time&per_page=100&page=1`;
   while (url) {
     const res = await fetch(url, {
       headers: { Authorization: `bearer ${VIMEO_TOKEN}` }
     });
-    if (!res.ok) throw new Error(`Vimeo API 오류: ${res.status}`);
+    if (!res.ok) break;
     const data = await res.json();
-    videos = videos.concat(data.data);
+    videos = videos.concat(data.data || []);
     url = data.paging?.next ? `https://api.vimeo.com${data.paging.next}` : null;
   }
   return videos;
 }
 
 window.syncVimeo = async () => {
-  const statusEl = document.getElementById('syncStatus');
+  const statusEl  = document.getElementById('syncStatus');
   const previewEl = document.getElementById('syncPreview');
   previewEl.style.display = 'none';
-  statusEl.textContent = '⏳ Vimeo에서 영상 목록 불러오는 중...';
+  syncCandidates = [];
+  statusEl.textContent = '⏳ Vimeo 폴더 목록 불러오는 중...';
 
   try {
-    // Vimeo 전체 영상 불러오기
-    const vimeoVideos = await fetchAllVimeoVideos();
-    statusEl.textContent = `Vimeo 영상 ${vimeoVideos.length}개 확인됨. Firebase 비교 중...`;
+    const folders = await fetchVimeoFolders();
+    // 폴더명이 알려진 태그와 일치하는 것만
+    const matchedFolders = folders.filter(f => KNOWN_TAGS_SYNC.includes(f.name));
 
-    // Firebase 기존 영상 ID 목록
-    const existingIds = new Set(videosCache.map(v => v.vimeoId));
-
-    // 신규 영상 + 태그 매칭
-    syncCandidates = [];
-    for (const v of vimeoVideos) {
-      const vimeoId = v.uri.replace('/videos/', '');
-      if (existingIds.has(vimeoId)) continue; // 이미 등록된 영상 제외
-
-      // Vimeo 태그에서 카테고리 찾기
-      const vimeoTags = (v.tags || []).map(t => t.tag || t.name || '');
-      const matchedTag = vimeoTags.find(t => KNOWN_TAGS.includes(t)) || '';
-
-      const date = v.created_time ? v.created_time.slice(0, 7).replace('-', '.') : '';
-      syncCandidates.push({ vimeoId, title: v.name, tag: matchedTag, date });
-    }
-
-    if (!syncCandidates.length) {
-      statusEl.textContent = `✅ 새로 추가할 영상이 없습니다. (Vimeo ${vimeoVideos.length}개 전체 이미 등록됨)`;
+    if (!matchedFolders.length) {
+      statusEl.textContent = '⚠️ 카테고리명과 일치하는 Vimeo 폴더가 없습니다. 폴더명을 확인해주세요.';
       return;
     }
 
-    // 미리보기 렌더
+    const existingIds = new Set(videosCache.map(v => v.vimeoId));
+    let total = 0;
+
+    for (const folder of matchedFolders) {
+      const folderId = folder.uri.replace('/users/', '').replace('/projects/', '').split('/').pop();
+      statusEl.textContent = `⏳ "${folder.name}" 폴더 확인 중...`;
+      const videos = await fetchFolderVideos(folderId);
+
+      for (const v of videos) {
+        const vimeoId = v.uri.replace('/videos/', '');
+        if (existingIds.has(vimeoId)) continue;
+        const date = v.created_time ? v.created_time.slice(0,7).replace('-','.') : '';
+        syncCandidates.push({ vimeoId, title: v.name, tag: folder.name, date });
+        total++;
+      }
+    }
+
+    if (!syncCandidates.length) {
+      statusEl.textContent = `✅ 새로 추가할 영상이 없습니다. (${matchedFolders.length}개 폴더 확인 완료)`;
+      return;
+    }
+
     statusEl.textContent = '';
-    renderSyncPreview();
+    renderSyncPreview(matchedFolders.length);
 
   } catch(e) {
     statusEl.textContent = '';
@@ -1184,56 +1231,50 @@ window.syncVimeo = async () => {
   }
 };
 
-function renderSyncPreview() {
-  const previewEl  = document.getElementById('syncPreview');
-  const titleEl    = document.getElementById('syncPreviewTitle');
-  const listEl     = document.getElementById('syncPreviewList');
+function renderSyncPreview(folderCount) {
+  const previewEl = document.getElementById('syncPreview');
+  const titleEl   = document.getElementById('syncPreviewTitle');
+  const listEl    = document.getElementById('syncPreviewList');
 
-  const noTag = syncCandidates.filter(v => !v.tag).length;
-  titleEl.innerHTML = `신규 영상 <b>${syncCandidates.length}개</b> 발견
-    ${noTag ? `<span style="color:#ff9090;margin-left:8px;">⚠️ 태그 미매칭 ${noTag}개 (저장 전 태그 선택 필요)</span>` : ''}`;
+  titleEl.innerHTML = `${folderCount}개 폴더에서 신규 영상 <b>${syncCandidates.length}개</b> 발견`;
 
-  // optgroup html 재활용
-  const tagOptHtml = KNOWN_TAGS.map(t => `<option value="${t}">${t}</option>`).join('');
+  // 태그별 그룹핑
+  const groups = {};
+  syncCandidates.forEach((v, i) => {
+    if (!groups[v.tag]) groups[v.tag] = [];
+    groups[v.tag].push({ ...v, idx: i });
+  });
 
-  listEl.innerHTML = syncCandidates.map((v, i) => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;">
-      <span style="font-size:12px;color:var(--muted);min-width:16px;">${i+1}</span>
-      <span style="flex:1;font-size:13px;min-width:160px;">${v.title}</span>
-      <span style="font-size:11px;color:var(--muted);">${v.date}</span>
-      <select id="sync-tag-${i}" style="padding:4px 8px;background:#1A1230;border:1px solid ${v.tag ? 'rgba(255,255,255,0.15)' : '#ff6060'};border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
-        <option value="">-- 태그 선택 --</option>
-        ${tagOptHtml}
-      </select>
+  listEl.innerHTML = Object.entries(groups).map(([tag, items]) => `
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;
+        padding:5px 0;border-bottom:1px solid rgba(240,192,64,0.2);margin-bottom:4px;">
+        ${tag} <span style="font-weight:400;color:var(--muted);">${items.length}개</span>
+      </div>
+      ${items.map(v => `
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 4px;
+          border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;">
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title}</span>
+          <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date}</span>
+        </div>`).join('')}
     </div>
   `).join('');
-
-  // 태그 초기값 세팅
-  syncCandidates.forEach((v, i) => {
-    const sel = document.getElementById(`sync-tag-${i}`);
-    if (sel && v.tag) sel.value = v.tag;
-  });
 
   previewEl.style.display = 'block';
 }
 
 window.syncSaveAll = async () => {
   const today = new Date().toISOString().slice(0,7).replace('-','.');
-  let saved = 0, skipped = 0;
+  let saved = 0;
 
-  for (let i = 0; i < syncCandidates.length; i++) {
-    const v = syncCandidates[i];
-    const sel = document.getElementById(`sync-tag-${i}`);
-    const tag = sel ? sel.value : v.tag;
-    if (!tag) { skipped++; continue; }
-
+  for (const v of syncCandidates) {
     try {
       await setDoc(doc(db, 'videos', v.vimeoId), {
         vimeoId: v.vimeoId,
-        title: v.title,
-        tag,
-        date: v.date || today,
-        order: null,
+        title:   v.title,
+        tag:     v.tag,
+        date:    v.date || today,
+        order:   null,
         createdAt: new Date().toISOString(),
       });
       saved++;
@@ -1244,7 +1285,7 @@ window.syncSaveAll = async () => {
 
   document.getElementById('syncPreview').style.display = 'none';
   document.getElementById('syncStatus').textContent = '';
-  showMsg('syncMsg', `✅ ${saved}개 저장 완료${skipped ? ` / 태그 없는 ${skipped}개 건너뜀` : ''}`, 'success');
+  showMsg('syncMsg', `✅ ${saved}개 저장 완료`, 'success');
   await loadVideos();
 };
 
