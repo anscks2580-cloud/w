@@ -361,18 +361,18 @@
         <button class="filter-btn" onclick="selectGrade('고3',this,'고등')">고3</button>
       </div>
       <!-- 3단계: 고등 과목 서브 -->
-      <div class="filter-sub" id="sub-고1">
+      <div class="filter-sub filter-sub-subject" id="sub-고1">
         <button class="filter-btn active" onclick="selectSub('고1-all',this,'고1')">전체</button>
         <button class="filter-btn" onclick="selectSub('공통수학1',this,'고1')">공통수학1</button>
         <button class="filter-btn" onclick="selectSub('공통수학2',this,'고1')">공통수학2</button>
       </div>
-      <div class="filter-sub" id="sub-고2">
+      <div class="filter-sub filter-sub-subject" id="sub-고2">
         <button class="filter-btn active" onclick="selectSub('고2-all',this,'고2')">전체</button>
         <button class="filter-btn" onclick="selectSub('대수',this,'고2')">대수</button>
         <button class="filter-btn" onclick="selectSub('미적분',this,'고2')">미적분</button>
         <button class="filter-btn" onclick="selectSub('확통',this,'고2')">확통</button>
       </div>
-      <div class="filter-sub" id="sub-고3">
+      <div class="filter-sub filter-sub-subject" id="sub-고3">
         <button class="filter-btn active" onclick="selectSub('고3-all',this,'고3')">전체</button>
         <button class="filter-btn" onclick="selectSub('미적분2',this,'고3')">미적분2</button>
         <button class="filter-btn" onclick="selectSub('기하',this,'고3')">기하</button>
@@ -385,22 +385,30 @@
         <button class="filter-btn" onclick="selectGrade('기출-고2',this,'기출해설')">고2</button>
         <button class="filter-btn" onclick="selectGrade('기출-고3',this,'기출해설')">고3</button>
       </div>
-      <!-- 3단계: 기출해설 과목 서브 -->
-      <div class="filter-sub" id="sub-기출-고1">
-        <button class="filter-btn active" onclick="selectSub('기출-고1-all',this,'기출-고1')">전체</button>
-        <button class="filter-btn" onclick="selectSub('기출_공통수학1',this,'기출-고1')">공통수학1</button>
-        <button class="filter-btn" onclick="selectSub('기출_공통수학2',this,'기출-고1')">공통수학2</button>
+      <!-- 3단계: 기출해설 년도 서브 -->
+      <div class="filter-sub filter-sub-year" id="sub-기출-고1">
+        <button class="filter-btn active" onclick="selectYear('기출-고1-all',this,'기출-고1')">전체</button>
+        <button class="filter-btn" onclick="selectYear('기출-고1-2025',this,'기출-고1')">2025</button>
+        <button class="filter-btn" onclick="selectYear('기출-고1-2024',this,'기출-고1')">2024</button>
+        <button class="filter-btn" onclick="selectYear('기출-고1-2023',this,'기출-고1')">2023</button>
+        <button class="filter-btn" onclick="selectYear('기출-고1-2022',this,'기출-고1')">2022</button>
+        <button class="filter-btn" onclick="selectYear('기출-고1-2021',this,'기출-고1')">2021</button>
       </div>
-      <div class="filter-sub" id="sub-기출-고2">
-        <button class="filter-btn active" onclick="selectSub('기출-고2-all',this,'기출-고2')">전체</button>
-        <button class="filter-btn" onclick="selectSub('기출_대수',this,'기출-고2')">대수</button>
-        <button class="filter-btn" onclick="selectSub('기출_미적분',this,'기출-고2')">미적분</button>
-        <button class="filter-btn" onclick="selectSub('기출_확통',this,'기출-고2')">확통</button>
+      <div class="filter-sub filter-sub-year" id="sub-기출-고2">
+        <button class="filter-btn active" onclick="selectYear('기출-고2-all',this,'기출-고2')">전체</button>
+        <button class="filter-btn" onclick="selectYear('기출-고2-2025',this,'기출-고2')">2025</button>
+        <button class="filter-btn" onclick="selectYear('기출-고2-2024',this,'기출-고2')">2024</button>
+        <button class="filter-btn" onclick="selectYear('기출-고2-2023',this,'기출-고2')">2023</button>
+        <button class="filter-btn" onclick="selectYear('기출-고2-2022',this,'기출-고2')">2022</button>
+        <button class="filter-btn" onclick="selectYear('기출-고2-2021',this,'기출-고2')">2021</button>
       </div>
-      <div class="filter-sub" id="sub-기출-고3">
-        <button class="filter-btn active" onclick="selectSub('기출-고3-all',this,'기출-고3')">전체</button>
-        <button class="filter-btn" onclick="selectSub('기출_미적분2',this,'기출-고3')">미적분2</button>
-        <button class="filter-btn" onclick="selectSub('기출_기하',this,'기출-고3')">기하</button>
+      <div class="filter-sub filter-sub-year" id="sub-기출-고3">
+        <button class="filter-btn active" onclick="selectYear('기출-고3-all',this,'기출-고3')">전체</button>
+        <button class="filter-btn" onclick="selectYear('기출-고3-2025',this,'기출-고3')">2025</button>
+        <button class="filter-btn" onclick="selectYear('기출-고3-2024',this,'기출-고3')">2024</button>
+        <button class="filter-btn" onclick="selectYear('기출-고3-2023',this,'기출-고3')">2023</button>
+        <button class="filter-btn" onclick="selectYear('기출-고3-2022',this,'기출-고3')">2022</button>
+        <button class="filter-btn" onclick="selectYear('기출-고3-2021',this,'기출-고3')">2021</button>
       </div>
     </div>
 
@@ -536,26 +544,36 @@ function showLoginPrompt() {
 }
 
 // 카테고리 → tag 매핑
+const EXAM_YEARS = ['2025','2024','2023','2022','2021'];
+
 const MAIN_TAGS = {
   '중등':    ['중1','중2','중3'],
   '고등':    ['공통수학1','공통수학2','대수','미적분','확통','미적분2','기하'],
-  '기출해설':['기출_공통수학1','기출_공통수학2','기출_대수','기출_미적분','기출_확통','기출_미적분2','기출_기하'],
+  '기출해설': EXAM_YEARS.flatMap(y => ['고1','고2','고3'].map(g => `기출_${g}_${y}`)),
   '수리논술':['수리논술'],
 };
 const GRADE_TAGS = {
   '고1':    ['공통수학1','공통수학2'],
   '고2':    ['대수','미적분','확통'],
   '고3':    ['미적분2','기하'],
-  '기출-고1':['기출_공통수학1','기출_공통수학2'],
-  '기출-고2':['기출_대수','기출_미적분','기출_확통'],
-  '기출-고3':['기출_미적분2','기출_기하'],
+  // 기출해설 학년별 전체 (년도 무관)
+  '기출-고1': EXAM_YEARS.map(y => `기출_고1_${y}`),
+  '기출-고2': EXAM_YEARS.map(y => `기출_고2_${y}`),
+  '기출-고3': EXAM_YEARS.map(y => `기출_고3_${y}`),
 };
+// 기출해설 학년+년도 태그 (3단계 선택용)
+const EXAM_GRADE_YEAR_TAGS = {};
+['고1','고2','고3'].forEach(g => {
+  EXAM_YEARS.forEach(y => {
+    EXAM_GRADE_YEAR_TAGS[`기출-${g}-${y}`] = [`기출_${g}_${y}`];
+  });
+});
 
 let currentMain  = 'all';
 let currentGrade = null; // 학년 선택 (고1/고2/고3 등)
 let currentSub   = null; // 최하위 과목 선택
 
-// 모든 서브 패널 닫기
+// 모든 서브 패널 닫기 (메인 카테고리 변경 시)
 function closeAllSubs() {
   document.querySelectorAll('.filter-sub').forEach(el => el.classList.remove('open'));
 }
@@ -568,6 +586,8 @@ window.selectMain = function(main, btn) {
   currentGrade = null;
   currentSub   = null;
   closeAllSubs();
+  document.querySelectorAll('.filter-sub-year').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.filter-sub-subject').forEach(el => el.classList.remove('open'));
   const subEl = document.getElementById('sub-' + main);
   if (subEl) {
     subEl.classList.add('open');
@@ -578,15 +598,14 @@ window.selectMain = function(main, btn) {
 
 // 2단계: 학년 선택 (고등/기출해설 전용)
 window.selectGrade = function(grade, btn, main) {
+  // 같은 학년 바 안에서만 active 토글 (바 자체는 유지)
   const mainSub = document.getElementById('sub-' + main);
   if (mainSub) mainSub.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  // 이전 3단계 서브 닫기
-  ['고1','고2','고3','기출-고1','기출-고2','기출-고3'].forEach(g => {
-    const el = document.getElementById('sub-' + g);
-    if (el) el.classList.remove('open');
-  });
+  // 기출해설: 년도 서브만 닫기 / 고등: 과목 서브만 닫기
+  document.querySelectorAll('.filter-sub-year').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.filter-sub-subject').forEach(el => el.classList.remove('open'));
 
   if (grade.endsWith('-all')) {
     currentGrade = null;
@@ -600,6 +619,15 @@ window.selectGrade = function(grade, btn, main) {
       gradeEl.querySelectorAll('.filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
     }
   }
+  renderVideos();
+};
+
+// 3단계: 년도 선택 (기출해설 전용)
+window.selectYear = function(yearKey, btn, gradeKey) {
+  const gradeEl = document.getElementById('sub-' + gradeKey);
+  if (gradeEl) gradeEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSub = yearKey.endsWith('-all') ? null : yearKey;
   renderVideos();
 };
 
@@ -621,7 +649,14 @@ function renderVideos() {
   if (currentMain === 'all') {
     list = myVideos;
   } else if (currentSub) {
-    list = myVideos.filter(v => v.tag === currentSub);
+    // 기출해설 년도 선택: e.g. currentSub = '기출-고1-2025'
+    const examYearMatch = currentSub.match(/^기출-(고[123])-(\d{4})$/);
+    if (examYearMatch) {
+      const tag = `기출_${examYearMatch[1]}_${examYearMatch[2]}`;
+      list = myVideos.filter(v => v.tag === tag);
+    } else {
+      list = myVideos.filter(v => v.tag === currentSub);
+    }
   } else if (currentGrade) {
     const tags = GRADE_TAGS[currentGrade] || [];
     list = myVideos.filter(v => tags.includes(v.tag));
