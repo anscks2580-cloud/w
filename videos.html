@@ -336,30 +336,32 @@
     </div>
 
     <!-- 검색 -->
-    <div style="margin-bottom:16px;position:relative;">
-      <input
-        id="videoSearch"
-        type="text"
-        placeholder="강의 제목 검색..."
-        oninput="onSearch()"
-        style="
-          width:100%; box-sizing:border-box;
-          padding:11px 44px 11px 18px;
-          background:rgba(255,255,255,0.04);
-          border:1px solid var(--border-soft);
-          border-radius:100px;
-          color:var(--off-white);
-          font-size:14px; font-family:inherit;
-          outline:none; transition:border-color 0.2s;
-        "
-        onfocus="this.style.borderColor='var(--gold)'"
-        onblur="this.style.borderColor=''"
-      >
-      <span id="searchClearBtn" onclick="clearSearch()" style="
-        display:none; position:absolute; right:16px; top:50%; transform:translateY(-50%);
-        color:var(--muted); cursor:pointer; font-size:16px; line-height:1;
-      ">✕</span>
-      <svg style="position:absolute;left:16px;top:50%;transform:translateY(-50%);pointer-events:none;display:none;" id="searchIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <div style="margin-bottom:16px;display:flex;justify-content:flex-start;">
+      <div style="position:relative;width:30%;">
+        <svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input
+          id="videoSearch"
+          type="text"
+          placeholder="강의 제목 검색..."
+          oninput="onSearch()"
+          style="
+            width:100%; box-sizing:border-box;
+            padding:9px 36px 9px 36px;
+            background:rgba(255,255,255,0.04);
+            border:1px solid var(--border-soft);
+            border-radius:100px;
+            color:var(--off-white);
+            font-size:13px; font-family:inherit;
+            outline:none; transition:border-color 0.2s;
+          "
+          onfocus="this.style.borderColor='var(--gold)'"
+          onblur="this.style.borderColor=''"
+        >
+        <span id="searchClearBtn" onclick="clearSearch()" style="
+          display:none; position:absolute; right:13px; top:50%; transform:translateY(-50%);
+          color:var(--muted); cursor:pointer; font-size:14px; line-height:1;
+        ">✕</span>
+      </div>
     </div>
     <!-- 검색 결과 안내 -->
     <div id="searchResultInfo" style="display:none;font-size:12px;color:var(--gold);margin-bottom:12px;padding:0 4px;"></div>
