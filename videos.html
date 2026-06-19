@@ -63,71 +63,69 @@
   font-size: 12px;
 }
 
-/* ── 영상 그리드 ── */
+/* ── 영상 리스트 ── */
 .video-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 카테고리 그룹 헤더 */
+.video-group-header {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--gold);
+  padding: 20px 0 8px;
+  border-bottom: 1px solid rgba(240,192,64,0.2);
+  margin-bottom: 2px;
 }
 
 .video-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
   cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s;
+  transition: background 0.15s;
+  border-radius: 6px;
 }
 
 .video-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(240,192,64,0.4);
+  background: rgba(240,192,64,0.06);
 }
 
-.video-thumb {
-  position: relative;
-  padding-bottom: 56.25%;
-  background: #0D0920;
-  overflow: hidden;
+/* 순서 번호 */
+.video-order {
+  font-size: 12px; font-weight: 700;
+  color: var(--gold);
+  min-width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
-.video-thumb img {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s;
-}
-
-.video-card:hover .video-thumb img { transform: scale(1.04); }
-
-.play-overlay {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(26,18,48,0.45);
-  transition: background 0.2s;
-}
-
-.video-card:hover .play-overlay { background: rgba(26,18,48,0.25); }
-
-.play-btn {
-  width: 52px; height: 52px;
-  background: var(--gold);
+/* 재생 아이콘 */
+.video-play-icon {
+  width: 30px; height: 30px;
+  background: rgba(240,192,64,0.12);
+  border: 1px solid rgba(240,192,64,0.3);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  transition: transform 0.15s;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
 }
-
-.video-card:hover .play-btn { transform: scale(1.1); }
-
-.play-icon {
-  width: 0; height: 0;
-  border-top: 9px solid transparent;
-  border-bottom: 9px solid transparent;
-  border-left: 15px solid var(--bg);
-  margin-left: 3px;
+.video-card:hover .video-play-icon {
+  background: var(--gold);
+  border-color: var(--gold);
 }
+.video-play-icon svg { transition: stroke 0.15s; }
+.video-card:hover .video-play-icon svg { stroke: var(--bg); }
 
-.video-info { padding: 18px 20px 22px; }
+.video-info {
+  flex: 1;
+  min-width: 0;
+}
 
 .video-tag {
   display: inline-block;
@@ -135,16 +133,17 @@
   letter-spacing: 1px; text-transform: uppercase;
   color: var(--gold);
   background: var(--gold-glow);
-  padding: 3px 9px; border-radius: 4px;
-  margin-bottom: 10px;
+  padding: 2px 7px; border-radius: 4px;
+  margin-bottom: 4px;
 }
 
 .video-title {
-  font-size: 15px; font-weight: 500;
-  line-height: 1.5; margin-bottom: 8px;
+  font-size: 14px; font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-.video-date { font-size: 12px; color: var(--muted); }
+.video-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
 /* ── 모달 ── */
 .modal-overlay {
@@ -731,6 +730,13 @@ function renderVideos() {
     return;
   }
 
+  // order 기준 정렬 (없으면 맨 뒤)
+  list = [...list].sort((a, b) => {
+    const oa = a.order != null ? Number(a.order) : 9999;
+    const ob = b.order != null ? Number(b.order) : 9999;
+    return oa - ob;
+  });
+
   // 검색어 하이라이트 함수
   function highlight(text) {
     if (!q) return text;
@@ -741,20 +747,44 @@ function renderVideos() {
       + text.slice(idx + q.length);
   }
 
-  grid.innerHTML = list.map(v => `
+  // 검색 중이면 그룹 없이 평탄 렌더, 아니면 태그별 그룹
+  if (q) {
+    grid.innerHTML = list.map((v, i) => renderRow(v, i + 1, highlight)).join('');
+  } else {
+    // 태그 순서대로 그룹핑
+    const groups = [];
+    const seen = new Map();
+    list.forEach(v => {
+      const tag = v.tag || '미분류';
+      if (!seen.has(tag)) { seen.set(tag, []); groups.push(tag); }
+      seen.get(tag).push(v);
+    });
+    let html = '';
+    groups.forEach(tag => {
+      const items = seen.get(tag);
+      html += `<div class="video-group-header">${tag} <span style="font-weight:400;color:var(--muted);font-size:10px;">${items.length}개</span></div>`;
+      html += items.map((v, i) => renderRow(v, i + 1, highlight)).join('');
+    });
+    grid.innerHTML = html;
+  }
+}
+
+function renderRow(v, idx, highlight) {
+  return `
     <div class="video-card" onclick="openModal('${v.vimeoId}','${(v.title||'').replace(/'/g,"\\'")}')">
-      <div class="video-thumb">
-        <img src="https://vumbnail.com/${v.vimeoId}.jpg" alt="${v.title}" loading="lazy"
-             onerror="this.src='https://i.vimeocdn.com/video/${v.vimeoId}_640.jpg'">
-        <div class="play-overlay"><div class="play-btn"><div class="play-icon"></div></div></div>
+      <span class="video-order">${v.order != null ? v.order : idx}</span>
+      <div class="video-play-icon">
+        <svg width="10" height="12" viewBox="0 0 10 12" fill="none" stroke="var(--gold)" stroke-width="0" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 1L9 6L1 11V1Z" fill="var(--gold)"/>
+        </svg>
       </div>
       <div class="video-info">
-        <span class="video-tag">${v.tag}</span>
         <div class="video-title">${highlight(v.title || '')}</div>
         <div class="video-date">${v.date || ''}</div>
       </div>
+      <span class="video-tag" style="margin-bottom:0;flex-shrink:0;">${v.tag || ''}</span>
     </div>
-  `).join('');
+  `;
 }
 
 window.openModal = function(id, title) {

@@ -990,28 +990,41 @@ function renderVideos() {
   // 그룹별로 묶어서 렌더
   const allKnownTags = VIDEO_GROUPS.flatMap(g => g.tags).filter(t => t);
   let html = '';
+  // order 기준 정렬
   VIDEO_GROUPS.forEach(group => {
     if (allowedTags && !group.tags.some(t => allowedTags.includes(t))) return;
     let items;
     if (group.tags.includes('') || group.tags.includes(null)) {
-      // 태그 없음 그룹: 알려진 태그 외의 것 전부
       items = filtered.filter(v => !allKnownTags.includes(v.tag));
     } else {
       items = filtered.filter(v => group.tags.includes(v.tag));
     }
     if (!items.length) return;
+    // order 정렬
+    items = [...items].sort((a, b) => {
+      const oa = a.order != null ? Number(a.order) : 9999;
+      const ob = b.order != null ? Number(b.order) : 9999;
+      return oa - ob;
+    });
     html += `<div style="margin-bottom:20px;">
       <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;
         text-transform:uppercase;padding:6px 0;border-bottom:1px solid rgba(240,192,64,0.2);
         margin-bottom:8px;">${group.label} <span style="font-weight:400;color:var(--muted);">(${items.length}개)</span></div>
       ${items.map(v => `
-        <div class="assign-item" style="flex-wrap:wrap;gap:8px;">
+        <div class="assign-item" style="flex-wrap:wrap;gap:8px;align-items:center;">
+          <input id="order-${v.id}" type="number" min="1" value="${v.order != null ? v.order : ''}"
+            placeholder="순서"
+            style="width:58px;padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
+              border-radius:6px;color:var(--gold);font-size:12px;font-family:inherit;text-align:center;
+              -moz-appearance:textfield;color-scheme:dark;"
+            title="표시 순서 번호 입력 후 저장 버튼 클릭">
           <span class="assign-title" style="min-width:160px;">${v.title}</span>
           <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date||''}</span>
           <select id="tag-sel-${v.id}" style="padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;color-scheme:dark;">
             ${optgroupHtml}
           </select>
-          <button class="btn btn-secondary btn-sm" onclick="changeVideoTag('${v.id}')">변경</button>
+          <button class="btn btn-secondary btn-sm" onclick="saveOrder('${v.id}')">순서저장</button>
+          <button class="btn btn-secondary btn-sm" onclick="changeVideoTag('${v.id}')">태그변경</button>
           <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')">삭제</button>
         </div>`).join('')}
     </div>`;
@@ -1024,6 +1037,20 @@ function renderVideos() {
     if (sel) sel.value = v.tag;
   });
 }
+
+window.saveOrder = async (id) => {
+  const input = document.getElementById('order-' + id);
+  if (!input) return;
+  const val = input.value.trim();
+  const orderNum = val === '' ? null : Number(val);
+  try {
+    await updateDoc(doc(db, 'videos', id), { order: orderNum });
+    showMsg('videoMsg', `✅ 순서가 ${orderNum != null ? orderNum + '번' : '미지정'}으로 저장되었습니다.`, 'success');
+    await loadVideos();
+  } catch(e) {
+    showMsg('videoMsg', '오류: ' + e.message, 'error');
+  }
+};
 
 window.changeVideoTag = async (id) => {
   const sel = document.getElementById('tag-sel-' + id);
