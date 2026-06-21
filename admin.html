@@ -1037,15 +1037,10 @@ function renderVideos() {
 
   // 일괄 처리 툴바
   html += `
-    <div id="bulkToolbar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;
       padding:10px 14px;background:rgba(240,192,64,0.06);border:1px solid rgba(240,192,64,0.2);
       border-radius:8px;margin-bottom:12px;">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-        <input type="checkbox" id="checkAll" onchange="toggleCheckAll(this)"
-          style="width:15px;height:15px;cursor:pointer;accent-color:var(--gold);">
-        전체선택
-      </label>
-      <span id="checkedCount" style="font-size:12px;color:var(--gold);min-width:50px;"></span>
+      <span id="checkedCount" style="font-size:12px;color:var(--gold);min-width:60px;"></span>
       <select id="bulkTagSel" style="padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
         border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
         <option value="">-- 일괄 카테고리 선택 --</option>
@@ -1055,7 +1050,7 @@ function renderVideos() {
       <button class="btn btn-danger btn-sm" onclick="bulkDelete()">일괄 삭제</button>
     </div>`;
 
-  // order 기준 정렬
+  // 그룹별 아코디언
   VIDEO_GROUPS.forEach(group => {
     if (allowedTags && !group.tags.some(t => allowedTags.includes(t))) return;
     let items;
@@ -1070,30 +1065,48 @@ function renderVideos() {
       const ob = b.order != null ? Number(b.order) : 9999;
       return oa - ob;
     });
-    html += `<div style="margin-bottom:20px;">
-      <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;
-        text-transform:uppercase;padding:6px 0;border-bottom:1px solid rgba(240,192,64,0.2);
-        margin-bottom:8px;">${group.label} <span style="font-weight:400;color:var(--muted);">(${items.length}개)</span></div>
-      ${items.map(v => `
-        <div class="assign-item" style="flex-wrap:wrap;gap:8px;align-items:center;">
-          <input type="checkbox" class="video-check" data-id="${v.id}"
-            onchange="updateCheckedCount()"
-            style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:var(--gold);">
-          <input id="order-${v.id}" type="number" min="1" value="${v.order != null ? v.order : ''}"
-            placeholder="순서"
-            style="width:58px;padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
-              border-radius:6px;color:var(--gold);font-size:12px;font-family:inherit;text-align:center;
-              -moz-appearance:textfield;color-scheme:dark;">
-          <span class="assign-title" style="min-width:160px;">${v.title}</span>
-          <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date||''}</span>
-          <select id="tag-sel-${v.id}" style="padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;color-scheme:dark;">
-            ${optgroupHtml}
-          </select>
-          <button class="btn btn-secondary btn-sm" onclick="saveOrder('${v.id}')">순서저장</button>
-          <button class="btn btn-secondary btn-sm" onclick="changeVideoTag('${v.id}')">태그변경</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')">삭제</button>
-        </div>`).join('')}
-    </div>`;
+
+    const groupId = 'vgrp-' + group.label.replace(/[^a-zA-Z0-9가-힣]/g,'_');
+
+    html += `
+      <div style="margin-bottom:8px;border:1px solid rgba(255,255,255,0.07);border-radius:8px;overflow:hidden;">
+        <!-- 그룹 헤더 -->
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+          background:rgba(255,255,255,0.03);cursor:pointer;"
+          onclick="toggleAdminGroup('${groupId}')">
+          <input type="checkbox" class="group-check" data-group="${groupId}"
+            onclick="event.stopPropagation();toggleGroupCheck(this,'${groupId}')"
+            style="width:15px;height:15px;cursor:pointer;accent-color:var(--gold);flex-shrink:0;">
+          <span style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;
+            text-transform:uppercase;flex:1;">${group.label}</span>
+          <span style="font-size:11px;color:var(--muted);">${items.length}개</span>
+          <span id="arrow-${groupId}" style="color:var(--gold);font-size:11px;transition:transform 0.2s;">▼</span>
+        </div>
+        <!-- 그룹 내용 (기본 접힘) -->
+        <div id="${groupId}" style="display:none;">
+          ${items.map(v => `
+            <div class="assign-item" style="flex-wrap:wrap;gap:8px;align-items:center;
+              border-top:1px solid rgba(255,255,255,0.04);">
+              <input type="checkbox" class="video-check" data-id="${v.id}" data-group="${groupId}"
+                onchange="updateCheckedCount()"
+                style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:var(--gold);">
+              <input id="order-${v.id}" type="number" min="1" value="${v.order != null ? v.order : ''}"
+                placeholder="순서"
+                style="width:52px;padding:4px 6px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
+                  border-radius:6px;color:var(--gold);font-size:12px;font-family:inherit;text-align:center;
+                  -moz-appearance:textfield;color-scheme:dark;">
+              <span class="assign-title" style="flex:1;min-width:120px;">${v.title}</span>
+              <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date||''}</span>
+              <select id="tag-sel-${v.id}" style="padding:4px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
+                border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;color-scheme:dark;">
+                ${optgroupHtml}
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="saveOrder('${v.id}')">순서저장</button>
+              <button class="btn btn-secondary btn-sm" onclick="changeVideoTag('${v.id}')">태그변경</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')">삭제</button>
+            </div>`).join('')}
+        </div>
+      </div>`;
   });
   el.innerHTML = html;
 
@@ -1104,9 +1117,27 @@ function renderVideos() {
   });
 }
 
-// ── 일괄 처리 ──
-window.toggleCheckAll = (master) => {
-  document.querySelectorAll('.video-check').forEach(cb => cb.checked = master.checked);
+// ── 그룹 아코디언 ──
+window.toggleAdminGroup = (groupId) => {
+  const el    = document.getElementById(groupId);
+  const arrow = document.getElementById('arrow-' + groupId);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+};
+
+// 그룹 헤더 체크박스 — 해당 그룹 전체 선택/해제
+window.toggleGroupCheck = (master, groupId) => {
+  const el = document.getElementById(groupId);
+  if (el && el.style.display === 'none') {
+    // 접혀있으면 먼저 펼치기
+    el.style.display = 'block';
+    const arrow = document.getElementById('arrow-' + groupId);
+    if (arrow) arrow.style.transform = 'rotate(180deg)';
+  }
+  document.querySelectorAll(`.video-check[data-group="${groupId}"]`)
+    .forEach(cb => { cb.checked = master.checked; });
   updateCheckedCount();
 };
 
