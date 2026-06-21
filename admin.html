@@ -1225,41 +1225,98 @@ function initBulkTagSearch() {
   renderBulkTagOptions('');
 }
 
+// 계층 구조 태그 목록
+const BULK_TAG_TREE = [
+  { grade:'고1', subjects:['공통수학1','공통수학2'] },
+  { grade:'고2', subjects:['대수','미적분'] },
+  { grade:'고3', subjects:['확통','기하','미적분2'] },
+];
+const BOOKS_WT = ['세쌍둥이개념','세쌍둥이심화','세쌍둥이라이트'];
+const TEACHERS_TREE = {
+  '공통수학1':['송우찬 원장T','송문찬 원장T','공민정T'],
+  '공통수학2':['송우찬 원장T','송문찬 원장T','공민정T'],
+  '대수':['송우찬 원장T','송문찬 원장T'],
+  '미적분':['송우찬 원장T','송문찬 원장T'],
+  '확통':['송우찬 원장T','송문찬 원장T'],
+  '미적분2':['송우찬 원장T','송문찬 원장T'],
+  '기하':['송우찬 원장T','송문찬 원장T'],
+};
+const BOOKS_NO_T_TREE = '세쌍둥이파이널';
+const BOOKS_LIMITED = { '확통':['세쌍둥이개념'], '기하':['세쌍둥이개념'] };
+
+function buildTagTree() {
+  const items = [];
+  for (const { grade, subjects } of BULK_TAG_TREE) {
+    items.push({ label: `── ${grade} ──`, value: null, indent: 0 });
+    for (const subject of subjects) {
+      items.push({ label: `  ${subject}`, value: null, indent: 1 });
+      const books = BOOKS_LIMITED[subject] || BOOKS_WT;
+      const teachers = TEACHERS_TREE[subject] || [];
+      for (const book of books) {
+        const bookLabel = book.replace('세쌍둥이개념','개념편').replace('세쌍둥이심화','심화편').replace('세쌍둥이라이트','라이트');
+        for (const teacher of teachers) {
+          items.push({
+            label: `    ${bookLabel} - ${teacher}`,
+            value: `${subject}_${book}_${teacher}`,
+            indent: 2
+          });
+        }
+      }
+      items.push({ label: `    파이널`, value: `${subject}_${BOOKS_NO_T_TREE}`, indent: 2 });
+    }
+  }
+  // 기출해설
+  items.push({ label: '── 기출해설 ──', value: null, indent: 0 });
+  for (const g of ['고1','고2','고3']) {
+    for (const y of ['2025','2024','2023','2022','2021']) {
+      items.push({ label: `  ${g} - ${y}`, value:`기출_${g}_${y}`, indent:1 });
+    }
+  }
+  // 수리논술
+  items.push({ label: '── 수리논술 ──', value: null, indent: 0 });
+  items.push({ label: '  수리논술', value: '수리논술', indent: 1 });
+  // 중등
+  items.push({ label: '── 중등 ──', value: null, indent: 0 });
+  for (const g of ['중1','중2','중3']) {
+    items.push({ label: `  ${g}`, value: g, indent: 1 });
+  }
+  // 보충강의실
+  items.push({ label: '── 보충강의실 ──', value: null, indent: 0 });
+  for (const t of ['송우찬 원장T','송문찬 원장T','김영진T','신민훈T']) {
+    items.push({ label: `  평촌 - ${t}`, value: `보충_평촌_${t}`, indent: 1 });
+  }
+  for (const t of ['송우찬 원장T','송문찬 원장T','공민정T','장미현T']) {
+    items.push({ label: `  산본 - ${t}`, value: `보충_산본_${t}`, indent: 1 });
+  }
+  return items;
+}
+
+const TAG_TREE = buildTagTree();
+
 function renderBulkTagOptions(q) {
   const dropdown = document.getElementById('bulkTagDropdown');
   if (!dropdown) return;
+  const ql = q.toLowerCase();
+  const filtered = q
+    ? TAG_TREE.filter(item => item.value && item.label.toLowerCase().includes(ql))
+    : TAG_TREE;
 
-  // 학년 별칭 매핑
-  const GRADE_ALIAS = {
-    '고1': ['공통수학1','공통수학2'],
-    '고2': ['대수','미적분'],
-    '고3': ['확통','기하','미적분2'],
-  };
-
-  let filtered;
-  if (!q) {
-    filtered = KNOWN_TAGS_SYNC;
-  } else {
-    const ql = q.toLowerCase();
-    // 학년 별칭 매칭
-    const aliasSubjects = Object.entries(GRADE_ALIAS)
-      .filter(([grade]) => grade.includes(q))
-      .flatMap(([,subjects]) => subjects);
-
-    filtered = KNOWN_TAGS_SYNC.filter(t =>
-      t.toLowerCase().includes(ql) ||
-      aliasSubjects.some(s => t.startsWith(s))
-    );
-  }
-
-  dropdown.innerHTML = filtered.map(t => `
-    <div onclick="selectBulkTag('${t.replace(/'/g,"\\'")}','${t.replace(/'/g,"\\'")}')"
-      style="padding:7px 12px;font-size:12px;cursor:pointer;color:var(--off-white);
-        border-bottom:1px solid rgba(255,255,255,0.05);"
+  dropdown.innerHTML = filtered.map(item => {
+    if (!item.value) {
+      // 헤더
+      return `<div style="padding:5px 10px;font-size:10px;font-weight:700;color:var(--gold);
+        letter-spacing:1px;background:rgba(240,192,64,0.06);border-bottom:1px solid rgba(240,192,64,0.1);">
+        ${item.label.trim()}
+      </div>`;
+    }
+    return `<div onclick="selectBulkTag('${item.value.replace(/'/g,"\\'")}','${item.label.trim().replace(/'/g,"\\'")}')"
+      style="padding:7px 10px 7px ${12 + item.indent*8}px;font-size:12px;cursor:pointer;color:var(--off-white);
+        border-bottom:1px solid rgba(255,255,255,0.04);"
       onmouseover="this.style.background='rgba(240,192,64,0.1)'"
       onmouseout="this.style.background=''">
-      ${t}
-    </div>`).join('') || '<div style="padding:8px 12px;font-size:12px;color:var(--muted);">결과 없음</div>';
+      ${item.label.trim()}
+    </div>`;
+  }).join('') || '<div style="padding:8px 12px;font-size:12px;color:var(--muted);">결과 없음</div>';
 }
 
 window.filterBulkTagOptions = function() {
@@ -1316,13 +1373,17 @@ function getCheckedIds() {
 
 window.bulkChangeTag = async () => {
   const ids = getCheckedIds();
-  const tag = document.getElementById('bulkTagSel')?.value
-    || document.getElementById('bulkTagSearch')?.value?.trim();
+  const hiddenEl = document.getElementById('bulkTagSel');
+  const tag = hiddenEl?.value?.trim() || document.getElementById('bulkTagSearch')?.value?.trim();
   if (!ids.length) { showMsg('videoMsg', '선택된 강의가 없습니다.', 'error'); return; }
   if (!tag) { showMsg('videoMsg', '카테고리를 선택해주세요.', 'error'); return; }
-  if (!confirm(`선택한 ${ids.length}개 강의의 카테고리를 "${tag}"로 변경할까요?`)) return;
+  if (!confirm(`선택한 ${ids.length}개 강의의 카테고리를\n"${tag}"\n로 변경할까요?`)) return;
   try {
     await Promise.all(ids.map(id => updateDoc(doc(db, 'videos', id), { tag })));
+    // hidden 초기화
+    if (hiddenEl) hiddenEl.value = '';
+    const searchEl = document.getElementById('bulkTagSearch');
+    if (searchEl) searchEl.value = '';
     showMsg('videoMsg', `✅ ${ids.length}개 카테고리 변경 완료`, 'success');
     await loadVideos();
   } catch(e) {
