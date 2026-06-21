@@ -1212,10 +1212,31 @@ window.saveOrder = async (id) => {
   const orderNum = val === '' ? null : Number(val);
   try {
     await updateDoc(doc(db, 'videos', id), { order: orderNum });
-    showToast(`✅ 순서 저장 완료 (${orderNum != null ? orderNum + '번' : '미지정'})`);
-    // videosCache만 업데이트 (화면 재렌더 없음)
+    // videosCache 업데이트
     const cached = videosCache.find(v => v.id === id);
     if (cached) cached.order = orderNum;
+    showToast(`✅ 순서 저장 완료 (${orderNum != null ? orderNum + '번' : '미지정'})`);
+
+    // 해당 아이템이 속한 그룹 컨테이너 찾아서 내부 순서만 재정렬
+    const checkbox = document.querySelector(`.video-check[data-id="${id}"]`);
+    if (checkbox) {
+      const groupId = checkbox.dataset.group;
+      const groupEl = document.getElementById(groupId);
+      if (groupEl) {
+        // 그룹 내 모든 아이템을 order 기준으로 재정렬
+        const rows = [...groupEl.querySelectorAll('.assign-item')];
+        rows.sort((a, b) => {
+          const idA = a.querySelector('.video-check')?.dataset.id;
+          const idB = b.querySelector('.video-check')?.dataset.id;
+          const vA = videosCache.find(v => v.id === idA);
+          const vB = videosCache.find(v => v.id === idB);
+          const oa = vA?.order != null ? Number(vA.order) : 9999;
+          const ob = vB?.order != null ? Number(vB.order) : 9999;
+          return oa - ob;
+        });
+        rows.forEach(row => groupEl.appendChild(row));
+      }
+    }
   } catch(e) {
     showToast('❌ 저장 실패: ' + e.message);
   }
@@ -1232,7 +1253,7 @@ window.bulkSaveOrder = async () => {
     const val = input.value.trim();
     const orderNum = val === '' ? null : Number(val);
     const cached = videosCache.find(v => v.id === id);
-    if (cached && cached.order === orderNum) return; // 변경 없으면 스킵
+    if (cached && cached.order === orderNum) return;
     promises.push(
       updateDoc(doc(db, 'videos', id), { order: orderNum })
         .then(() => {
@@ -1243,6 +1264,21 @@ window.bulkSaveOrder = async () => {
   });
   try {
     await Promise.all(promises);
+    // 모든 열린 그룹 재정렬
+    document.querySelectorAll('[id^="vgrp-"]').forEach(groupEl => {
+      if (groupEl.style.display === 'none') return;
+      const rows = [...groupEl.querySelectorAll('.assign-item')];
+      rows.sort((a, b) => {
+        const idA = a.querySelector('.video-check')?.dataset.id;
+        const idB = b.querySelector('.video-check')?.dataset.id;
+        const vA = videosCache.find(v => v.id === idA);
+        const vB = videosCache.find(v => v.id === idB);
+        const oa = vA?.order != null ? Number(vA.order) : 9999;
+        const ob = vB?.order != null ? Number(vB.order) : 9999;
+        return oa - ob;
+      });
+      rows.forEach(row => groupEl.appendChild(row));
+    });
     showToast(`✅ ${saved}개 순서 일괄 저장 완료`);
   } catch(e) {
     showToast('❌ 일부 저장 실패: ' + e.message);
