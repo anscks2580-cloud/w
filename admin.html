@@ -1058,7 +1058,7 @@ function renderVideos() {
         ${optgroupHtml}
       </select>
       <button class="btn btn-secondary btn-sm" onclick="bulkChangeTag()">일괄 카테고리 변경</button>
-      <button class="btn btn-secondary btn-sm" onclick="bulkSaveOrder()" style="background:rgba(240,192,64,0.15);border-color:var(--gold);color:var(--gold);">📋 순서 일괄 저장</button>
+      <button class="btn btn-secondary btn-sm" onclick="bulkSaveOrder()" style="background:rgba(240,192,64,0.15);border-color:var(--gold);color:var(--gold);">📋 순서·제목 일괄 저장</button>
       <button class="btn btn-danger btn-sm" onclick="bulkDelete()">일괄 삭제</button>
     </div>`;
 
@@ -1107,13 +1107,15 @@ function renderVideos() {
                 style="width:52px;padding:4px 6px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
                   border-radius:6px;color:var(--gold);font-size:12px;font-family:inherit;text-align:center;
                   -moz-appearance:textfield;color-scheme:dark;">
-              <span class="assign-title" style="flex:1;min-width:120px;">${v.title}</span>
+              <input id="title-${v.id}" type="text" value="${(v.title||'').replace(/"/g,'&quot;')}"
+                style="flex:1;min-width:160px;padding:4px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
+                  border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
               <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date||''}</span>
               <select id="tag-sel-${v.id}" style="padding:4px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
                 border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;color-scheme:dark;">
                 ${optgroupHtml}
               </select>
-              <button class="btn btn-secondary btn-sm" onclick="saveOrder('${v.id}')">순서저장</button>
+              <button class="btn btn-secondary btn-sm" onclick="saveRow('${v.id}')" style="background:rgba(240,192,64,0.15);border-color:var(--gold);color:var(--gold);">저장</button>
               <button class="btn btn-secondary btn-sm" onclick="changeVideoTag('${v.id}')">태그변경</button>
               <button class="btn btn-danger btn-sm" onclick="deleteVideo('${v.id}')">삭제</button>
             </div>`).join('')}
@@ -1205,6 +1207,42 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
 }
 
+// 행 저장 (순서 + 제목 함께)
+window.saveRow = async (id) => {
+  const orderInput = document.getElementById('order-' + id);
+  const titleInput = document.getElementById('title-' + id);
+  const orderVal = orderInput ? orderInput.value.trim() : '';
+  const orderNum = orderVal === '' ? null : Number(orderVal);
+  const title = titleInput ? titleInput.value.trim() : '';
+
+  if (!title) { showToast('❌ 제목을 입력해주세요.'); return; }
+
+  try {
+    await updateDoc(doc(db, 'videos', id), { order: orderNum, title });
+    const cached = videosCache.find(v => v.id === id);
+    if (cached) { cached.order = orderNum; cached.title = title; }
+    showToast('✅ 저장 완료');
+
+    const checkbox = document.querySelector(`.video-check[data-id="${id}"]`);
+    if (checkbox) {
+      const groupEl = document.getElementById(checkbox.dataset.group);
+      if (groupEl) {
+        const rows = [...groupEl.querySelectorAll('.assign-item')];
+        rows.sort((a, b) => {
+          const vA = videosCache.find(v => v.id === a.querySelector('.video-check')?.dataset.id);
+          const vB = videosCache.find(v => v.id === b.querySelector('.video-check')?.dataset.id);
+          const oa = vA?.order != null ? Number(vA.order) : 9999;
+          const ob = vB?.order != null ? Number(vB.order) : 9999;
+          return oa - ob;
+        });
+        rows.forEach(row => groupEl.appendChild(row));
+      }
+    }
+  } catch(e) {
+    showToast('❌ 저장 실패: ' + e.message);
+  }
+};
+
 window.saveOrder = async (id) => {
   const input = document.getElementById('order-' + id);
   if (!input) return;
@@ -1242,7 +1280,7 @@ window.saveOrder = async (id) => {
   }
 };
 
-// 일괄 순서 저장 (펼쳐진 그룹 내 모든 입력값 한번에 저장)
+// 일괄 저장 (펼쳐진 그룹 내 순서 + 제목 한번에 저장)
 window.bulkSaveOrder = async () => {
   const inputs = document.querySelectorAll('input[id^="order-"]');
   if (!inputs.length) { showToast('저장할 항목이 없습니다.'); return; }
@@ -1252,19 +1290,23 @@ window.bulkSaveOrder = async () => {
     const id = input.id.replace('order-', '');
     const val = input.value.trim();
     const orderNum = val === '' ? null : Number(val);
+    const titleInput = document.getElementById('title-' + id);
+    const title = titleInput ? titleInput.value.trim() : null;
     const cached = videosCache.find(v => v.id === id);
-    if (cached && cached.order === orderNum) return;
+    // 변경 없으면 스킵
+    if (cached && cached.order === orderNum && (title === null || cached.title === title)) return;
+    const updateData = { order: orderNum };
+    if (title) updateData.title = title;
     promises.push(
-      updateDoc(doc(db, 'videos', id), { order: orderNum })
+      updateDoc(doc(db, 'videos', id), updateData)
         .then(() => {
-          if (cached) cached.order = orderNum;
+          if (cached) { cached.order = orderNum; if (title) cached.title = title; }
           saved++;
         })
     );
   });
   try {
     await Promise.all(promises);
-    // 모든 열린 그룹 재정렬
     document.querySelectorAll('[id^="vgrp-"]').forEach(groupEl => {
       if (groupEl.style.display === 'none') return;
       const rows = [...groupEl.querySelectorAll('.assign-item')];
@@ -1279,7 +1321,7 @@ window.bulkSaveOrder = async () => {
       });
       rows.forEach(row => groupEl.appendChild(row));
     });
-    showToast(`✅ ${saved}개 순서 일괄 저장 완료`);
+    showToast(`✅ ${saved}개 일괄 저장 완료`);
   } catch(e) {
     showToast('❌ 일부 저장 실패: ' + e.message);
   }
