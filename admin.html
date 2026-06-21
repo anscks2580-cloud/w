@@ -1378,6 +1378,22 @@ async function fetchFolderVideos(folderUri) {
   return videos;
 }
 
+// 계정 전체 영상 목록 가져오기 (폴더 무관)
+async function fetchAllAccountVideos() {
+  let videos = [];
+  let url = 'https://api.vimeo.com/me/videos?fields=uri,name,created_time&per_page=100&page=1';
+  while (url) {
+    const res = await fetch(url, {
+      headers: { Authorization: `bearer ${VIMEO_TOKEN}` }
+    });
+    if (!res.ok) break;
+    const data = await res.json();
+    videos = videos.concat(data.data || []);
+    url = data.paging?.next ? `https://api.vimeo.com${data.paging.next}` : null;
+  }
+  return videos;
+}
+
 window.syncVimeo = async () => {
   const statusEl  = document.getElementById('syncStatus');
   const previewEl = document.getElementById('syncPreview');
@@ -1387,32 +1403,37 @@ window.syncVimeo = async () => {
 
   try {
     const folders = await fetchVimeoFolders();
-    // 폴더명이 알려진 태그와 일치하는 것만
     const matchedFolders = folders.filter(f => KNOWN_TAGS_SYNC.includes(f.name));
 
-    if (!matchedFolders.length) {
-      statusEl.textContent = '⚠️ 카테고리명과 일치하는 Vimeo 폴더가 없습니다. 폴더명을 확인해주세요.';
-      return;
-    }
-
     const existingIds = new Set(videosCache.map(v => v.vimeoId));
-    let total = 0;
+    const foundIds = new Set(); // 폴더에서 찾은 영상 ID
 
+    // ① 폴더에 든 영상
     for (const folder of matchedFolders) {
       statusEl.textContent = `⏳ "${folder.name}" 폴더 확인 중...`;
       const videos = await fetchFolderVideos(folder.uri);
-
       for (const v of videos) {
         const vimeoId = v.uri.replace('/videos/', '');
+        foundIds.add(vimeoId);
         if (existingIds.has(vimeoId)) continue;
         const date = v.created_time ? v.created_time.slice(0,7).replace('-','.') : '';
         syncCandidates.push({ vimeoId, title: v.name, tag: folder.name, date });
-        total++;
       }
     }
 
+    // ② 폴더 밖(루트) 영상 → 미분류로
+    statusEl.textContent = '⏳ 폴더 미지정 영상 확인 중...';
+    const allVideos = await fetchAllAccountVideos();
+    for (const v of allVideos) {
+      const vimeoId = v.uri.replace('/videos/', '');
+      if (existingIds.has(vimeoId)) continue;  // 이미 등록됨
+      if (foundIds.has(vimeoId)) continue;       // 폴더에서 이미 처리됨
+      const date = v.created_time ? v.created_time.slice(0,7).replace('-','.') : '';
+      syncCandidates.push({ vimeoId, title: v.name, tag: '', date }); // 태그 없음 = 미분류
+    }
+
     if (!syncCandidates.length) {
-      statusEl.textContent = `✅ 새로 추가할 영상이 없습니다. (${matchedFolders.length}개 폴더 확인 완료)`;
+      statusEl.textContent = `✅ 새로 추가할 영상이 없습니다. (폴더 ${matchedFolders.length}개 확인 완료)`;
       return;
     }
 
@@ -1430,43 +1451,85 @@ function renderSyncPreview(folderCount) {
   const titleEl   = document.getElementById('syncPreviewTitle');
   const listEl    = document.getElementById('syncPreviewList');
 
-  titleEl.innerHTML = `${folderCount}개 폴더에서 신규 영상 <b>${syncCandidates.length}개</b> 발견`;
+  const unfiled = syncCandidates.filter(v => !v.tag).length;
+  titleEl.innerHTML = `신규 영상 <b>${syncCandidates.length}개</b> 발견
+    ${unfiled ? `<span style="color:#ffd060;margin-left:8px;">· 폴더 미지정 ${unfiled}개 (카테고리·제목 직접 지정)</span>` : ''}`;
 
-  // 태그별 그룹핑
+  // 카테고리 드롭다운 옵션 HTML
+  const catOptHtml = KNOWN_TAGS_SYNC.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  // 태그별 그룹핑 (미분류는 맨 위로)
   const groups = {};
   syncCandidates.forEach((v, i) => {
-    if (!groups[v.tag]) groups[v.tag] = [];
-    groups[v.tag].push({ ...v, idx: i });
+    const key = v.tag || '__unfiled__';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push({ ...v, idx: i });
   });
 
-  listEl.innerHTML = Object.entries(groups).map(([tag, items]) => `
-    <div style="margin-bottom:12px;">
-      <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;
+  // 미분류 먼저, 나머지는 뒤에
+  const orderedKeys = Object.keys(groups).sort((a, b) => {
+    if (a === '__unfiled__') return -1;
+    if (b === '__unfiled__') return 1;
+    return 0;
+  });
+
+  listEl.innerHTML = orderedKeys.map(key => {
+    const items = groups[key];
+    const isUnfiled = key === '__unfiled__';
+    const headerLabel = isUnfiled
+      ? `⚠️ 폴더 미지정 (직접 선택 필요)`
+      : key;
+
+    return `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;color:${isUnfiled ? '#ffd060' : 'var(--gold)'};letter-spacing:1px;
         padding:5px 0;border-bottom:1px solid rgba(240,192,64,0.2);margin-bottom:4px;">
-        ${tag} <span style="font-weight:400;color:var(--muted);">${items.length}개</span>
+        ${headerLabel} <span style="font-weight:400;color:var(--muted);">${items.length}개</span>
       </div>
-      ${items.map(v => `
+      ${items.map(v => isUnfiled ? `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;
+          border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;flex-wrap:wrap;">
+          <input id="sync-title-${v.idx}" type="text" value="${(v.title||'').replace(/"/g,'&quot;')}"
+            style="flex:1;min-width:160px;padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
+              border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
+          <select id="sync-tag-${v.idx}" style="padding:5px 8px;background:#1A1230;border:1px solid #ffd060;
+            border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
+            <option value="">-- 카테고리 선택 --</option>
+            ${catOptHtml}
+          </select>
+        </div>` : `
         <div style="display:flex;align-items:center;gap:10px;padding:6px 4px;
           border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;">
           <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title}</span>
           <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date}</span>
         </div>`).join('')}
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   previewEl.style.display = 'block';
 }
 
 window.syncSaveAll = async () => {
   const today = new Date().toISOString().slice(0,7).replace('-','.');
-  let saved = 0;
+  let saved = 0, skipped = 0;
 
-  for (const v of syncCandidates) {
+  for (let i = 0; i < syncCandidates.length; i++) {
+    const v = syncCandidates[i];
+    let tag = v.tag;
+    let title = v.title;
+    if (!v.tag) {
+      const tagSel = document.getElementById('sync-tag-' + i);
+      const titleInput = document.getElementById('sync-title-' + i);
+      if (tagSel) tag = tagSel.value;
+      if (titleInput) title = titleInput.value.trim();
+      if (!tag) { skipped++; continue; }
+    }
+
     try {
       await setDoc(doc(db, 'videos', v.vimeoId), {
         vimeoId: v.vimeoId,
-        title:   v.title,
-        tag:     v.tag,
+        title,
+        tag,
         date:    v.date || today,
         order:   null,
         createdAt: new Date().toISOString(),
@@ -1479,7 +1542,7 @@ window.syncSaveAll = async () => {
 
   document.getElementById('syncPreview').style.display = 'none';
   document.getElementById('syncStatus').textContent = '';
-  showMsg('syncMsg', `✅ ${saved}개 저장 완료`, 'success');
+  showMsg('syncMsg', `✅ ${saved}개 저장 완료${skipped ? ` · 카테고리 미선택 ${skipped}개 건너뜀` : ''}`, 'success');
   await loadVideos();
 };
 
