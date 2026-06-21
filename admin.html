@@ -57,6 +57,17 @@
 .btn-danger { background:rgba(255,80,80,0.15); color:#ff9090; border:1px solid rgba(255,80,80,0.3); }
 .btn-danger:hover { background:rgba(255,80,80,0.25); }
 .btn-sm { padding:6px 13px; font-size:12px; }
+  #toast {
+    position:fixed; bottom:28px; right:28px;
+    background:#1e1440; border:1px solid #f0c040;
+    color:#f0c040; padding:12px 22px;
+    border-radius:10px; font-size:13px; font-weight:600;
+    box-shadow:0 4px 20px rgba(0,0,0,0.4);
+    opacity:0; transform:translateY(10px);
+    transition:opacity 0.2s, transform 0.2s;
+    pointer-events:none; z-index:9999;
+  }
+  #toast.show { opacity:1; transform:translateY(0); }
 
 /* 엑셀 업로드 영역 */
 .excel-drop {
@@ -1047,6 +1058,7 @@ function renderVideos() {
         ${optgroupHtml}
       </select>
       <button class="btn btn-secondary btn-sm" onclick="bulkChangeTag()">일괄 카테고리 변경</button>
+      <button class="btn btn-secondary btn-sm" onclick="bulkSaveOrder()" style="background:rgba(240,192,64,0.15);border-color:var(--gold);color:var(--gold);">📋 순서 일괄 저장</button>
       <button class="btn btn-danger btn-sm" onclick="bulkDelete()">일괄 삭제</button>
     </div>`;
 
@@ -1182,6 +1194,17 @@ window.bulkDelete = async () => {
   }
 };
 
+// 토스트 알림
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
 window.saveOrder = async (id) => {
   const input = document.getElementById('order-' + id);
   if (!input) return;
@@ -1189,10 +1212,40 @@ window.saveOrder = async (id) => {
   const orderNum = val === '' ? null : Number(val);
   try {
     await updateDoc(doc(db, 'videos', id), { order: orderNum });
-    showMsg('videoMsg', `✅ 순서가 ${orderNum != null ? orderNum + '번' : '미지정'}으로 저장되었습니다.`, 'success');
-    await loadVideos();
+    showToast(`✅ 순서 저장 완료 (${orderNum != null ? orderNum + '번' : '미지정'})`);
+    // videosCache만 업데이트 (화면 재렌더 없음)
+    const cached = videosCache.find(v => v.id === id);
+    if (cached) cached.order = orderNum;
   } catch(e) {
-    showMsg('videoMsg', '오류: ' + e.message, 'error');
+    showToast('❌ 저장 실패: ' + e.message);
+  }
+};
+
+// 일괄 순서 저장 (펼쳐진 그룹 내 모든 입력값 한번에 저장)
+window.bulkSaveOrder = async () => {
+  const inputs = document.querySelectorAll('input[id^="order-"]');
+  if (!inputs.length) { showToast('저장할 항목이 없습니다.'); return; }
+  let saved = 0;
+  const promises = [];
+  inputs.forEach(input => {
+    const id = input.id.replace('order-', '');
+    const val = input.value.trim();
+    const orderNum = val === '' ? null : Number(val);
+    const cached = videosCache.find(v => v.id === id);
+    if (cached && cached.order === orderNum) return; // 변경 없으면 스킵
+    promises.push(
+      updateDoc(doc(db, 'videos', id), { order: orderNum })
+        .then(() => {
+          if (cached) cached.order = orderNum;
+          saved++;
+        })
+    );
+  });
+  try {
+    await Promise.all(promises);
+    showToast(`✅ ${saved}개 순서 일괄 저장 완료`);
+  } catch(e) {
+    showToast('❌ 일부 저장 실패: ' + e.message);
   }
 };
 
@@ -2133,5 +2186,7 @@ window.downloadMonthlyZip = async () => {
   if (failCount) alert(`${failCount}개 파일 다운로드 실패. 나머지는 정상적으로 저장되었습니다.`);
 };
 </script>
+<div id="toast"></div>
+
 </body>
 </html>
