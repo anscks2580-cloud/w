@@ -1228,7 +1228,30 @@ function initBulkTagSearch() {
 function renderBulkTagOptions(q) {
   const dropdown = document.getElementById('bulkTagDropdown');
   if (!dropdown) return;
-  const filtered = q ? KNOWN_TAGS_SYNC.filter(t => t.toLowerCase().includes(q.toLowerCase())) : KNOWN_TAGS_SYNC;
+
+  // 학년 별칭 매핑
+  const GRADE_ALIAS = {
+    '고1': ['공통수학1','공통수학2'],
+    '고2': ['대수','미적분'],
+    '고3': ['확통','기하','미적분2'],
+  };
+
+  let filtered;
+  if (!q) {
+    filtered = KNOWN_TAGS_SYNC;
+  } else {
+    const ql = q.toLowerCase();
+    // 학년 별칭 매칭
+    const aliasSubjects = Object.entries(GRADE_ALIAS)
+      .filter(([grade]) => grade.includes(q))
+      .flatMap(([,subjects]) => subjects);
+
+    filtered = KNOWN_TAGS_SYNC.filter(t =>
+      t.toLowerCase().includes(ql) ||
+      aliasSubjects.some(s => t.startsWith(s))
+    );
+  }
+
   dropdown.innerHTML = filtered.map(t => `
     <div onclick="selectBulkTag('${t.replace(/'/g,"\\'")}','${t.replace(/'/g,"\\'")}')"
       style="padding:7px 12px;font-size:12px;cursor:pointer;color:var(--off-white);
@@ -1293,7 +1316,8 @@ function getCheckedIds() {
 
 window.bulkChangeTag = async () => {
   const ids = getCheckedIds();
-  const tag = document.getElementById('bulkTagSel')?.value;
+  const tag = document.getElementById('bulkTagSel')?.value
+    || document.getElementById('bulkTagSearch')?.value?.trim();
   if (!ids.length) { showMsg('videoMsg', '선택된 강의가 없습니다.', 'error'); return; }
   if (!tag) { showMsg('videoMsg', '카테고리를 선택해주세요.', 'error'); return; }
   if (!confirm(`선택한 ${ids.length}개 강의의 카테고리를 "${tag}"로 변경할까요?`)) return;
