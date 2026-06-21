@@ -585,6 +585,11 @@ onAuthStateChanged(auth, async (user) => {
       allowedTags = { subjectPrefixes, examPrefix, extraTags, teacherTags, grade, isJunior };
     }
 
+    // videoGroups (그룹 표시 이름) 로드
+    const { getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const groupSnap = await getDocs(collection(db, 'videoGroups'));
+    groupSnap.forEach(d => { videoGroupNames[d.id] = d.data().displayName || ''; });
+
     onSnapshot(collection(db, 'videos'), (snap) => {
       allVideos = [];
       snap.forEach(d => allVideos.push({id: d.id, ...d.data()}));
@@ -743,9 +748,10 @@ const GRADE_PREFIXES = {
 };
 
 let currentMain  = 'all';
-let currentGrade = null; // 학년 선택 (고1/고2/고3 등)
-let currentSub   = null; // 최하위 과목 선택
-let currentSearch = '';  // 검색어
+let currentGrade = null;
+let currentSub   = null;
+let currentSearch = '';
+let videoGroupNames = {}; // tag → 표시이름 맵
 
 // 검색 핸들러
 window.onSearch = function() {
@@ -926,19 +932,23 @@ function renderVideos() {
     let html = '';
     let grpIdx = 0;
     groups.forEach((items, tag) => {
-      const bookMap = {
-        '세쌍둥이개념':'세쌍둥이 개념편',
-        '세쌍둥이심화':'세쌍둥이 심화편',
-        '세쌍둥이라이트':'세쌍둥이 라이트',
-        '세쌍둥이파이널':'세쌍둥이 파이널',
-      };
-      const firstUnderscore  = tag.indexOf('_');
-      const rest             = firstUnderscore >= 0 ? tag.slice(firstUnderscore + 1) : '';
-      const secondUnderscore = rest.indexOf('_');
-      const bookKey          = secondUnderscore >= 0 ? rest.slice(0, secondUnderscore) : rest;
-      const teacherPart      = secondUnderscore >= 0 ? rest.slice(secondUnderscore + 1) : '';
-      const book             = bookMap[bookKey] || bookKey;
-      const groupLabel       = teacherPart ? `${book} - ${teacherPart}` : book;
+      // 관리자가 지정한 이름 우선, 없으면 자동 파싱
+      let groupLabel = videoGroupNames[tag] || '';
+      if (!groupLabel) {
+        const bookMap = {
+          '세쌍둥이개념':'세쌍둥이 개념편',
+          '세쌍둥이심화':'세쌍둥이 심화편',
+          '세쌍둥이라이트':'세쌍둥이 라이트',
+          '세쌍둥이파이널':'세쌍둥이 파이널',
+        };
+        const firstUnderscore  = tag.indexOf('_');
+        const rest             = firstUnderscore >= 0 ? tag.slice(firstUnderscore + 1) : '';
+        const secondUnderscore = rest.indexOf('_');
+        const bookKey          = secondUnderscore >= 0 ? rest.slice(0, secondUnderscore) : rest;
+        const teacherPart      = secondUnderscore >= 0 ? rest.slice(secondUnderscore + 1) : '';
+        const book             = bookMap[bookKey] || bookKey;
+        groupLabel             = teacherPart ? `${book} - ${teacherPart}` : (book || tag);
+      }
 
       const groupId = 'grp' + (grpIdx++);
       html += `

@@ -577,6 +577,26 @@
       </div>
       <div class="msg" id="syncMsg"></div>
     </div>
+
+    <!-- 그룹 표시 이름 관리 -->
+    <div class="card">
+      <h3>🏷️ 강의 그룹 이름 관리</h3>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+        동영상강의 페이지에서 카드에 표시될 그룹 이름을 지정합니다.<br>
+        예: <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">공통수학1_세쌍둥이개념_송우찬 원장T</code> → <b style="color:var(--gold);">세쌍둥이 개념편 - 송우찬 원장T</b>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <select id="groupTagSel" style="flex:1;min-width:240px;padding:8px 12px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;color-scheme:dark;">
+          <option value="">-- 태그 선택 --</option>
+        </select>
+        <input id="groupNameInput" type="text" placeholder="표시할 그룹 이름 입력..."
+          style="flex:2;min-width:200px;padding:8px 12px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;color-scheme:dark;">
+        <button class="btn btn-primary" onclick="saveGroupName()">저장</button>
+      </div>
+      <div id="groupNameList" style="max-height:280px;overflow-y:auto;"></div>
+      <div class="msg" id="groupNameMsg"></div>
+    </div>
+
     <div class="card">
       <h3>📹 전체 강의 목록 (<span id="videoCount">0</span>개)</h3>
       <!-- 카테고리 필터 -->
@@ -641,6 +661,7 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('adminName').textContent = user.email;
   await loadStudents();
   await loadVideos();
+  await loadGroupNames();
   await loadTeachers();
   setupExcelDrop();
   setupTeacherExcelDrop();
@@ -1131,7 +1152,67 @@ function renderVideos() {
   });
 }
 
-// ── 그룹 아코디언 ──
+// ── 그룹 이름 관리 ──
+let groupNamesCache = {}; // tag → displayName
+
+async function loadGroupNames() {
+  const snap = await getDocs(collection(db, 'videoGroups'));
+  groupNamesCache = {};
+  snap.forEach(d => { groupNamesCache[d.id] = d.data().displayName || ''; });
+  renderGroupNameList();
+  // 태그 드롭다운 채우기
+  const sel = document.getElementById('groupTagSel');
+  if (sel) {
+    sel.innerHTML = '<option value="">-- 태그 선택 --</option>'
+      + KNOWN_TAGS_SYNC.map(t => `<option value="${t}">${t}</option>`).join('');
+  }
+  // 태그 선택 시 기존 이름 자동 입력
+  sel?.addEventListener('change', () => {
+    const input = document.getElementById('groupNameInput');
+    if (input) input.value = groupNamesCache[sel.value] || '';
+  });
+}
+
+function renderGroupNameList() {
+  const el = document.getElementById('groupNameList');
+  if (!el) return;
+  const entries = Object.entries(groupNamesCache);
+  if (!entries.length) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;">등록된 그룹 이름이 없습니다.</div>'; return; }
+  el.innerHTML = entries.map(([tag, name]) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;">
+      <span style="color:var(--muted);font-size:11px;min-width:260px;flex-shrink:0;">${tag}</span>
+      <span style="color:var(--gold);flex:1;">→ ${name}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteGroupName('${tag.replace(/'/g,"\\'")}')">삭제</button>
+    </div>`).join('');
+}
+
+window.saveGroupName = async () => {
+  const tag  = document.getElementById('groupTagSel')?.value;
+  const name = document.getElementById('groupNameInput')?.value.trim();
+  if (!tag)  { showMsg('groupNameMsg', '태그를 선택해주세요.', 'error'); return; }
+  if (!name) { showMsg('groupNameMsg', '이름을 입력해주세요.', 'error'); return; }
+  try {
+    await setDoc(doc(db, 'videoGroups', tag), { displayName: name, tag });
+    groupNamesCache[tag] = name;
+    renderGroupNameList();
+    document.getElementById('groupNameInput').value = '';
+    showMsg('groupNameMsg', `✅ "${name}" 저장 완료`, 'success');
+  } catch(e) {
+    showMsg('groupNameMsg', '오류: ' + e.message, 'error');
+  }
+};
+
+window.deleteGroupName = async (tag) => {
+  if (!confirm(`"${tag}" 그룹 이름을 삭제할까요?`)) return;
+  try {
+    await deleteDoc(doc(db, 'videoGroups', tag));
+    delete groupNamesCache[tag];
+    renderGroupNameList();
+    showMsg('groupNameMsg', '삭제 완료', 'success');
+  } catch(e) {
+    showMsg('groupNameMsg', '오류: ' + e.message, 'error');
+  }
+};
 window.toggleAdminGroup = (groupId) => {
   const el    = document.getElementById(groupId);
   const arrow = document.getElementById('arrow-' + groupId);
