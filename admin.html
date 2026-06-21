@@ -1150,6 +1150,8 @@ window.bulkDelete = async () => {
     showMsg('videoMsg', '오류: ' + e.message, 'error');
   }
 };
+
+window.saveOrder = async (id) => {
   const input = document.getElementById('order-' + id);
   if (!input) return;
   const val = input.value.trim();
