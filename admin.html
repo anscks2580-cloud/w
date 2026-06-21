@@ -1034,6 +1034,27 @@ function renderVideos() {
   // 그룹별로 묶어서 렌더
   const allKnownTags = VIDEO_GROUPS.flatMap(g => g.tags).filter(t => t);
   let html = '';
+
+  // 일괄 처리 툴바
+  html += `
+    <div id="bulkToolbar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+      padding:10px 14px;background:rgba(240,192,64,0.06);border:1px solid rgba(240,192,64,0.2);
+      border-radius:8px;margin-bottom:12px;">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="checkAll" onchange="toggleCheckAll(this)"
+          style="width:15px;height:15px;cursor:pointer;accent-color:var(--gold);">
+        전체선택
+      </label>
+      <span id="checkedCount" style="font-size:12px;color:var(--gold);min-width:50px;"></span>
+      <select id="bulkTagSel" style="padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
+        border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
+        <option value="">-- 일괄 카테고리 선택 --</option>
+        ${optgroupHtml}
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="bulkChangeTag()">일괄 카테고리 변경</button>
+      <button class="btn btn-danger btn-sm" onclick="bulkDelete()">일괄 삭제</button>
+    </div>`;
+
   // order 기준 정렬
   VIDEO_GROUPS.forEach(group => {
     if (allowedTags && !group.tags.some(t => allowedTags.includes(t))) return;
@@ -1044,7 +1065,6 @@ function renderVideos() {
       items = filtered.filter(v => group.tags.includes(v.tag));
     }
     if (!items.length) return;
-    // order 정렬
     items = [...items].sort((a, b) => {
       const oa = a.order != null ? Number(a.order) : 9999;
       const ob = b.order != null ? Number(b.order) : 9999;
@@ -1056,12 +1076,14 @@ function renderVideos() {
         margin-bottom:8px;">${group.label} <span style="font-weight:400;color:var(--muted);">(${items.length}개)</span></div>
       ${items.map(v => `
         <div class="assign-item" style="flex-wrap:wrap;gap:8px;align-items:center;">
+          <input type="checkbox" class="video-check" data-id="${v.id}"
+            onchange="updateCheckedCount()"
+            style="width:15px;height:15px;cursor:pointer;flex-shrink:0;accent-color:var(--gold);">
           <input id="order-${v.id}" type="number" min="1" value="${v.order != null ? v.order : ''}"
             placeholder="순서"
             style="width:58px;padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
               border-radius:6px;color:var(--gold);font-size:12px;font-family:inherit;text-align:center;
-              -moz-appearance:textfield;color-scheme:dark;"
-            title="표시 순서 번호 입력 후 저장 버튼 클릭">
+              -moz-appearance:textfield;color-scheme:dark;">
           <span class="assign-title" style="min-width:160px;">${v.title}</span>
           <span style="font-size:11px;color:var(--muted);flex-shrink:0;">${v.date||''}</span>
           <select id="tag-sel-${v.id}" style="padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;cursor:pointer;flex-shrink:0;color-scheme:dark;">
@@ -1082,7 +1104,52 @@ function renderVideos() {
   });
 }
 
-window.saveOrder = async (id) => {
+// ── 일괄 처리 ──
+window.toggleCheckAll = (master) => {
+  document.querySelectorAll('.video-check').forEach(cb => cb.checked = master.checked);
+  updateCheckedCount();
+};
+
+window.updateCheckedCount = () => {
+  const count = document.querySelectorAll('.video-check:checked').length;
+  const el = document.getElementById('checkedCount');
+  if (el) el.textContent = count ? `${count}개 선택됨` : '';
+  const master = document.getElementById('checkAll');
+  const all = document.querySelectorAll('.video-check').length;
+  if (master) master.indeterminate = count > 0 && count < all;
+};
+
+function getCheckedIds() {
+  return [...document.querySelectorAll('.video-check:checked')].map(cb => cb.dataset.id);
+}
+
+window.bulkChangeTag = async () => {
+  const ids = getCheckedIds();
+  const tag = document.getElementById('bulkTagSel')?.value;
+  if (!ids.length) return showMsg('videoMsg', '선택된 강의가 없습니다.', 'error');
+  if (!tag) return showMsg('videoMsg', '카테고리를 선택해주세요.', 'error');
+  if (!confirm(`선택한 ${ids.length}개 강의의 카테고리를 "${tag}"로 변경할까요?`)) return;
+  try {
+    await Promise.all(ids.map(id => updateDoc(doc(db, 'videos', id), { tag })));
+    showMsg('videoMsg', `✅ ${ids.length}개 카테고리 변경 완료`, 'success');
+    await loadVideos();
+  } catch(e) {
+    showMsg('videoMsg', '오류: ' + e.message, 'error');
+  }
+};
+
+window.bulkDelete = async () => {
+  const ids = getCheckedIds();
+  if (!ids.length) return showMsg('videoMsg', '선택된 강의가 없습니다.', 'error');
+  if (!confirm(`선택한 ${ids.length}개 강의를 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
+  try {
+    await Promise.all(ids.map(id => deleteDoc(doc(db, 'videos', id))));
+    showMsg('videoMsg', `✅ ${ids.length}개 삭제 완료`, 'success');
+    await loadVideos();
+  } catch(e) {
+    showMsg('videoMsg', '오류: ' + e.message, 'error');
+  }
+};
   const input = document.getElementById('order-' + id);
   if (!input) return;
   const val = input.value.trim();
