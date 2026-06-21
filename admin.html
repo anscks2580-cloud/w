@@ -1073,11 +1073,19 @@ function renderVideos() {
       padding:10px 14px;background:rgba(240,192,64,0.06);border:1px solid rgba(240,192,64,0.2);
       border-radius:8px;margin-bottom:12px;">
       <span id="checkedCount" style="font-size:12px;color:var(--gold);min-width:60px;"></span>
-      <select id="bulkTagSel" style="padding:5px 8px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
-        border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
-        <option value="">-- 일괄 카테고리 선택 --</option>
-        ${optgroupHtml}
-      </select>
+      <div style="position:relative;flex:1;min-width:200px;">
+        <input id="bulkTagSearch" type="text" placeholder="카테고리 검색..."
+          oninput="filterBulkTagOptions()"
+          onfocus="document.getElementById('bulkTagDropdown').style.display='block'"
+          onblur="setTimeout(()=>document.getElementById('bulkTagDropdown').style.display='none',200)"
+          style="width:100%;box-sizing:border-box;padding:6px 10px;background:#1A1230;
+            border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--off-white);
+            font-size:12px;font-family:inherit;color-scheme:dark;">
+        <div id="bulkTagDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;
+          max-height:200px;overflow-y:auto;background:#1A1230;border:1px solid rgba(255,255,255,0.2);
+          border-radius:6px;z-index:100;margin-top:2px;"></div>
+        <input type="hidden" id="bulkTagSel">
+      </div>
       <button class="btn btn-secondary btn-sm" onclick="bulkChangeTag()">일괄 카테고리 변경</button>
       <button class="btn btn-secondary btn-sm" onclick="bulkSaveOrder()" style="background:rgba(240,192,64,0.15);border-color:var(--gold);color:var(--gold);">📋 순서·제목 일괄 저장</button>
       <button class="btn btn-danger btn-sm" onclick="bulkDelete()">일괄 삭제</button>
@@ -1144,8 +1152,7 @@ function renderVideos() {
       </div>`;
   });
   el.innerHTML = html;
-
-  // 드롭다운 현재 태그로 초기화
+  initBulkTagSearch();
   filtered.forEach(v => {
     const sel = document.getElementById('tag-sel-' + v.id);
     if (sel) sel.value = v.tag;
@@ -1213,6 +1220,41 @@ window.deleteGroupName = async (tag) => {
     showMsg('groupNameMsg', '오류: ' + e.message, 'error');
   }
 };
+// 일괄 카테고리 검색 드롭다운
+function initBulkTagSearch() {
+  renderBulkTagOptions('');
+}
+
+function renderBulkTagOptions(q) {
+  const dropdown = document.getElementById('bulkTagDropdown');
+  if (!dropdown) return;
+  const filtered = q ? KNOWN_TAGS_SYNC.filter(t => t.toLowerCase().includes(q.toLowerCase())) : KNOWN_TAGS_SYNC;
+  dropdown.innerHTML = filtered.map(t => `
+    <div onclick="selectBulkTag('${t.replace(/'/g,"\\'")}','${t.replace(/'/g,"\\'")}')"
+      style="padding:7px 12px;font-size:12px;cursor:pointer;color:var(--off-white);
+        border-bottom:1px solid rgba(255,255,255,0.05);"
+      onmouseover="this.style.background='rgba(240,192,64,0.1)'"
+      onmouseout="this.style.background=''">
+      ${t}
+    </div>`).join('') || '<div style="padding:8px 12px;font-size:12px;color:var(--muted);">결과 없음</div>';
+}
+
+window.filterBulkTagOptions = function() {
+  const q = document.getElementById('bulkTagSearch')?.value || '';
+  const dropdown = document.getElementById('bulkTagDropdown');
+  if (dropdown) dropdown.style.display = 'block';
+  renderBulkTagOptions(q);
+};
+
+window.selectBulkTag = function(value, label) {
+  const input  = document.getElementById('bulkTagSearch');
+  const hidden = document.getElementById('bulkTagSel');
+  if (input)  input.value  = label;
+  if (hidden) hidden.value = value;
+  const dropdown = document.getElementById('bulkTagDropdown');
+  if (dropdown) dropdown.style.display = 'none';
+};
+
 window.toggleAdminGroup = (groupId) => {
   const el    = document.getElementById(groupId);
   const arrow = document.getElementById('arrow-' + groupId);
