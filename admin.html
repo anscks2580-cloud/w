@@ -1482,8 +1482,9 @@ async function fetchVimeoFolders() {
     url = data.paging?.next ? `https://api.vimeo.com${data.paging.next}` : null;
   }
 
-  // 팀 프로젝트 폴더도 가져오기
+  // 팀 라이브러리 폴더
   try {
+    // 팀 목록 가져오기
     const teamRes = await fetch('https://api.vimeo.com/me/teams?per_page=10', {
       headers: { Authorization: `bearer ${VIMEO_TOKEN}` }
     });
@@ -1491,11 +1492,21 @@ async function fetchVimeoFolders() {
       const teamData = await teamRes.json();
       const teams = teamData.data || [];
       for (const team of teams) {
-        const teamId = team.uri.replace('/teams/', '');
-        let teamUrl = `https://api.vimeo.com/teams/${teamId}/projects?per_page=100&page=1`;
+        const teamUri = team.uri; // 예: /teams/12345
+        // 팀 라이브러리 폴더 목록
+        let teamUrl = `https://api.vimeo.com${teamUri}/folders?per_page=100&page=1`;
         while (teamUrl) {
           const res = await fetch(teamUrl, { headers: { Authorization: `bearer ${VIMEO_TOKEN}` } });
-          if (!res.ok) break;
+          if (!res.ok) {
+            // folders 안되면 projects로 시도
+            let altUrl = `https://api.vimeo.com${teamUri}/projects?per_page=100&page=1`;
+            const res2 = await fetch(altUrl, { headers: { Authorization: `bearer ${VIMEO_TOKEN}` } });
+            if (res2.ok) {
+              const data2 = await res2.json();
+              folders = folders.concat(data2.data || []);
+            }
+            break;
+          }
           const data = await res.json();
           folders = folders.concat(data.data || []);
           teamUrl = data.paging?.next ? `https://api.vimeo.com${data.paging.next}` : null;
@@ -1503,7 +1514,7 @@ async function fetchVimeoFolders() {
       }
     }
   } catch(e) {
-    console.log('팀 폴더 로드 실패 (무시):', e.message);
+    console.log('팀 라이브러리 폴더 로드 실패:', e.message);
   }
 
   return folders;
