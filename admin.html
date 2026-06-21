@@ -1126,8 +1126,8 @@ function getCheckedIds() {
 window.bulkChangeTag = async () => {
   const ids = getCheckedIds();
   const tag = document.getElementById('bulkTagSel')?.value;
-  if (!ids.length) return showMsg('videoMsg', '선택된 강의가 없습니다.', 'error');
-  if (!tag) return showMsg('videoMsg', '카테고리를 선택해주세요.', 'error');
+  if (!ids.length) { showMsg('videoMsg', '선택된 강의가 없습니다.', 'error'); return; }
+  if (!tag) { showMsg('videoMsg', '카테고리를 선택해주세요.', 'error'); return; }
   if (!confirm(`선택한 ${ids.length}개 강의의 카테고리를 "${tag}"로 변경할까요?`)) return;
   try {
     await Promise.all(ids.map(id => updateDoc(doc(db, 'videos', id), { tag })));
@@ -1140,7 +1140,7 @@ window.bulkChangeTag = async () => {
 
 window.bulkDelete = async () => {
   const ids = getCheckedIds();
-  if (!ids.length) return showMsg('videoMsg', '선택된 강의가 없습니다.', 'error');
+  if (!ids.length) { showMsg('videoMsg', '선택된 강의가 없습니다.', 'error'); return; }
   if (!confirm(`선택한 ${ids.length}개 강의를 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
   try {
     await Promise.all(ids.map(id => deleteDoc(doc(db, 'videos', id))));
