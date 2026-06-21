@@ -1080,11 +1080,11 @@ function renderVideos() {
           onblur="setTimeout(()=>document.getElementById('bulkTagDropdown').style.display='none',200)"
           style="width:100%;box-sizing:border-box;padding:6px 10px;background:#1A1230;
             border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--off-white);
-            font-size:12px;font-family:inherit;color-scheme:dark;">
+            font-size:12px;font-family:inherit;color-scheme:dark;"
+          data-selected-value="">
         <div id="bulkTagDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;
           max-height:200px;overflow-y:auto;background:#1A1230;border:1px solid rgba(255,255,255,0.2);
           border-radius:6px;z-index:100;margin-top:2px;"></div>
-        <input type="hidden" id="bulkTagSel">
       </div>
       <button class="btn btn-secondary btn-sm" onclick="bulkChangeTag()">일괄 카테고리 변경</button>
       <button class="btn btn-secondary btn-sm" onclick="bulkSaveOrder()" style="background:rgba(240,192,64,0.15);border-color:var(--gold);color:var(--gold);">📋 순서·제목 일괄 저장</button>
@@ -1327,12 +1327,31 @@ window.filterBulkTagOptions = function() {
 };
 
 window.selectBulkTag = function(value, label) {
-  const input  = document.getElementById('bulkTagSearch');
-  const hidden = document.getElementById('bulkTagSel');
-  if (input)  input.value  = label;
-  if (hidden) hidden.value = value;
+  const input = document.getElementById('bulkTagSearch');
+  if (input) {
+    input.value = label;
+    input.dataset.selectedValue = value;
+    input.style.borderColor = 'var(--gold)';
+  }
   const dropdown = document.getElementById('bulkTagDropdown');
   if (dropdown) dropdown.style.display = 'none';
+};
+
+window.bulkChangeTag = async () => {
+  const ids = getCheckedIds();
+  const input = document.getElementById('bulkTagSearch');
+  const tag = (input?.dataset.selectedValue || input?.value || '').trim();
+  if (!ids.length) { showMsg('videoMsg', '선택된 강의가 없습니다.', 'error'); return; }
+  if (!tag) { showMsg('videoMsg', '카테고리를 선택해주세요.', 'error'); return; }
+  if (!confirm(`선택한 ${ids.length}개 강의의 카테고리를\n"${tag}"\n로 변경할까요?`)) return;
+  try {
+    await Promise.all(ids.map(id => updateDoc(doc(db, 'videos', id), { tag })));
+    if (input) { input.value = ''; input.dataset.selectedValue = ''; input.style.borderColor = ''; }
+    showMsg('videoMsg', `✅ ${ids.length}개 카테고리 변경 완료`, 'success');
+    await loadVideos();
+  } catch(e) {
+    showMsg('videoMsg', '오류: ' + e.message, 'error');
+  }
 };
 
 window.toggleAdminGroup = (groupId) => {
@@ -1370,26 +1389,6 @@ window.updateCheckedCount = () => {
 function getCheckedIds() {
   return [...document.querySelectorAll('.video-check:checked')].map(cb => cb.dataset.id);
 }
-
-window.bulkChangeTag = async () => {
-  const ids = getCheckedIds();
-  const hiddenEl = document.getElementById('bulkTagSel');
-  const tag = hiddenEl?.value?.trim() || document.getElementById('bulkTagSearch')?.value?.trim();
-  if (!ids.length) { showMsg('videoMsg', '선택된 강의가 없습니다.', 'error'); return; }
-  if (!tag) { showMsg('videoMsg', '카테고리를 선택해주세요.', 'error'); return; }
-  if (!confirm(`선택한 ${ids.length}개 강의의 카테고리를\n"${tag}"\n로 변경할까요?`)) return;
-  try {
-    await Promise.all(ids.map(id => updateDoc(doc(db, 'videos', id), { tag })));
-    // hidden 초기화
-    if (hiddenEl) hiddenEl.value = '';
-    const searchEl = document.getElementById('bulkTagSearch');
-    if (searchEl) searchEl.value = '';
-    showMsg('videoMsg', `✅ ${ids.length}개 카테고리 변경 완료`, 'success');
-    await loadVideos();
-  } catch(e) {
-    showMsg('videoMsg', '오류: ' + e.message, 'error');
-  }
-};
 
 window.bulkDelete = async () => {
   const ids = getCheckedIds();
