@@ -924,25 +924,23 @@ function renderVideos() {
     });
 
     let html = '';
+    let grpIdx = 0;
     groups.forEach((items, tag) => {
-      // 폴더명 파싱: 과목_교재_선생님 → "세쌍둥이 개념편 - 송우찬 원장T"
       const bookMap = {
         '세쌍둥이개념':'세쌍둥이 개념편',
         '세쌍둥이심화':'세쌍둥이 심화편',
         '세쌍둥이라이트':'세쌍둥이 라이트',
         '세쌍둥이파이널':'세쌍둥이 파이널',
       };
-      // 태그 형식: 과목_교재_선생님 or 과목_교재
-      // 과목은 항상 첫 번째 _ 앞부분
-      const firstUnderscore = tag.indexOf('_');
-      const rest = firstUnderscore >= 0 ? tag.slice(firstUnderscore + 1) : '';
+      const firstUnderscore  = tag.indexOf('_');
+      const rest             = firstUnderscore >= 0 ? tag.slice(firstUnderscore + 1) : '';
       const secondUnderscore = rest.indexOf('_');
-      const bookKey    = secondUnderscore >= 0 ? rest.slice(0, secondUnderscore) : rest;
-      const teacherPart = secondUnderscore >= 0 ? rest.slice(secondUnderscore + 1) : '';
-      const book = bookMap[bookKey] || bookKey;
-      let groupLabel = teacherPart ? `${book} - ${teacherPart}` : book;
+      const bookKey          = secondUnderscore >= 0 ? rest.slice(0, secondUnderscore) : rest;
+      const teacherPart      = secondUnderscore >= 0 ? rest.slice(secondUnderscore + 1) : '';
+      const book             = bookMap[bookKey] || bookKey;
+      const groupLabel       = teacherPart ? `${book} - ${teacherPart}` : book;
 
-      const groupId = 'grp-' + tag.replace(/[^a-zA-Z0-9가-힣]/g,'_');
+      const groupId = 'grp' + (grpIdx++);
       html += `
         <div style="border:1px solid rgba(255,255,255,0.08);border-radius:10px;margin-bottom:8px;overflow:hidden;">
           <div onclick="toggleGroup('${groupId}')" style="
