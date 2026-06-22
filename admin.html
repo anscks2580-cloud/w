@@ -559,13 +559,28 @@
     <div class="card">
       <h3>🔄 Vimeo 동기화</h3>
       <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
-        가져올 Vimeo 폴더명을 입력하세요. 여러 개는 줄바꿈으로 구분.<br>
-        비워두면 전체 폴더를 확인합니다.
+        가져올 폴더를 선택하거나 검색하세요. 선택 안 하면 전체 폴더를 확인합니다.
       </div>
-      <textarea id="syncFolderInput" placeholder="공통수학1_세쌍둥이개념_송우찬 원장T&#10;기출_고1_2025&#10;기출_고2_2025" rows="4"
-        style="width:100%;box-sizing:border-box;padding:10px 12px;background:#1A1230;
-          border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--off-white);
-          font-size:12px;font-family:inherit;color-scheme:dark;resize:vertical;margin-bottom:12px;"></textarea>
+
+      <!-- 폴더 선택기 -->
+      <div style="border:1px solid rgba(255,255,255,0.1);border-radius:8px;margin-bottom:12px;overflow:hidden;">
+        <!-- 검색 + 전체선택 헤더 -->
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.08);">
+          <input id="folderSearchInput" type="text" placeholder="폴더 검색..."
+            oninput="filterFolderList()"
+            style="flex:1;padding:6px 10px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);
+              border-radius:6px;color:var(--off-white);font-size:12px;font-family:inherit;color-scheme:dark;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" id="folderCheckAll" onchange="toggleAllFolders(this)"
+              style="accent-color:var(--gold);">
+            전체선택
+          </label>
+          <span id="folderSelectedCount" style="font-size:11px;color:var(--gold);white-space:nowrap;"></span>
+        </div>
+        <!-- 아코디언 폴더 목록 -->
+        <div id="folderAccordion" style="max-height:300px;overflow-y:auto;"></div>
+      </div>
+
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="syncVimeo()">📥 Vimeo에서 불러오기</button>
         <span id="syncStatus" style="font-size:13px;color:var(--muted);"></span>
@@ -646,6 +661,7 @@ onAuthStateChanged(auth, async (user) => {
   await loadStudents();
   await loadVideos();
   await loadGroupNames();
+  renderFolderAccordion();
   await loadTeachers();
   setupExcelDrop();
   setupTeacherExcelDrop();
@@ -1558,6 +1574,103 @@ window.changeVideoTag = async (id) => {
   }
 };
 
+// ── 폴더 선택기 ──
+const FOLDER_TREE = [
+  { group:'고1', folders:['공통수학1_세쌍둥이개념_송우찬 원장T','공통수학1_세쌍둥이개념_송문찬 원장T','공통수학1_세쌍둥이개념_공민정T','공통수학1_세쌍둥이심화_송우찬 원장T','공통수학1_세쌍둥이심화_송문찬 원장T','공통수학1_세쌍둥이심화_공민정T','공통수학1_세쌍둥이라이트_송우찬 원장T','공통수학1_세쌍둥이라이트_송문찬 원장T','공통수학1_세쌍둥이라이트_공민정T','공통수학1_세쌍둥이파이널','공통수학2_세쌍둥이개념_송우찬 원장T','공통수학2_세쌍둥이개념_송문찬 원장T','공통수학2_세쌍둥이개념_공민정T','공통수학2_세쌍둥이심화_송우찬 원장T','공통수학2_세쌍둥이심화_송문찬 원장T','공통수학2_세쌍둥이심화_공민정T','공통수학2_세쌍둥이라이트_송우찬 원장T','공통수학2_세쌍둥이라이트_송문찬 원장T','공통수학2_세쌍둥이라이트_공민정T','공통수학2_세쌍둥이파이널'] },
+  { group:'고2', folders:['대수_세쌍둥이개념_송우찬 원장T','대수_세쌍둥이개념_송문찬 원장T','대수_세쌍둥이심화_송우찬 원장T','대수_세쌍둥이심화_송문찬 원장T','대수_세쌍둥이라이트_송우찬 원장T','대수_세쌍둥이라이트_송문찬 원장T','대수_세쌍둥이파이널','미적분_세쌍둥이개념_송우찬 원장T','미적분_세쌍둥이개념_송문찬 원장T','미적분_세쌍둥이심화_송우찬 원장T','미적분_세쌍둥이심화_송문찬 원장T','미적분_세쌍둥이라이트_송우찬 원장T','미적분_세쌍둥이라이트_송문찬 원장T','미적분_세쌍둥이파이널','확통_세쌍둥이개념_송우찬 원장T','확통_세쌍둥이개념_송문찬 원장T','확통_세쌍둥이파이널'] },
+  { group:'고3', folders:['미적분2_세쌍둥이개념_송우찬 원장T','미적분2_세쌍둥이개념_송문찬 원장T','미적분2_세쌍둥이심화_송우찬 원장T','미적분2_세쌍둥이심화_송문찬 원장T','미적분2_세쌍둥이라이트_송우찬 원장T','미적분2_세쌍둥이라이트_송문찬 원장T','미적분2_세쌍둥이파이널','기하_세쌍둥이개념_송우찬 원장T','기하_세쌍둥이개념_송문찬 원장T','기하_세쌍둥이파이널'] },
+  { group:'기출해설', folders:['기출_고1_2025','기출_고1_2024','기출_고1_2023','기출_고1_2022','기출_고1_2021','기출_고2_2025','기출_고2_2024','기출_고2_2023','기출_고2_2022','기출_고2_2021','기출_고3_2025','기출_고3_2024','기출_고3_2023','기출_고3_2022','기출_고3_2021'] },
+  { group:'수리논술', folders:['수리논술'] },
+  { group:'중등', folders:['중1','중2','중3'] },
+  { group:'보충강의실', folders:['보충_평촌_송우찬 원장T','보충_평촌_송문찬 원장T','보충_평촌_김영진T','보충_평촌_신민훈T','보충_산본_송우찬 원장T','보충_산본_송문찬 원장T','보충_산본_공민정T','보충_산본_장미현T'] },
+];
+
+let _checkedFolders = new Set();
+
+function isFolderChecked(f) { return _checkedFolders.has(f); }
+
+function renderFolderAccordion(q='') {
+  const el = document.getElementById('folderAccordion');
+  if (!el) return;
+  const ql = q.toLowerCase();
+  let html = '';
+  FOLDER_TREE.forEach((group, gi) => {
+    const filtered = q ? group.folders.filter(f => f.toLowerCase().includes(ql)) : group.folders;
+    if (!filtered.length) return;
+    const groupId = 'fgrp' + gi;
+    const allChecked = filtered.every(f => isFolderChecked(f));
+    html += `
+      <div style="border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div onclick="toggleFolderGroup('${groupId}')"
+          style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;
+            background:rgba(255,255,255,0.02);"
+          onmouseover="this.style.background='rgba(240,192,64,0.06)'"
+          onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+          <input type="checkbox" class="folder-group-check" data-gi="${gi}"
+            ${allChecked&&filtered.length?'checked':''}
+            onclick="event.stopPropagation();toggleFolderGroupCheck(this,${gi})"
+            style="accent-color:var(--gold);">
+          <span style="font-size:12px;font-weight:700;color:var(--gold);flex:1;">${group.group}</span>
+          <span style="font-size:11px;color:var(--muted);">${filtered.length}개</span>
+          <span id="arrow-${groupId}" style="color:var(--gold);font-size:10px;transition:transform 0.2s;">▼</span>
+        </div>
+        <div id="${groupId}" style="display:${q?'block':'none'};">
+          ${filtered.map(f => `
+            <label style="display:flex;align-items:center;gap:8px;padding:6px 12px 6px 28px;
+              cursor:pointer;border-top:1px solid rgba(255,255,255,0.04);font-size:12px;"
+              onmouseover="this.style.background='rgba(255,255,255,0.03)'"
+              onmouseout="this.style.background=''">
+              <input type="checkbox" class="folder-check" value="${f}"
+                ${isFolderChecked(f)?'checked':''}
+                onchange="onFolderCheckChange()"
+                style="accent-color:var(--gold);flex-shrink:0;">
+              <span style="color:var(--off-white);">${f}</span>
+            </label>`).join('')}
+        </div>
+      </div>`;
+  });
+  el.innerHTML = html || '<div style="padding:12px;font-size:12px;color:var(--muted);">검색 결과 없음</div>';
+  updateFolderCount();
+}
+
+function onFolderCheckChange() {
+  document.querySelectorAll('.folder-check').forEach(cb => {
+    if (cb.checked) _checkedFolders.add(cb.value);
+    else _checkedFolders.delete(cb.value);
+  });
+  updateFolderCount();
+}
+
+window.toggleFolderGroup = (id) => {
+  const el = document.getElementById(id);
+  const arrow = document.getElementById('arrow-' + id);
+  if (!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
+};
+
+window.toggleFolderGroupCheck = (master, gi) => {
+  const group = FOLDER_TREE[gi];
+  if (!group) return;
+  group.folders.forEach(f => { if (master.checked) _checkedFolders.add(f); else _checkedFolders.delete(f); });
+  renderFolderAccordion(document.getElementById('folderSearchInput')?.value || '');
+};
+
+window.toggleAllFolders = (master) => {
+  FOLDER_TREE.forEach(g => g.folders.forEach(f => { if (master.checked) _checkedFolders.add(f); else _checkedFolders.delete(f); }));
+  renderFolderAccordion(document.getElementById('folderSearchInput')?.value || '');
+};
+
+window.filterFolderList = () => {
+  renderFolderAccordion(document.getElementById('folderSearchInput')?.value || '');
+};
+
+function updateFolderCount() {
+  const el = document.getElementById('folderSelectedCount');
+  if (el) el.textContent = _checkedFolders.size ? `${_checkedFolders.size}개 선택` : '';
+}
+
 // ── Vimeo 동기화 (폴더 기준) ──
 const VIMEO_TOKEN = '91f67f8f7f387216004dd35ec5136f8e';
 
@@ -1696,11 +1809,8 @@ window.syncVimeo = async () => {
   previewEl.style.display = 'none';
   syncCandidates = [];
 
-  // 입력창에서 폴더명 파싱
-  const inputVal = document.getElementById('syncFolderInput')?.value?.trim() || '';
-  const targetFolders = inputVal
-    ? inputVal.split('\n').map(s => s.trim()).filter(Boolean)
-    : null; // null = 전체
+  // 선택된 폴더 목록 (없으면 전체)
+  const targetFolders = _checkedFolders.size > 0 ? [..._checkedFolders] : null;
 
   statusEl.textContent = '⏳ Vimeo 폴더 목록 불러오는 중...';
 
