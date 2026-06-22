@@ -1809,7 +1809,9 @@ window.syncVimeo = async () => {
   syncCandidates = [];
 
   // 선택된 폴더 목록 (없으면 전체)
-  const targetFolders = window._checkedFolders.size > 0 ? [...window._checkedFolders] : null;
+  // 체크된 폴더 DOM에서 직접 읽기
+  const checkedBoxes = [...document.querySelectorAll('.folder-check:checked')].map(cb => cb.value);
+  const targetFolders = checkedBoxes.length > 0 ? checkedBoxes : null;
 
   statusEl.textContent = '⏳ Vimeo 폴더 목록 불러오는 중...';
 
