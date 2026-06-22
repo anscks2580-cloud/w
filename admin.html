@@ -976,14 +976,30 @@ async function loadVideos() {
 // 카테고리 그룹 정의
 const EXAM_YEARS = ['2025','2024','2023','2022','2021'];
 const TEACHERS_ADMIN = {
-  '평촌관': ['송우찬T','송문찬T','김영진T','신민훈T'],
-  '산본관': ['송우찬T','송문찬T','공민정T','장미현T'],
+  '평촌관': ['송우찬 원장T','송문찬 원장T','김영진T','신민훈T'],
+  '산본관': ['송우찬 원장T','송문찬 원장T','공민정T','장미현T'],
 };
+
+// 과목별 전체 태그 생성 함수
+function genSubjectTags(subject, teachers, books, hasParinal=true) {
+  const tags = books.flatMap(b => teachers.map(t => `${subject}_${b}_${t}`));
+  if (hasParinal) tags.push(`${subject}_세쌍둥이파이널`);
+  return tags;
+}
+const SUBJ_TEACHERS_1 = ['송우찬 원장T','송문찬 원장T','공민정T'];
+const SUBJ_TEACHERS_2 = ['송우찬 원장T','송문찬 원장T'];
+const BOOKS_FULL = ['세쌍둥이개념','세쌍둥이심화','세쌍둥이라이트'];
+const BOOKS_LTD  = ['세쌍둥이개념'];
+
 const VIDEO_GROUPS = [
   { label: '중등',              tags: ['중1','중2','중3'] },
-  { label: '고등 — 고1',        tags: ['공통수학1','공통수학2'] },
-  { label: '고등 — 고2',        tags: ['대수','미적분','확통'] },
-  { label: '고등 — 고3',        tags: ['미적분2','기하'] },
+  { label: '고등 — 고1 — 공통수학1', tags: genSubjectTags('공통수학1', SUBJ_TEACHERS_1, BOOKS_FULL) },
+  { label: '고등 — 고1 — 공통수학2', tags: genSubjectTags('공통수학2', SUBJ_TEACHERS_1, BOOKS_FULL) },
+  { label: '고등 — 고2 — 대수',      tags: genSubjectTags('대수',      SUBJ_TEACHERS_2, BOOKS_FULL) },
+  { label: '고등 — 고2 — 미적분',    tags: genSubjectTags('미적분',    SUBJ_TEACHERS_2, BOOKS_FULL) },
+  { label: '고등 — 고2 — 확통',      tags: genSubjectTags('확통',      SUBJ_TEACHERS_2, BOOKS_LTD) },
+  { label: '고등 — 고3 — 미적분2',   tags: genSubjectTags('미적분2',   SUBJ_TEACHERS_2, BOOKS_FULL) },
+  { label: '고등 — 고3 — 기하',      tags: genSubjectTags('기하',      SUBJ_TEACHERS_2, BOOKS_LTD) },
   ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고1 (${y})`, tags: [`기출_고1_${y}`] })),
   ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고2 (${y})`, tags: [`기출_고2_${y}`] })),
   ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고3 (${y})`, tags: [`기출_고3_${y}`] })),
@@ -1888,8 +1904,10 @@ function renderTeachers() {
 function renderTeacherSelect() {
   // 보고서 열람용
   const sel = document.getElementById('reportTeacher');
-  sel.innerHTML = '<option value="">선생님을 선택하세요</option>' +
-    teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
+  if (sel) {
+    sel.innerHTML = '<option value="">선생님을 선택하세요</option>' +
+      teachersCache.map(t => `<option value="${t.id}">${t.name} (${t.branch || ''})</option>`).join('');
+  }
   // 학생 등록용
   const nSel = document.getElementById('n-teacher');
   if (nSel) {
