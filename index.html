@@ -345,10 +345,12 @@ onAuthStateChanged(auth, async (user) => {
       nameHtml = user.email;
     }
 
+    const adminBtn = document.getElementById('navAdminBtn');
     loginBtn.style.display = 'none';
     userName.style.display = 'inline';
     userName.innerHTML = nameHtml;
     logoutBtn.style.display = 'inline';
+    if (adminDoc.exists() && adminBtn) adminBtn.style.display = 'inline';
   } else {
     loginBtn.style.display = 'inline';
     userName.style.display = 'none';
