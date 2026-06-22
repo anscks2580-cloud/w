@@ -578,25 +578,6 @@
       <div class="msg" id="syncMsg"></div>
     </div>
 
-    <!-- 그룹 표시 이름 관리 -->
-    <div class="card">
-      <h3>🏷️ 강의 그룹 이름 관리</h3>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
-        동영상강의 페이지에서 카드에 표시될 그룹 이름을 지정합니다.<br>
-        예: <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">공통수학1_세쌍둥이개념_송우찬 원장T</code> → <b style="color:var(--gold);">세쌍둥이 개념편 - 송우찬 원장T</b>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-        <select id="groupTagSel" style="flex:1;min-width:240px;padding:8px 12px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;color-scheme:dark;">
-          <option value="">-- 태그 선택 --</option>
-        </select>
-        <input id="groupNameInput" type="text" placeholder="표시할 그룹 이름 입력..."
-          style="flex:2;min-width:200px;padding:8px 12px;background:#1A1230;border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;color-scheme:dark;">
-        <button class="btn btn-primary" onclick="saveGroupName()">저장</button>
-      </div>
-      <div id="groupNameList" style="max-height:280px;overflow-y:auto;"></div>
-      <div class="msg" id="groupNameMsg"></div>
-    </div>
-
     <div class="card">
       <h3>📹 전체 강의 목록 (<span id="videoCount">0</span>개)</h3>
       <!-- 카테고리 필터 -->
@@ -980,34 +961,45 @@ const TEACHERS_ADMIN = {
   '산본관': ['송우찬 원장T','송문찬 원장T','공민정T','장미현T'],
 };
 
-// 과목별 전체 태그 생성 함수
-function genSubjectTags(subject, teachers, books, hasParinal=true) {
-  const tags = books.flatMap(b => teachers.map(t => `${subject}_${b}_${t}`));
-  if (hasParinal) tags.push(`${subject}_세쌍둥이파이널`);
-  return tags;
+const BOOK_LABEL = {
+  '세쌍둥이개념':'개념편','세쌍둥이심화':'심화편',
+  '세쌍둥이라이트':'라이트','세쌍둥이파이널':'파이널',
+};
+
+function genGroups(subject, grade, teachers, books) {
+  const groups = [];
+  for (const book of books) {
+    for (const teacher of teachers) {
+      const tag = `${subject}_${book}_${teacher}`;
+      groups.push({ label:`고등 — ${grade} — ${subject} — ${BOOK_LABEL[book]} - ${teacher}`, tags:[tag] });
+    }
+  }
+  groups.push({ label:`고등 — ${grade} — ${subject} — 파이널`, tags:[`${subject}_세쌍둥이파이널`] });
+  return groups;
 }
-const SUBJ_TEACHERS_1 = ['송우찬 원장T','송문찬 원장T','공민정T'];
-const SUBJ_TEACHERS_2 = ['송우찬 원장T','송문찬 원장T'];
-const BOOKS_FULL = ['세쌍둥이개념','세쌍둥이심화','세쌍둥이라이트'];
-const BOOKS_LTD  = ['세쌍둥이개념'];
+
+const SUBJ_T1 = ['송우찬 원장T','송문찬 원장T','공민정T'];
+const SUBJ_T2 = ['송우찬 원장T','송문찬 원장T'];
+const BOOKS_F = ['세쌍둥이개념','세쌍둥이심화','세쌍둥이라이트'];
+const BOOKS_L = ['세쌍둥이개념'];
 
 const VIDEO_GROUPS = [
-  { label: '중등',              tags: ['중1','중2','중3'] },
-  { label: '고등 — 고1 — 공통수학1', tags: genSubjectTags('공통수학1', SUBJ_TEACHERS_1, BOOKS_FULL) },
-  { label: '고등 — 고1 — 공통수학2', tags: genSubjectTags('공통수학2', SUBJ_TEACHERS_1, BOOKS_FULL) },
-  { label: '고등 — 고2 — 대수',      tags: genSubjectTags('대수',      SUBJ_TEACHERS_2, BOOKS_FULL) },
-  { label: '고등 — 고2 — 미적분',    tags: genSubjectTags('미적분',    SUBJ_TEACHERS_2, BOOKS_FULL) },
-  { label: '고등 — 고2 — 확통',      tags: genSubjectTags('확통',      SUBJ_TEACHERS_2, BOOKS_LTD) },
-  { label: '고등 — 고3 — 미적분2',   tags: genSubjectTags('미적분2',   SUBJ_TEACHERS_2, BOOKS_FULL) },
-  { label: '고등 — 고3 — 기하',      tags: genSubjectTags('기하',      SUBJ_TEACHERS_2, BOOKS_LTD) },
-  ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고1 (${y})`, tags: [`기출_고1_${y}`] })),
-  ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고2 (${y})`, tags: [`기출_고2_${y}`] })),
-  ...EXAM_YEARS.map(y => ({ label: `기출해설 — 고3 (${y})`, tags: [`기출_고3_${y}`] })),
-  { label: '기출해설 (구형 태그)', tags: ['기출_공통수학1','기출_공통수학2','기출_대수','기출_미적분','기출_확통','기출_미적분2','기출_기하','기출해설'] },
-  { label: '수리논술',           tags: ['수리논술'] },
-  ...TEACHERS_ADMIN['평촌관'].map(t => ({ label: `보충강의실 — 평촌관 ${t}`, tags: [`보충_평촌_${t}`] })),
-  ...TEACHERS_ADMIN['산본관'].map(t => ({ label: `보충강의실 — 산본관 ${t}`, tags: [`보충_산본_${t}`] })),
-  { label: '⚠️ 태그 없음 (미분류)', tags: ['', null, undefined] },
+  { label: '중등', tags: ['중1','중2','중3'] },
+  ...genGroups('공통수학1','고1', SUBJ_T1, BOOKS_F),
+  ...genGroups('공통수학2','고1', SUBJ_T1, BOOKS_F),
+  ...genGroups('대수',     '고2', SUBJ_T2, BOOKS_F),
+  ...genGroups('미적분',   '고2', SUBJ_T2, BOOKS_F),
+  ...genGroups('확통',     '고2', SUBJ_T2, BOOKS_L),
+  ...genGroups('미적분2',  '고3', SUBJ_T2, BOOKS_F),
+  ...genGroups('기하',     '고3', SUBJ_T2, BOOKS_L),
+  ...EXAM_YEARS.map(y => ({ label:`기출해설 — 고1 (${y})`, tags:[`기출_고1_${y}`] })),
+  ...EXAM_YEARS.map(y => ({ label:`기출해설 — 고2 (${y})`, tags:[`기출_고2_${y}`] })),
+  ...EXAM_YEARS.map(y => ({ label:`기출해설 — 고3 (${y})`, tags:[`기출_고3_${y}`] })),
+  { label:'기출해설 (구형)', tags:['기출_공통수학1','기출_공통수학2','기출_대수','기출_미적분','기출_확통','기출_미적분2','기출_기하','기출해설'] },
+  { label:'수리논술', tags:['수리논술'] },
+  ...TEACHERS_ADMIN['평촌관'].map(t => ({ label:`보충강의실 — 평촌관 ${t}`, tags:[`보충_평촌_${t}`] })),
+  ...TEACHERS_ADMIN['산본관'].map(t => ({ label:`보충강의실 — 산본관 ${t}`, tags:[`보충_산본_${t}`] })),
+  { label:'⚠️ 태그 없음 (미분류)', tags:['', null, undefined] },
 ];
 const VIDEO_CAT_TAGS = {
   '중등':    ['중1','중2','중3'],
