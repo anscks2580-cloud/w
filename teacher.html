@@ -187,6 +187,7 @@
     <button class="teacher-tab" onclick="switchTab('monthly',this)">📝 월말보고서</button>
     <button class="teacher-tab" onclick="switchTab('tests',this)">📊 누적테스트</button>
     <button class="teacher-tab" onclick="switchTab('progress',this)">📍 반별 진도</button>
+    <button class="teacher-tab" onclick="switchTab('clinic',this);initClinicTab()">🏥 토요클리닉</button>
     <button class="teacher-tab" onclick="switchTab('videos',this);loadTeacherVideos()">🎬 강의 목록</button>
   </div>
 
@@ -515,6 +516,67 @@
     <div class="card">
       <div class="card-title">🗂 반별 진도 제출 이력</div>
       <div id="progressHistory" class="history-list">
+        <div class="empty-state"><div class="icon">📭</div>아직 제출 이력이 없습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 탭 6: 토요 추가클리닉 ══ -->
+  <div class="tab-panel" id="tab-clinic">
+
+    <!-- 입력 카드 -->
+    <div class="card">
+      <div class="card-title">🏥 토요 추가클리닉 입력
+        <span style="font-size:12px;color:var(--muted);font-weight:400;" id="clinicDateLabel"></span>
+      </div>
+      <div class="alert ok" id="clinic-ok"></div>
+      <div class="alert err" id="clinic-err"></div>
+
+      <!-- 날짜 -->
+      <div class="form-group" style="margin-bottom:16px;max-width:220px;">
+        <label>날짜 <span style="color:#ff9090;">*</span></label>
+        <input type="date" id="c-date" style="color-scheme:dark;width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:14px;font-family:inherit;outline:none;">
+      </div>
+
+      <!-- 학생 선택 -->
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>학생 <span style="color:#ff9090;">*</span></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;" id="clinicStudentChips"></div>
+        <input type="text" id="clinicStudentSearch" placeholder="🔍 이름 검색..."
+          oninput="filterClinicStudents()"
+          style="width:100%;max-width:280px;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;">
+        <input type="hidden" id="c-studentId">
+        <input type="hidden" id="c-studentName">
+      </div>
+
+      <!-- 시간 / 지참교재 -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label>시간 <span style="color:#ff9090;">*</span></label>
+          <input type="text" id="c-time" placeholder="예: 10:00 ~ 12:00">
+        </div>
+        <div class="form-group">
+          <label>지참교재 <span style="color:#ff9090;">*</span></label>
+          <input type="text" id="c-book" placeholder="예: 수학의 정석 심화편">
+        </div>
+      </div>
+
+      <!-- 클리닉 내용 -->
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>클리닉 내용 <span style="color:#ff9090;">*</span></label>
+        <textarea id="c-content" placeholder="이번 토요 클리닉에서 다룬 내용을 적어주세요." style="min-height:90px;"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="submitClinic()">제출하기</button>
+        <button class="btn btn-outline" onclick="resetClinic()">초기화</button>
+      </div>
+    </div>
+
+    <!-- 제출 이력 -->
+    <div class="card">
+      <div class="card-title">🗂 토요클리닉 제출 이력</div>
+      <div id="clinicHistory" class="history-list">
         <div class="empty-state"><div class="icon">📭</div>아직 제출 이력이 없습니다.</div>
       </div>
     </div>
@@ -1231,6 +1293,147 @@ window.openVideoModal = function(vimeoId, title) {
   const modal = document.getElementById('videoModal');
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+};
+
+// ══════════════════════════════════════════
+// 토요 추가클리닉
+// ══════════════════════════════════════════
+let clinicStudentsAll = [];
+let clinicSelectedId   = '';
+let clinicSelectedName = '';
+
+window.initClinicTab = function() {
+  // 날짜 기본값: 오늘
+  const today = new Date();
+  const yyyy  = today.getFullYear();
+  const mm    = String(today.getMonth()+1).padStart(2,'0');
+  const dd    = String(today.getDate()).padStart(2,'0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const dateInput = document.getElementById('c-date');
+  if (!dateInput.value) dateInput.value = todayStr;
+
+  // 내 학생 목록 렌더
+  clinicStudentsAll = studentsCache.filter(s => s.teacherUid === currentTeacher.uid);
+  renderClinicChips(clinicStudentsAll);
+  loadClinicHistory();
+};
+
+function renderClinicChips(list) {
+  const wrap = document.getElementById('clinicStudentChips');
+  wrap.innerHTML = '';
+  list.forEach(s => {
+    const chip = document.createElement('button');
+    chip.className = 'rating-btn' + (s.id === clinicSelectedId ? ' selected' : '');
+    chip.textContent = s.name;
+    chip.onclick = () => {
+      clinicSelectedId   = s.id;
+      clinicSelectedName = s.name;
+      document.getElementById('c-studentId').value   = s.id;
+      document.getElementById('c-studentName').value = s.name;
+      renderClinicChips(clinicStudentsAll.filter(x =>
+        document.getElementById('clinicStudentSearch').value
+          ? x.name.includes(document.getElementById('clinicStudentSearch').value)
+          : true
+      ));
+    };
+    wrap.appendChild(chip);
+  });
+}
+
+window.filterClinicStudents = function() {
+  const q = document.getElementById('clinicStudentSearch').value.trim();
+  const filtered = q ? clinicStudentsAll.filter(s => s.name.includes(q)) : clinicStudentsAll;
+  renderClinicChips(filtered);
+};
+
+window.submitClinic = async function() {
+  const dateVal   = document.getElementById('c-date').value;
+  const studentId = document.getElementById('c-studentId').value;
+  const stuName   = document.getElementById('c-studentName').value;
+  const time      = document.getElementById('c-time').value.trim();
+  const book      = document.getElementById('c-book').value.trim();
+  const content   = document.getElementById('c-content').value.trim();
+  const ok  = document.getElementById('clinic-ok');
+  const err = document.getElementById('clinic-err');
+
+  if (!dateVal)    { showAlert(err, '날짜를 입력해주세요.', 'err'); return; }
+  if (!studentId)  { showAlert(err, '학생을 선택해주세요.', 'err'); return; }
+  if (!time)       { showAlert(err, '시간을 입력해주세요.', 'err'); return; }
+  if (!book)       { showAlert(err, '지참교재를 입력해주세요.', 'err'); return; }
+  if (!content)    { showAlert(err, '클리닉 내용을 입력해주세요.', 'err'); return; }
+
+  try {
+    await addDoc(collection(db, 'satClinicReports'), {
+      teacherUid:   currentTeacher.uid,
+      teacherName:  currentTeacher.name,
+      studentId,
+      studentName:  stuName,
+      date:         dateVal,
+      time,
+      book,
+      content,
+      submittedAt:  serverTimestamp()
+    });
+    showAlert(ok, `✅ ${stuName} 학생의 토요클리닉이 제출되었습니다.`, 'ok');
+    resetClinic();
+    loadClinicHistory();
+  } catch(e) {
+    showAlert(err, '제출 오류: ' + e.message, 'err');
+  }
+};
+
+window.resetClinic = function() {
+  clinicSelectedId   = '';
+  clinicSelectedName = '';
+  document.getElementById('c-studentId').value   = '';
+  document.getElementById('c-studentName').value = '';
+  document.getElementById('c-time').value    = '';
+  document.getElementById('c-book').value    = '';
+  document.getElementById('c-content').value = '';
+  document.getElementById('clinicStudentSearch').value = '';
+  renderClinicChips(clinicStudentsAll);
+};
+
+async function loadClinicHistory() {
+  const el = document.getElementById('clinicHistory');
+  try {
+    const q = query(
+      collection(db, 'satClinicReports'),
+      where('teacherUid', '==', currentTeacher.uid),
+      orderBy('submittedAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">📭</div>아직 제출 이력이 없습니다.</div>`;
+      return;
+    }
+    el.innerHTML = [...snap.docs].map(d => {
+      const r = d.data();
+      return `<div class="history-item" style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div>
+            <span style="font-weight:700;color:var(--gold);">${r.studentName}</span>
+            <span style="font-size:12px;color:var(--muted);margin-left:8px;">${r.date} · ${r.time}</span>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">지참교재: ${r.book}</div>
+            <div style="font-size:13px;margin-top:4px;">${r.content}</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteClinic('${d.id}','${r.studentName}')">삭제</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state" style="color:#ff9090;">오류: ${e.message}</div>`;
+  }
+}
+
+window.deleteClinic = async function(docId, name) {
+  if (!confirm(`${name} 학생의 토요클리닉 기록을 삭제할까요?`)) return;
+  try {
+    await deleteDoc(doc(db, 'satClinicReports', docId));
+    loadClinicHistory();
+  } catch(e) {
+    alert('삭제 오류: ' + e.message);
+  }
 };
 
 window.closeVideoModal = function() {
