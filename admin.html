@@ -1586,6 +1586,7 @@ const FOLDER_TREE = [
 ];
 
 let _checkedFolders = new Set();
+window._checkedFolders = _checkedFolders;
 
 function isFolderChecked(f) { return _checkedFolders.has(f); }
 
@@ -1808,7 +1809,7 @@ window.syncVimeo = async () => {
   syncCandidates = [];
 
   // 선택된 폴더 목록 (없으면 전체)
-  const targetFolders = _checkedFolders.size > 0 ? [..._checkedFolders] : null;
+  const targetFolders = window._checkedFolders.size > 0 ? [...window._checkedFolders] : null;
 
   statusEl.textContent = '⏳ Vimeo 폴더 목록 불러오는 중...';
 
