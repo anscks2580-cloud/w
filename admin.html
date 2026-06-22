@@ -558,11 +558,14 @@
     </div>
     <div class="card">
       <h3>🔄 Vimeo 동기화</h3>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7;">
-        Vimeo에 올린 영상을 해당 <b style="color:var(--gold);">폴더</b>에 넣어두면 폴더명 기준으로 자동 분류됩니다.<br>
-        예: <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">공통수학1_세쌍둥이개념_송우찬 원장T</code>
-        <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">기출_고2_2025</code>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+        가져올 Vimeo 폴더명을 입력하세요. 여러 개는 줄바꿈으로 구분.<br>
+        비워두면 전체 폴더를 확인합니다.
       </div>
+      <textarea id="syncFolderInput" placeholder="공통수학1_세쌍둥이개념_송우찬 원장T&#10;기출_고1_2025&#10;기출_고2_2025" rows="4"
+        style="width:100%;box-sizing:border-box;padding:10px 12px;background:#1A1230;
+          border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--off-white);
+          font-size:12px;font-family:inherit;color-scheme:dark;resize:vertical;margin-bottom:12px;"></textarea>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="syncVimeo()">📥 Vimeo에서 불러오기</button>
         <span id="syncStatus" style="font-size:13px;color:var(--muted);"></span>
@@ -1692,18 +1695,36 @@ window.syncVimeo = async () => {
   const previewEl = document.getElementById('syncPreview');
   previewEl.style.display = 'none';
   syncCandidates = [];
+
+  // 입력창에서 폴더명 파싱
+  const inputVal = document.getElementById('syncFolderInput')?.value?.trim() || '';
+  const targetFolders = inputVal
+    ? inputVal.split('\n').map(s => s.trim()).filter(Boolean)
+    : null; // null = 전체
+
   statusEl.textContent = '⏳ Vimeo 폴더 목록 불러오는 중...';
 
   try {
-    const folders = await fetchVimeoFolders();
-    const matchedFolders = folders.filter(f => KNOWN_TAGS_SYNC.includes(f.name));
+    const allFolders = await fetchVimeoFolders();
+
+    // 지정된 폴더명만 필터 (미입력 시 KNOWN_TAGS_SYNC 전체)
+    const matchedFolders = allFolders.filter(f =>
+      targetFolders
+        ? targetFolders.includes(f.name)
+        : KNOWN_TAGS_SYNC.includes(f.name)
+    );
+
+    if (!matchedFolders.length) {
+      statusEl.textContent = '⚠️ 입력한 폴더명과 일치하는 Vimeo 폴더가 없습니다.';
+      return;
+    }
 
     const existingIds = new Set(videosCache.map(v => v.vimeoId));
-    const foundIds = new Set(); // 폴더에서 찾은 영상 ID
+    const foundIds = new Set();
 
-    // ① 폴더에 든 영상
+    // 지정 폴더 영상
     for (const folder of matchedFolders) {
-      statusEl.textContent = `⏳ "${folder.name}" 폴더 확인 중...`;
+      statusEl.textContent = `⏳ "${folder.name}" 확인 중...`;
       const videos = await fetchFolderVideos(folder.uri);
       for (const v of videos) {
         const vimeoId = v.uri.replace('/videos/', '');
@@ -1714,19 +1735,20 @@ window.syncVimeo = async () => {
       }
     }
 
-    // ② 폴더 밖(루트) 영상 → 미분류로
-    statusEl.textContent = '⏳ 폴더 미지정 영상 확인 중...';
-    const allVideos = await fetchAllAccountVideos();
-    for (const v of allVideos) {
-      const vimeoId = v.uri.replace('/videos/', '');
-      if (existingIds.has(vimeoId)) continue;  // 이미 등록됨
-      if (foundIds.has(vimeoId)) continue;       // 폴더에서 이미 처리됨
-      const date = v.created_time ? v.created_time.slice(0,7).replace('-','.') : '';
-      syncCandidates.push({ vimeoId, title: v.name, tag: '', date }); // 태그 없음 = 미분류
+    // 폴더 미지정 영상 (루트) — 전체 모드일 때만
+    if (!targetFolders) {
+      statusEl.textContent = '⏳ 폴더 미지정 영상 확인 중...';
+      const allVideos = await fetchAllAccountVideos();
+      for (const v of allVideos) {
+        const vimeoId = v.uri.replace('/videos/', '');
+        if (existingIds.has(vimeoId) || foundIds.has(vimeoId)) continue;
+        const date = v.created_time ? v.created_time.slice(0,7).replace('-','.') : '';
+        syncCandidates.push({ vimeoId, title: v.name, tag: '', date });
+      }
     }
 
     if (!syncCandidates.length) {
-      statusEl.textContent = `✅ 새로 추가할 영상이 없습니다. (폴더 ${matchedFolders.length}개 확인 완료)`;
+      statusEl.textContent = `✅ 새로 추가할 영상이 없습니다. (${matchedFolders.length}개 폴더 확인 완료)`;
       return;
     }
 
