@@ -1622,7 +1622,7 @@ function renderFolderAccordion(q='') {
               onmouseout="this.style.background=''">
               <input type="checkbox" class="folder-check" value="${f}"
                 ${isFolderChecked(f)?'checked':''}
-                onchange="onFolderCheckChange()"
+                onchange="onFolderCheckChange(this)"
                 style="accent-color:var(--gold);flex-shrink:0;">
               <span style="color:var(--off-white);">${f}</span>
             </label>`).join('')}
@@ -1633,11 +1633,9 @@ function renderFolderAccordion(q='') {
   updateFolderCount();
 }
 
-function onFolderCheckChange() {
-  document.querySelectorAll('.folder-check').forEach(cb => {
-    if (cb.checked) _checkedFolders.add(cb.value);
-    else _checkedFolders.delete(cb.value);
-  });
+function onFolderCheckChange(cb) {
+  if (cb.checked) _checkedFolders.add(cb.value);
+  else _checkedFolders.delete(cb.value);
   updateFolderCount();
 }
 
