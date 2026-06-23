@@ -412,7 +412,7 @@
     <div class="section-wrap">
       <div class="sec-header">
         <div class="sec-eyebrow">VIDEO LECTURES</div>
-        <div class="sec-title">송우찬수학 전체 강의</div>
+        <div class="sec-title">에이펙스 전용 공개 강의</div>
       </div>
 
       <!-- 카테고리 필터 -->
@@ -537,8 +537,11 @@ async function loadVideos() {
     const cats = new Set();
     snap.forEach(d => {
       const v = { id: d.id, ...d.data() };
-      allVideos.push(v);
-      if (v.category) cats.add(v.category);
+      // 에이펙스 공개 허용된 영상만 표시
+      if (v.apexAccess === true) {
+        allVideos.push(v);
+        if (v.category) cats.add(v.category);
+      }
     });
 
     // 카테고리 버튼 생성
@@ -551,6 +554,10 @@ async function loadVideos() {
       catFilter.appendChild(btn);
     });
 
+    if (allVideos.length === 0) {
+      grid.innerHTML = '<div class="loading-msg">현재 공개된 강의가 없습니다.<br><small>관리자가 강의를 공개하면 여기에 표시됩니다.</small></div>';
+      return;
+    }
     renderVideos('all');
   } catch(e) {
     grid.innerHTML = '<div class="loading-msg">강의 목록을 불러오지 못했습니다.<br><small>' + e.message + '</small></div>';
@@ -568,7 +575,7 @@ function renderVideos(cat) {
   const grid = document.getElementById('videoGrid');
   const list = cat === 'all' ? allVideos : allVideos.filter(v => v.category === cat);
   if (!list.length) {
-    grid.innerHTML = '<div class="loading-msg">해당 카테고리에 강의가 없습니다.</div>';
+    grid.innerHTML = '<div class="loading-msg">해당 카테고리에 공개된 강의가 없습니다.</div>';
     return;
   }
   grid.innerHTML = '';
