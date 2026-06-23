@@ -196,6 +196,7 @@
     <button class="admin-tab" onclick="switchTab('assign',this)">강의 배정</button>
     <button class="admin-tab" onclick="switchTab('videos',this)">강의 목록</button>
     <button class="admin-tab" onclick="switchTab('teachers',this)">선생님 관리</button>
+    <button class="admin-tab" onclick="switchTab('weekly',this);initWeeklyTab()">📊 주간성취도</button>
     <button class="admin-tab" onclick="switchTab('monthly',this);initMonthlyTab()">📝 월말보고서</button>
     <button class="admin-tab" onclick="switchTab('satclinic',this);initSatClinicTab()">🏥 토요클리닉</button>
   </div>
@@ -389,8 +390,10 @@
       <div id="teacherList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
     </div>
 
+  </div>
 
-    <!-- 주간성취도 엑셀 다운로드 -->
+  <!-- 주간성취도 -->
+  <div class="tab-panel" id="tab-weekly">
     <div class="card">
       <h3>📥 주간성취도 엑셀 다운로드</h3>
       <div class="form-row" style="max-width:500px;margin-bottom:16px;">
@@ -410,7 +413,6 @@
       </div>
       <div class="msg" id="excelWeeklyMsg"></div>
     </div>
-    <!-- 반별 진도 엑셀 다운로드 -->
     <div class="card">
       <h3>📍 반별 진도 엑셀 다운로드</h3>
       <div class="form-row" style="max-width:500px;margin-bottom:16px;">
@@ -2369,6 +2371,8 @@ window.downloadWeeklyExcel = async () => {
       rows.push({
         선생님:        data.teacherName || '',
         학생명:        data.studentName || '',
+        학년:          data.studentGrade || '',
+        단원:          data.topic || '',
         과제충실도:    rl.homework || '',
         수업태도:      rl.attitude || '',
         클리닉참여도:  rl.clinic || '',
@@ -2385,12 +2389,12 @@ window.downloadWeeklyExcel = async () => {
 
     // SheetJS로 엑셀 생성
     const ws = XLSX.utils.json_to_sheet(rows, {
-      header: ['선생님','학생명','과제충실도','수업태도','클리닉참여도','담임말씀','제출일시']
+      header: ['선생님','학생명','학년','단원','과제충실도','수업태도','클리닉참여도','담임말씀','제출일시']
     });
 
     // 컬럼 너비 설정
     ws['!cols'] = [
-      {wch:10},{wch:8},
+      {wch:10},{wch:8},{wch:6},{wch:20},
       {wch:10},{wch:10},{wch:12},{wch:40},{wch:12}
     ];
 
@@ -2532,6 +2536,23 @@ let monthlyAdminCache = [];   // 전체 조회 결과
 let monthlySelectedUid = '';  // 현재 선택된 선생님 UID
 
 // 탭 첫 진입 시 선생님 버튼 초기화
+window.initWeeklyTab = () => {
+  // excelTeacher, progressTeacher 선생님 필터 드롭다운 채우기
+  ['excelTeacher','progressTeacher'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel || sel.options.length > 1) return;
+    teachersCache.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name + ' T';
+      sel.appendChild(opt);
+    });
+  });
+  // 이번 주 기본 세팅
+  setThisWeek('excelWeek');
+  setThisWeek('progressWeek');
+};
+
 window.initMonthlyTab = () => {
   const wrap = document.getElementById('monthlyTeacherBtns');
   if (!wrap) return;
