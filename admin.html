@@ -197,6 +197,7 @@
     <button class="admin-tab" onclick="switchTab('videos',this)">강의 목록</button>
     <button class="admin-tab" onclick="switchTab('teachers',this)">선생님 관리</button>
     <button class="admin-tab" onclick="switchTab('weekly',this);initWeeklyTab()">📊 주간성취도</button>
+    <button class="admin-tab" onclick="switchTab('progress',this);initProgressTab()">📍 반별진도</button>
     <button class="admin-tab" onclick="switchTab('monthly',this);initMonthlyTab()">📝 월말보고서</button>
     <button class="admin-tab" onclick="switchTab('satclinic',this);initSatClinicTab()">🏥 토요클리닉</button>
   </div>
@@ -413,6 +414,10 @@
       </div>
       <div class="msg" id="excelWeeklyMsg"></div>
     </div>
+  </div>
+
+  <!-- 반별진도 -->
+  <div class="tab-panel" id="tab-progress">
     <div class="card">
       <h3>📍 반별 진도 엑셀 다운로드</h3>
       <div class="form-row" style="max-width:500px;margin-bottom:16px;">
@@ -2550,6 +2555,18 @@ window.initWeeklyTab = () => {
   });
   // 이번 주 기본 세팅
   setThisWeek('excelWeek');
+  setThisWeek('progressWeek');
+};
+
+window.initProgressTab = () => {
+  const sel = document.getElementById('progressTeacher');
+  if (!sel || sel.options.length > 1) return;
+  teachersCache.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name + ' T';
+    sel.appendChild(opt);
+  });
   setThisWeek('progressWeek');
 };
 
