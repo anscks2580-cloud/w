@@ -65,14 +65,6 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
   display:flex; justify-content:space-between; align-items:center;
   margin-bottom:16px;
 }
-.checkbox-label {
-  display:flex; align-items:center; gap:7px;
-  font-size:12px; color:var(--muted); cursor:pointer;
-}
-.checkbox-label input[type=checkbox] {
-  width:15px; height:15px; accent-color:var(--gold);
-  cursor:pointer;
-}
 
 .btn-login {
   width:100%; padding:14px;
@@ -124,12 +116,7 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
         <input type="password" id="s-pw" placeholder="" autocomplete="current-password">
       </div>
       <div class="login-options">
-        <label class="checkbox-label">
-          <input type="checkbox" id="s-saveId"> 아이디 저장
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" id="s-autoLogin"> 자동 로그인
-        </label>
+
       </div>
       <button class="btn-login" id="s-btn" onclick="loginStudent()">로그인</button>
       <div class="error-msg" id="s-err"></div>
@@ -146,9 +133,7 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
         <input type="password" id="t-pw" placeholder="" autocomplete="current-password">
       </div>
       <div class="login-options">
-        <label class="checkbox-label">
-          <input type="checkbox" id="t-autoLogin"> 자동 로그인
-        </label>
+
         <span></span>
       </div>
       <button class="btn-login" id="t-btn" onclick="loginTeacher()">선생님 로그인</button>
@@ -166,9 +151,7 @@ body { display:flex; align-items:center; justify-content:center; min-height:100v
         <input type="password" id="a-pw" placeholder="" autocomplete="current-password">
       </div>
       <div class="login-options">
-        <label class="checkbox-label">
-          <input type="checkbox" id="a-autoLogin"> 자동 로그인
-        </label>
+
         <span></span>
       </div>
       <button class="btn-login" id="a-btn" onclick="loginAdmin()">관리자 로그인</button>
@@ -205,7 +188,6 @@ const db = getFirestore(app);
 const savedId = localStorage.getItem('swc_saved_id');
 if (savedId) {
   document.getElementById('s-name').value = savedId;
-  document.getElementById('s-saveId').checked = true;
 }
 
 // 탭 전환
@@ -220,8 +202,6 @@ window.switchTab = function(id, btn) {
 window.loginStudent = async function() {
   const name = document.getElementById('s-name').value.trim();
   const pw = document.getElementById('s-pw').value.trim().replace(/-/g,'');
-  const saveId = document.getElementById('s-saveId').checked;
-  const autoLogin = document.getElementById('s-autoLogin').checked;
   const btn = document.getElementById('s-btn');
   const err = document.getElementById('s-err');
 
@@ -230,12 +210,10 @@ window.loginStudent = async function() {
   btn.disabled = true; btn.textContent = '로그인 중...';
   err.style.display = 'none';
 
-  // 아이디 저장
-  if (saveId) localStorage.setItem('swc_saved_id', name);
+  localStorage.removeItem('swc_saved_id');
   else localStorage.removeItem('swc_saved_id');
 
-  // 자동로그인: LOCAL(영구) vs SESSION(브라우저 닫으면 해제)
-  const persistence = autoLogin ? browserLocalPersistence : browserSessionPersistence;
+  const persistence = browserSessionPersistence;
 
   try {
     await setPersistence(auth, persistence);
@@ -251,14 +229,13 @@ window.loginStudent = async function() {
 window.loginTeacher = async function() {
   const name = document.getElementById('t-name').value.trim();
   const pw   = document.getElementById('t-pw').value;
-  const autoLogin = document.getElementById('t-autoLogin').checked;
   const btn  = document.getElementById('t-btn');
 
   if (!name || !pw) { showErr('t-err', '이름과 비밀번호를 입력해주세요.'); return; }
 
   btn.disabled = true; btn.textContent = '로그인 중...';
 
-  const persistence = autoLogin ? browserLocalPersistence : browserSessionPersistence;
+  const persistence = browserSessionPersistence;
 
   try {
     await setPersistence(auth, persistence);
@@ -280,14 +257,13 @@ window.loginTeacher = async function() {
 window.loginAdmin = async function() {
   const email = document.getElementById('a-email').value.trim();
   const pw = document.getElementById('a-pw').value;
-  const autoLogin = document.getElementById('a-autoLogin').checked;
   const btn = document.getElementById('a-btn');
 
   if (!email || !pw) { showErr('a-err','이메일과 비밀번호를 입력해주세요.'); return; }
 
   btn.disabled = true; btn.textContent = '로그인 중...';
 
-  const persistence = autoLogin ? browserLocalPersistence : browserSessionPersistence;
+  const persistence = browserSessionPersistence;
 
   try {
     await setPersistence(auth, persistence);
