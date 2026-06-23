@@ -2369,8 +2369,6 @@ window.downloadWeeklyExcel = async () => {
       rows.push({
         선생님:        data.teacherName || '',
         학생명:        data.studentName || '',
-        학년:          data.studentGrade || '',
-        단원:          data.topic || '',
         과제충실도:    rl.homework || '',
         수업태도:      rl.attitude || '',
         클리닉참여도:  rl.clinic || '',
@@ -2387,12 +2385,12 @@ window.downloadWeeklyExcel = async () => {
 
     // SheetJS로 엑셀 생성
     const ws = XLSX.utils.json_to_sheet(rows, {
-      header: ['선생님','학생명','학년','단원','과제충실도','수업태도','클리닉참여도','담임말씀','제출일시']
+      header: ['선생님','학생명','과제충실도','수업태도','클리닉참여도','담임말씀','제출일시']
     });
 
     // 컬럼 너비 설정
     ws['!cols'] = [
-      {wch:10},{wch:8},{wch:6},{wch:20},
+      {wch:10},{wch:8},
       {wch:10},{wch:10},{wch:12},{wch:40},{wch:12}
     ];
 

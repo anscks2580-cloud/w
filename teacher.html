@@ -229,11 +229,8 @@
 
       <!-- 학생 카드 목록 -->
       <div id="studentCardList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;min-height:36px;"></div>
-      <!-- 수업 단원 -->
-      <div class="form-group" style="margin-bottom:16px;">
-        <label>수업 단원</label>
-        <input type="text" id="w-topic" placeholder="예: 수1 · 지수함수">
-      </div>
+      <!-- hidden inputs for compatibility -->
+      <input type="hidden" id="w-topic" value="">
       <!-- hidden select for compatibility -->
       <select id="w-student" style="display:none;"></select>
 
@@ -277,7 +274,7 @@
       <div class="form-grid full">
         <div class="form-group">
           <label>담임선생님 말씀 <span style="text-transform:none;letter-spacing:0;">— 특이사항 또는 학부모께 전달할 사항</span></label>
-          <textarea id="w-memo" placeholder="해당 학생에 대한 특이사항 혹은 부모님께 전달할 사항을 적어주세요."></textarea>
+          <textarea id="w-memo" placeholder="해당 학생에 대한 특이사항 혹은 부모님께 전달할 사항을 적어주세요." style="min-height:270px;"></textarea>
         </div>
       </div>
 
