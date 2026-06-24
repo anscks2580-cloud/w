@@ -726,6 +726,9 @@
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
         <button class="btn btn-primary" onclick="previewDailyReport()">👁 미리보기</button>
         <button class="btn btn-secondary" onclick="downloadDailyReport()">⬇ 이미지 다운로드</button>
+        <button class="btn btn-secondary" onclick="saveDraft('dr')" style="border-color:rgba(100,200,100,0.4);color:#90ee90;">💾 임시저장</button>
+        <button class="btn btn-secondary" onclick="loadDraft('dr')" style="border-color:rgba(100,180,255,0.4);color:#90cfff;">📂 불러오기</button>
+        <span id="dr-draft-status" style="font-size:11px;color:var(--muted);"></span>
       </div>
     </div>
 
@@ -814,8 +817,11 @@
         border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
     </div>
 
-    <div style="display:flex;gap:12px;margin-bottom:32px;">
+    <div style="display:flex;gap:12px;margin-bottom:32px;flex-wrap:wrap;align-items:center;">
       <button class="btn btn-primary" onclick="downloadWeeklyLog()">⬇ 이미지 저장</button>
+      <button class="btn btn-secondary" onclick="saveDraft('wl')" style="border-color:rgba(100,200,100,0.4);color:#90ee90;">💾 임시저장</button>
+      <button class="btn btn-secondary" onclick="loadDraft('wl')" style="border-color:rgba(100,180,255,0.4);color:#90cfff;">📂 불러오기</button>
+      <span id="wl-draft-status" style="font-size:11px;color:var(--muted);"></span>
     </div>
     <canvas id="wlCanvas" style="display:none;"></canvas>
   </div>
@@ -840,6 +846,9 @@
           <option value="산본관" style="background:#2D1F5E;color:#F0EDF8;">산본관</option>
         </select>
         <button class="btn btn-sm btn-secondary" id="attDownloadBtn" onclick="downloadAttendanceImage()" style="display:none;">⬇ 이미지 저장</button>
+        <button class="btn btn-sm btn-secondary" onclick="saveDraft('att')" style="border-color:rgba(100,200,100,0.4);color:#90ee90;">💾 임시저장</button>
+        <button class="btn btn-sm btn-secondary" onclick="loadDraft('att')" style="border-color:rgba(100,180,255,0.4);color:#90cfff;">📂 불러오기</button>
+        <span id="att-draft-status" style="font-size:11px;color:var(--muted);"></span>
       </div>
       <div style="display:flex;gap:14px;margin-bottom:16px;font-size:12px;color:var(--muted);">
         <span style="display:flex;align-items:center;gap:5px;"><span style="width:13px;height:13px;border-radius:3px;background:#3B82F6;display:inline-block;"></span>출석</span>
@@ -4288,6 +4297,176 @@ window.downloadWeeklyLog = function() {
   link.download = `주간업무일지_${branch}_${fmtDate(fromVal).replace(/\./g,'')}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
+};
+
+// ══════════════════════════════════════════
+// 임시저장 (Firestore dailyDrafts)
+// ══════════════════════════════════════════
+
+function draftDocId(type) {
+  // type: 'dr' | 'wl' | 'att'
+  if (type === 'dr') {
+    const date   = document.getElementById('dr-date')?.value || new Date().toISOString().slice(0,10);
+    const branch = document.getElementById('dr-branch')?.value || '';
+    return `dr_${branch}_${date}`;
+  }
+  if (type === 'wl') {
+    const from   = document.getElementById('wl-from')?.value || new Date().toISOString().slice(0,10);
+    const branch = document.getElementById('wl-branch')?.value || '';
+    return `wl_${branch}_${from}`;
+  }
+  if (type === 'att') {
+    const dateStr = attCurrentDate.toISOString().slice(0,10);
+    const branch  = document.getElementById('attBranchFilter')?.value || 'all';
+    return `att_${branch}_${dateStr}`;
+  }
+  return type + '_' + new Date().toISOString().slice(0,10);
+}
+
+function getDrData() {
+  return {
+    branch:   document.getElementById('dr-branch')?.value || '',
+    date:     document.getElementById('dr-date')?.value || '',
+    author:   document.getElementById('dr-author')?.value || '',
+    classes:  document.getElementById('dr-classes')?.value || '',
+    consult:  document.getElementById('dr-consult')?.value || '',
+    receipt:  document.getElementById('dr-receipt')?.value || '',
+    absent:   document.getElementById('dr-absent')?.value || '',
+    textbook: document.getElementById('dr-textbook')?.value || '',
+    note:     document.getElementById('dr-note')?.value || '',
+    phone:    document.getElementById('dr-phone')?.value || '',
+    nextday:  document.getElementById('dr-nextday')?.value || '',
+  };
+}
+
+function setDrData(d) {
+  if (d.branch)   document.getElementById('dr-branch').value   = d.branch;
+  if (d.date)     document.getElementById('dr-date').value     = d.date;
+  if (d.author !== undefined)   document.getElementById('dr-author').value   = d.author;
+  if (d.classes !== undefined)  document.getElementById('dr-classes').value  = d.classes;
+  if (d.consult !== undefined)  document.getElementById('dr-consult').value  = d.consult;
+  if (d.receipt !== undefined)  document.getElementById('dr-receipt').value  = d.receipt;
+  if (d.absent !== undefined)   document.getElementById('dr-absent').value   = d.absent;
+  if (d.textbook !== undefined) document.getElementById('dr-textbook').value = d.textbook;
+  if (d.note !== undefined)     document.getElementById('dr-note').value     = d.note;
+  if (d.phone !== undefined)    document.getElementById('dr-phone').value    = d.phone;
+  if (d.nextday !== undefined)  document.getElementById('dr-nextday').value  = d.nextday;
+}
+
+function getWlData() {
+  const secs = ['new','leave','pause','upcoming','cash','consult'];
+  const data = {
+    branch: document.getElementById('wl-branch')?.value || '',
+    from:   document.getElementById('wl-from')?.value || '',
+    to:     document.getElementById('wl-to')?.value || '',
+    consultNote: document.getElementById('wl-consult-note')?.value || '',
+    textbook:    document.getElementById('wl-textbook')?.value || '',
+    rows: {},
+  };
+  secs.forEach(sec => {
+    data.rows[sec] = [];
+    document.querySelectorAll(`[data-sec="${sec}"]`).forEach(inp => {
+      const r = parseInt(inp.dataset.row);
+      const c = parseInt(inp.dataset.col);
+      if (!data.rows[sec][r]) data.rows[sec][r] = [];
+      data.rows[sec][r][c] = inp.value;
+    });
+  });
+  return data;
+}
+
+function setWlData(d) {
+  if (d.branch) document.getElementById('wl-branch').value = d.branch;
+  if (d.from)   document.getElementById('wl-from').value   = d.from;
+  if (d.to)     document.getElementById('wl-to').value     = d.to;
+  if (d.consultNote !== undefined) document.getElementById('wl-consult-note').value = d.consultNote;
+  if (d.textbook !== undefined)    document.getElementById('wl-textbook').value     = d.textbook;
+
+  if (d.rows) {
+    Object.entries(d.rows).forEach(([sec, rows]) => {
+      const container = document.getElementById('wl-' + sec + '-rows');
+      if (!container) return;
+      container.innerHTML = '';
+      (rows.length ? rows : [[]]).forEach((rowData, ri) => {
+        wlAddRow(sec);
+        const inputs = container.querySelectorAll(`[data-row="${ri}"]`);
+        inputs.forEach((inp, ci) => { inp.value = (rowData && rowData[ci]) || ''; });
+      });
+    });
+  }
+}
+
+function getAttData() {
+  const dow = attCurrentDate.getDay();
+  const branchFilter = document.getElementById('attBranchFilter')?.value || '';
+  const filtered = studentsCache.filter(s =>
+    (s.days||[]).includes(DAY_NAMES[dow]) && (!branchFilter || s.branch === branchFilter)
+  );
+  const statusSnapshot = {};
+  filtered.forEach(s => { statusSnapshot[s.id] = attStatus[s.id] || 'present'; });
+  return {
+    date:   attCurrentDate.toISOString().slice(0,10),
+    branch: branchFilter,
+    status: statusSnapshot,
+  };
+}
+
+function setAttData(d) {
+  if (d.date) {
+    const parts = d.date.split('-');
+    attCurrentDate = new Date(+parts[0], +parts[1]-1, +parts[2]);
+  }
+  if (d.branch !== undefined) {
+    const sel = document.getElementById('attBranchFilter');
+    if (sel) sel.value = d.branch;
+  }
+  if (d.status) Object.assign(attStatus, d.status);
+  renderAttendance();
+}
+
+function showDraftStatus(type, msg, isErr=false) {
+  const el = document.getElementById(type + '-draft-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? '#ff9090' : '#90ee90';
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+window.saveDraft = async function(type) {
+  let payload;
+  if (type === 'dr')  payload = getDrData();
+  if (type === 'wl')  payload = getWlData();
+  if (type === 'att') payload = getAttData();
+  if (!payload) return;
+
+  const docId = draftDocId(type);
+  try {
+    await setDoc(doc(db, 'dailyDrafts', docId), {
+      ...payload,
+      savedAt: new Date().toISOString(),
+    });
+    showDraftStatus(type, `✅ 저장됨 (${new Date().toLocaleTimeString('ko-KR', {hour:'2-digit',minute:'2-digit'})})`);
+  } catch(e) {
+    showDraftStatus(type, '❌ 저장 실패: ' + e.message, true);
+  }
+};
+
+window.loadDraft = async function(type) {
+  const docId = draftDocId(type);
+  try {
+    const snap = await getDoc(doc(db, 'dailyDrafts', docId));
+    if (!snap.exists()) {
+      showDraftStatus(type, '저장된 내용 없음', true); return;
+    }
+    const d = snap.data();
+    if (type === 'dr')  setDrData(d);
+    if (type === 'wl')  setWlData(d);
+    if (type === 'att') setAttData(d);
+    const savedTime = d.savedAt ? new Date(d.savedAt).toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    showDraftStatus(type, `📂 불러옴 ${savedTime ? '('+savedTime+')' : ''}`);
+  } catch(e) {
+    showDraftStatus(type, '❌ 불러오기 실패: ' + e.message, true);
+  }
 };
 
 // ══════════════════════════════════════════
