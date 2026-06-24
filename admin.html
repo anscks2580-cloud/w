@@ -3995,7 +3995,8 @@ window.downloadAttendanceImage = function() {
 
   const filtered = studentsCache.filter(s =>
     (s.days || []).includes(dayName) &&
-    (!branchFilter || s.branch === branchFilter)
+    (!branchFilter || s.branch === branchFilter) &&
+    attStatus[s.id] !== 'none'   // 해당없음 제외
   );
   if (!filtered.length) return;
 
