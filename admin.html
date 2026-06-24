@@ -853,7 +853,8 @@
       <div style="display:flex;gap:14px;margin-bottom:16px;font-size:12px;color:var(--muted);">
         <span style="display:flex;align-items:center;gap:5px;"><span style="width:13px;height:13px;border-radius:3px;background:#3B82F6;display:inline-block;"></span>출석</span>
         <span style="display:flex;align-items:center;gap:5px;"><span style="width:13px;height:13px;border-radius:3px;background:#EF4444;display:inline-block;"></span>결석</span>
-        <span>· 칸 클릭 시 출석↔결석 전환</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:13px;height:13px;border-radius:3px;background:#fff;border:1px solid #aaa;display:inline-block;"></span>해당없음</span>
+        <span>· 클릭 시 출석→결석→해당없음 순환</span>
       </div>
       <div id="attStudentList"></div>
     </div>
@@ -3834,16 +3835,29 @@ window.resetAttDay = function() {
 };
 
 window.toggleAttStatus = function(uid) {
-  attStatus[uid] = attStatus[uid] === 'absent' ? 'present' : 'absent';
-  // 칩 색깔만 업데이트
+  const cur = attStatus[uid] || 'present';
+  attStatus[uid] = cur === 'present' ? 'absent' : cur === 'absent' ? 'none' : 'present';
   const chip = document.getElementById('att-chip-' + uid);
   if (!chip) return;
-  const isAbsent = attStatus[uid] === 'absent';
-  chip.style.background    = isAbsent ? '#EF4444' : '#3B82F6';
-  chip.style.borderColor   = isAbsent ? '#B91C1C' : '#1D4ED8';
-  chip.title = isAbsent ? '결석 (클릭하면 출석)' : '출석 (클릭하면 결석)';
+  applyChipStyle(chip, attStatus[uid]);
   updateAttSummary();
 };
+
+function attChipColors(status) {
+  if (status === 'absent') return { bg:'#EF4444', bdr:'#B91C1C', text:'#fff', sub:'rgba(255,255,255,0.85)', title:'결석 → 클릭:해당없음' };
+  if (status === 'none')   return { bg:'#FFFFFF', bdr:'#AAAAAA', text:'#555', sub:'#888',                   title:'해당없음 → 클릭:출석' };
+  /* present */             return { bg:'#3B82F6', bdr:'#1D4ED8', text:'#fff', sub:'rgba(255,255,255,0.85)', title:'출석 → 클릭:결석' };
+}
+
+function applyChipStyle(chip, status) {
+  const c = attChipColors(status);
+  chip.style.background  = c.bg;
+  chip.style.borderColor = c.bdr;
+  chip.title             = c.title;
+  const spans = chip.querySelectorAll('span');
+  if (spans[0]) spans[0].style.color = c.text;
+  if (spans[1]) spans[1].style.color = c.sub;
+}
 
 window.renderAttendance = function() {
   const dow     = attCurrentDate.getDay();
@@ -3909,18 +3923,16 @@ window.renderAttendance = function() {
         <div style="display:flex;flex-wrap:wrap;gap:6px;">`;
 
       gStudents.forEach(s => {
-        const isAbsent = attStatus[s.id] === 'absent';
-        const bg    = isAbsent ? '#EF4444' : '#3B82F6';
-        const bdr   = isAbsent ? '#B91C1C' : '#1D4ED8';
-        const title = isAbsent ? '결석 (클릭하면 출석)' : '출석 (클릭하면 결석)';
+        const st  = attStatus[s.id] || 'present';
+        const c   = attChipColors(st);
         html += `<div id="att-chip-${s.id}" onclick="toggleAttStatus('${s.id}')"
-          title="${title}"
+          title="${c.title}"
           style="display:flex;flex-direction:column;align-items:center;justify-content:center;
             min-width:72px;padding:7px 10px;border-radius:8px;cursor:pointer;
-            background:${bg};border:2px solid ${bdr};
+            background:${c.bg};border:2px solid ${c.bdr};
             transition:background 0.15s,border-color 0.15s;user-select:none;">
-          <span style="font-size:13px;font-weight:700;color:#fff;">${s.name}</span>
-          <span style="font-size:10px;color:rgba(255,255,255,0.85);margin-top:2px;">${s.classGroup || s.grade}</span>
+          <span style="font-size:13px;font-weight:700;color:${c.text};">${s.name}</span>
+          <span style="font-size:10px;color:${c.sub};margin-top:2px;">${s.classGroup || s.grade}</span>
         </div>`;
       });
 
@@ -3947,7 +3959,8 @@ function updateAttSummary() {
 
   const total   = filtered.length;
   const absent  = filtered.filter(s => attStatus[s.id] === 'absent').length;
-  const present = total - absent;
+  const none    = filtered.filter(s => attStatus[s.id] === 'none').length;
+  const present = total - absent - none;
 
   const absentNames = filtered
     .filter(s => attStatus[s.id] === 'absent')
@@ -3964,6 +3977,10 @@ function updateAttSummary() {
       <div style="display:flex;gap:4px;align-items:center;">
         <span style="width:12px;height:12px;border-radius:2px;background:#EF4444;display:inline-block;"></span>
         <span style="font-size:14px;font-weight:600;color:#FCA5A5;">결석 ${absent}명</span>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <span style="width:12px;height:12px;border-radius:2px;background:#fff;border:1px solid #aaa;display:inline-block;"></span>
+        <span style="font-size:14px;font-weight:600;color:var(--muted);">해당없음 ${none}명</span>
       </div>
     </div>
     ${absentNames ? `<div style="font-size:12px;color:#FCA5A5;">결석: ${absentNames}</div>` : ''}`;
@@ -4052,21 +4069,28 @@ window.downloadAttendanceImage = function() {
         const row = Math.floor(i / cols);
         const cx = PAD + col * (CHIP_W + GAP);
         const cy = y + row * (CHIP_H + GAP);
-        const absent = attStatus[s.id] === 'absent';
+        const st = attStatus[s.id] || 'present';
 
         // 칩 배경
-        ctx.fillStyle = absent ? '#EF4444' : '#3B82F6';
+        const bgMap = { present:'#3B82F6', absent:'#EF4444', none:'#FFFFFF' };
+        ctx.fillStyle = bgMap[st] || '#3B82F6';
         roundRect(ctx, cx, cy, CHIP_W, CHIP_H, 7);
         ctx.fill();
+        // 테두리 (해당없음)
+        if (st === 'none') {
+          ctx.strokeStyle = '#AAAAAA'; ctx.lineWidth = 1;
+          roundRect(ctx, cx, cy, CHIP_W, CHIP_H, 7);
+          ctx.stroke();
+        }
 
         // 이름
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = st === 'none' ? '#555555' : '#FFFFFF';
         ctx.font = 'bold 13px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(s.name, cx + CHIP_W/2, cy + 22, CHIP_W - 8);
         // 반명
         ctx.font = '10px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.fillStyle = st === 'none' ? '#888888' : 'rgba(255,255,255,0.88)';
         ctx.fillText(s.classGroup || s.grade, cx + CHIP_W/2, cy + 37, CHIP_W - 8);
         ctx.textAlign = 'left';
       });
@@ -4075,15 +4099,15 @@ window.downloadAttendanceImage = function() {
     });
   });
 
-  // 요약
   const total   = filtered.length;
   const absent  = filtered.filter(s => attStatus[s.id] === 'absent').length;
-  const present = total - absent;
+  const none    = filtered.filter(s => attStatus[s.id] === 'none').length;
+  const present = total - absent - none;
   y += 8;
   ctx.fillStyle = '#333';
   ctx.font = '13px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText(`총 ${total}명 · 출석 ${present}명 · 결석 ${absent}명`, PAD, y + 16);
+  ctx.fillText(`총 ${total}명 · 출석 ${present}명 · 결석 ${absent}명 · 해당없음 ${none}명`, PAD, y + 16);
   const absentNames = filtered.filter(s => attStatus[s.id]==='absent').map(s=>s.name).join(', ');
   if (absentNames) {
     ctx.fillStyle = '#DC2626';
