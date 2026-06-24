@@ -547,8 +547,15 @@
         하루 업무 내용을 입력하고 이미지 파일로 저장합니다. 입력한 내용은 사진과 같은 보고서 양식으로 다운로드됩니다.
       </div>
 
-      <!-- 날짜 / 작성자 -->
-      <div class="form-row" style="max-width:600px;">
+      <!-- 관 선택 / 날짜 / 작성자 -->
+      <div class="form-row" style="max-width:700px;grid-template-columns:1fr 1fr 1fr;">
+        <div class="form-group">
+          <label>관 선택</label>
+          <select id="dr-branch" style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:14px;font-family:inherit;outline:none;">
+            <option value="평촌관">평촌관</option>
+            <option value="산본관">산본관</option>
+          </select>
+        </div>
         <div class="form-group">
           <label>날짜</label>
           <input type="date" id="dr-date" style="color-scheme:dark;width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:14px;font-family:inherit;outline:none;">
@@ -3099,6 +3106,7 @@ function getDRValues() {
     dateDisplay = `${y}.${m}.${day}`;
   }
   return {
+    branch:   document.getElementById('dr-branch').value || '평촌관',
     date:     dateDisplay,
     author:   document.getElementById('dr-author').value.trim() || '-',
     classes:  document.getElementById('dr-classes').value.trim() || '-',
@@ -3126,7 +3134,7 @@ function drawDailyReport(canvas, data) {
   ctx.fillStyle = '#222';
   ctx.font = 'bold 34px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('< 일일  업무  보고 >', W / 2, 70);
+  ctx.fillText(`< 일일  업무  보고  ${data.branch} >`, W / 2, 70);
   ctx.textAlign = 'left';
 
   const bdr = '#888';
@@ -3260,7 +3268,7 @@ window.downloadDailyReport = function() {
   document.getElementById('drPreviewWrap').style.display = 'block';
   const link = document.createElement('a');
   const dateStr = data.date.replace(/\./g, '') || 'report';
-  link.download = `일일업무보고_${dateStr}_${data.author}.png`;
+  link.download = `일일업무보고_${data.branch}_${dateStr}_${data.author}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
 };
