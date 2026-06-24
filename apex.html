@@ -505,7 +505,6 @@ window.tryAuth = function() {
   const errEl = document.getElementById('authError');
   if (val === APEX_CODE) {
     errEl.style.display = 'none';
-    sessionStorage.setItem('apexAuth', '1');
     showContent();
   } else {
     errEl.style.display = 'block';
@@ -517,11 +516,6 @@ function showContent() {
   document.getElementById('apexHero').style.display = 'none';
   document.getElementById('apexContent').style.display = 'block';
   loadVideos();
-}
-
-// 세션 유지
-if (sessionStorage.getItem('apexAuth') === '1') {
-  showContent();
 }
 
 // ── Firestore 에서 videos 컬렉션 로드 (videos.html 과 동일 구조)
