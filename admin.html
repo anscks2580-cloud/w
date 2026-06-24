@@ -1009,7 +1009,7 @@ async function loadStudents() {
   document.getElementById('studentCount').textContent = studentsCache.length;
 }
 
-function renderStudents() {
+window.renderStudents = function renderStudents() {
   const el = document.getElementById('studentList');
   const q = (document.getElementById('studentSearch')?.value || '').trim().toLowerCase();
   const list = q ? studentsCache.filter(s => s.name.toLowerCase().includes(q)) : studentsCache;
