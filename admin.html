@@ -566,10 +566,31 @@
         </div>
       </div>
 
-      <!-- 금일 수업 반 -->
+      <!-- 금일 수업 반 (아코디언) -->
       <div class="form-group" style="margin-bottom:14px;">
         <label>금일 수업 반</label>
-        <input type="text" id="dr-classes" placeholder="예: 초6 2A / 중1 7A / 중2 2A,7A / 중3 2A,7A" style="width:100%;">
+
+        <!-- 아코디언 토글 버튼 -->
+        <div id="drClassAccordion" style="border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;margin-bottom:8px;">
+          <!-- 헤더 -->
+          <div onclick="toggleDrClassAccordion()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);cursor:pointer;"
+            onmouseover="this.style.background='rgba(240,192,64,0.07)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+            <span style="font-size:13px;color:var(--gold);font-weight:600;">📅 요일별 수업반 선택</span>
+            <span id="drClassArrow" style="color:var(--gold);font-size:11px;transition:transform 0.2s;">▼</span>
+          </div>
+          <!-- 내용 -->
+          <div id="drClassBody" style="display:none;padding:14px;">
+            <div id="drClassDayTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+            <div id="drClassDayPanel" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+            <div style="margin-top:12px;display:flex;gap:8px;">
+              <button class="btn btn-sm btn-primary" onclick="drSelectAllClasses()">전체 선택</button>
+              <button class="btn btn-sm btn-secondary" onclick="drClearAllClasses()">전체 해제</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 선택된 반 표시 / 수동 편집 -->
+        <input type="text" id="dr-classes" placeholder="선택하거나 직접 입력" style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;">
       </div>
 
       <!-- 4칸 그리드 -->
@@ -3088,11 +3109,134 @@ window.downloadClinicExcel = function() {
 // ══════════════════════════════════════════
 
 window.initDailyReportTab = function() {
-  // 오늘 날짜 기본값
   const today = new Date().toISOString().slice(0, 10);
   if (!document.getElementById('dr-date').value) {
     document.getElementById('dr-date').value = today;
   }
+  // 관 변경 시 아코디언 갱신
+  document.getElementById('dr-branch').addEventListener('change', renderDrClassAccordion);
+  renderDrClassAccordion();
+};
+
+// ── 수업반 데이터 ──
+const DR_CLASSES = {
+  평촌관: {
+    월: ['초6-2A','중1-2A','중1-7A','중2-2A','중2-7A','중3-2A','중3-7A'],
+    화: ['초5-2B','초6-7B','중1-7B','중2-2B','중3-2B','중3-3B','중3-7B','고1-1B','고1-3B'],
+    수: ['초6-2A','중1-2A','중1-7A','중2-2A','중2-7A','중3-2A','중3-7A','고1-3A','고2-3A'],
+    목: ['초5-2B','초6-7B','중1-7B','중2-2B','중3-2B','중3-3B','중3-7B','고2-3B'],
+    금: ['초6-2A','초6-7B','중1-2A','중1-7A','중2-2A','중2-7A','중3-2A','중3-7A','고1-3A','고2-3A'],
+    토: ['중3-3B','고1-1B','고1-3B','고2-3B','고3-3B'],
+  },
+  산본관: {
+    월: ['(초6)3-A','(중2)2-A','(중2)3-A','(중2)5-A','(중3)2-A','(중3)3-A','(고1)1-B','(고1)2-A','(고2)1-A','(고3)1-A'],
+    화: ['(초5)2-A','(중2)3-B','(중3)2-B','(중3)3-B','(고1)1-A','(고1)2-B','(고2)1-B'],
+    수: ['(중2)2-A','(중2)3-A','(중2)5-A','(중3)2-A','(중3)3-A','(고1)1-B','(고1)2-A','(고2)1-A'],
+    목: ['(초5)2-A','(중2)3-B','(중3)2-B','(중3)3-B','(고1)1-A','(고1)2-B','(고2)1-B'],
+    금: ['(초5)2-A','(초6)3-A','(중2)2-A','(중2)3-A','(중2)5-A','(중3)2-A','(중3)3-A','(고1)1-B','(고1)2-A','(고2)1-A','(고3)1-A'],
+  },
+};
+
+const DAY_ORDER = ['월','화','수','목','금','토'];
+let drActiveDayTab = '';        // 현재 선택된 요일 탭
+let drChecked = new Set();      // 선택된 반 (요일_반명 키)
+
+function renderDrClassAccordion() {
+  drChecked.clear();
+  document.getElementById('dr-classes').value = '';
+  drActiveDayTab = '';
+
+  const branch = document.getElementById('dr-branch').value;
+  const days = Object.keys(DR_CLASSES[branch] || {}).sort((a,b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b));
+
+  // 요일 탭 렌더
+  const tabWrap = document.getElementById('drClassDayTabs');
+  tabWrap.innerHTML = days.map(d => `
+    <button class="btn btn-sm btn-secondary" id="drTab-${d}"
+      onclick="drSwitchDay('${d}')"
+      style="border-radius:20px;">${d}요일</button>
+  `).join('');
+
+  // 첫 번째 요일 기본 선택
+  if (days.length) drSwitchDay(days[0]);
+}
+
+window.drSwitchDay = function(day) {
+  drActiveDayTab = day;
+  // 탭 스타일
+  document.querySelectorAll('[id^="drTab-"]').forEach(btn => {
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+    btn.style.borderRadius = '20px';
+  });
+  const activeBtn = document.getElementById('drTab-' + day);
+  if (activeBtn) { activeBtn.classList.remove('btn-secondary'); activeBtn.classList.add('btn-primary'); }
+
+  const branch = document.getElementById('dr-branch').value;
+  const classes = DR_CLASSES[branch]?.[day] || [];
+  const panel = document.getElementById('drClassDayPanel');
+  panel.innerHTML = classes.map(cls => {
+    const key = day + '_' + cls;
+    const checked = drChecked.has(key);
+    return `
+      <label style="display:flex;align-items:center;gap:6px;padding:5px 10px;
+        background:${checked ? 'rgba(240,192,64,0.15)' : 'rgba(255,255,255,0.04)'};
+        border:1px solid ${checked ? 'rgba(240,192,64,0.5)' : 'rgba(255,255,255,0.1)'};
+        border-radius:6px;cursor:pointer;font-size:12px;color:var(--off-white);white-space:nowrap;
+        transition:all 0.15s;" id="drLabel-${key}">
+        <input type="checkbox" ${checked ? 'checked' : ''} value="${key}"
+          onchange="drToggleClass(this,'${key}')"
+          style="accent-color:var(--gold);width:13px;height:13px;">
+        ${cls}
+      </label>`;
+  }).join('');
+};
+
+window.drToggleClass = function(cb, key) {
+  if (cb.checked) drChecked.add(key); else drChecked.delete(key);
+  // 라벨 스타일 갱신
+  const lbl = document.getElementById('drLabel-' + key);
+  if (lbl) {
+    lbl.style.background = cb.checked ? 'rgba(240,192,64,0.15)' : 'rgba(255,255,255,0.04)';
+    lbl.style.borderColor = cb.checked ? 'rgba(240,192,64,0.5)' : 'rgba(255,255,255,0.1)';
+  }
+  updateDrClassInput();
+};
+
+window.drSelectAllClasses = function() {
+  const branch = document.getElementById('dr-branch').value;
+  const day = drActiveDayTab;
+  (DR_CLASSES[branch]?.[day] || []).forEach(cls => drChecked.add(day + '_' + cls));
+  drSwitchDay(day);
+  updateDrClassInput();
+};
+
+window.drClearAllClasses = function() {
+  const day = drActiveDayTab;
+  [...drChecked].filter(k => k.startsWith(day + '_')).forEach(k => drChecked.delete(k));
+  drSwitchDay(day);
+  updateDrClassInput();
+};
+
+function updateDrClassInput() {
+  // 요일 순서대로 정렬해서 input에 반영
+  const branch = document.getElementById('dr-branch').value;
+  const parts = DAY_ORDER.map(day => {
+    const dayClasses = DR_CLASSES[branch]?.[day] || [];
+    const selected = dayClasses.filter(cls => drChecked.has(day + '_' + cls));
+    if (!selected.length) return null;
+    return selected.join(', ');
+  }).filter(Boolean);
+  document.getElementById('dr-classes').value = parts.join(' / ');
+}
+
+window.toggleDrClassAccordion = function() {
+  const body = document.getElementById('drClassBody');
+  const arrow = document.getElementById('drClassArrow');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  arrow.style.transform = open ? '' : 'rotate(180deg)';
+  if (!open) renderDrClassAccordion();
 };
 
 function getDRValues() {
