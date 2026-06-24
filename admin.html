@@ -256,12 +256,60 @@
     </div>
     <div class="card">
       <h3>📋 등록된 학생 (<span id="studentCount">0</span>명)</h3>
-      <div style="margin-bottom:14px;">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+        <input type="text" id="studentSearch" placeholder="이름 검색..." oninput="renderStudents()"
+          style="flex:1;min-width:160px;max-width:280px;padding:8px 13px;background:rgba(255,255,255,0.05);
+          border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;
+          font-family:inherit;outline:none;">
         <button class="btn btn-danger" onclick="deleteAllStudents()" style="font-size:12px;">
-          🗑 전체 학생 삭제 (Firestore만 / Auth는 Firebase Console에서 별도 삭제)
+          🗑 전체 삭제
         </button>
       </div>
       <div id="studentList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
+    </div>
+  </div>
+
+  <!-- 학생 수정 모달 -->
+  <div id="editStudentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#1A1230;border:1px solid rgba(240,192,64,0.3);border-radius:16px;padding:28px;width:92%;max-width:500px;max-height:90vh;overflow-y:auto;">
+      <h3 style="color:var(--gold);margin-bottom:20px;font-size:16px;">✏️ 학생 정보 수정</h3>
+
+      <div class="form-row">
+        <div class="form-group"><label>학년</label>
+          <select id="edit-grade">
+            <option>중1</option><option>중2</option><option>중3</option>
+            <option>고1</option><option>고2</option><option>고3</option><option>N수</option>
+          </select>
+        </div>
+        <div class="form-group"><label>관할</label>
+          <select id="edit-branch"><option>평촌관</option><option>산본관</option></select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>담당 선생님</label>
+        <select id="edit-teacher"><option value="">선생님 선택...</option></select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>등원 요일</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;padding:6px 0;">
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="edit-day" value="월" style="accent-color:var(--gold);width:14px;height:14px;"> 월</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="edit-day" value="화" style="accent-color:var(--gold);width:14px;height:14px;"> 화</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="edit-day" value="수" style="accent-color:var(--gold);width:14px;height:14px;"> 수</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="edit-day" value="목" style="accent-color:var(--gold);width:14px;height:14px;"> 목</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="edit-day" value="금" style="accent-color:var(--gold);width:14px;height:14px;"> 금</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:var(--off-white);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" class="edit-day" value="토" style="accent-color:var(--gold);width:14px;height:14px;"> 토</label>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>수업 반</label>
+        <input type="text" id="edit-classgroup" placeholder="예: 중2-7A">
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
+        <button class="btn btn-primary" onclick="saveEditStudent()">저장</button>
+      </div>
+      <div class="msg" id="editStudentMsg"></div>
     </div>
   </div>
 
@@ -963,8 +1011,14 @@ async function loadStudents() {
 
 function renderStudents() {
   const el = document.getElementById('studentList');
-  if (!studentsCache.length) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;">등록된 학생이 없습니다.</div>'; return; }
-  el.innerHTML = studentsCache.map(s => `
+  const q = (document.getElementById('studentSearch')?.value || '').trim().toLowerCase();
+  const list = q ? studentsCache.filter(s => s.name.toLowerCase().includes(q)) : studentsCache;
+
+  if (!list.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;">${q ? '검색 결과가 없습니다.' : '등록된 학생이 없습니다.'}</div>`;
+    return;
+  }
+  el.innerHTML = list.map(s => `
     <div class="student-item">
       <div class="student-name">${s.name}</div>
       <span class="student-meta">${s.grade} · ${s.branch}</span>
@@ -972,6 +1026,7 @@ function renderStudents() {
       <span class="student-meta" style="font-size:11px;">${(s.days||[]).join('·') || '-'}</span>
       <span class="student-meta" style="font-size:11px;color:${s.classGroup ? 'var(--gold)' : 'var(--muted)'};">${s.classGroup || '반 미배정'}</span>
       <span class="student-meta" style="font-size:11px;">강의 ${(s.assignedVideos||[]).length}개</span>
+      <button class="btn btn-secondary btn-sm" onclick="openEditModal('${s.id}')">✏️ 수정</button>
       <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}','${s.name}')">삭제</button>
     </div>`).join('');
 }
@@ -1019,6 +1074,66 @@ window.createStudent = async () => {
     showMsg('createMsg', e.code === 'auth/email-already-in-use' ? '이미 등록된 학생입니다.' : '오류: '+e.message, 'error');
   }
 };
+
+let editingStudentId = null;
+
+window.openEditModal = function(uid) {
+  const s = studentsCache.find(st => st.id === uid);
+  if (!s) return;
+  editingStudentId = uid;
+
+  document.getElementById('edit-grade').value  = s.grade || '중1';
+  document.getElementById('edit-branch').value = s.branch || '평촌관';
+  document.getElementById('edit-classgroup').value = s.classGroup || '';
+
+  // 선생님 드롭다운 채우기
+  const tSel = document.getElementById('edit-teacher');
+  tSel.innerHTML = '<option value="">선생님 선택...</option>' +
+    teachersCache.map(t => `<option value="${t.id}" ${t.id === s.teacherUid ? 'selected' : ''}>${t.name} (${t.branch||''})</option>`).join('');
+
+  // 요일 체크박스
+  document.querySelectorAll('.edit-day').forEach(cb => {
+    cb.checked = (s.days || []).includes(cb.value);
+  });
+
+  // 메시지 초기화
+  const msg = document.getElementById('editStudentMsg');
+  msg.style.display = 'none';
+
+  const modal = document.getElementById('editStudentModal');
+  modal.style.display = 'flex';
+};
+
+window.closeEditModal = function() {
+  document.getElementById('editStudentModal').style.display = 'none';
+  editingStudentId = null;
+};
+
+window.saveEditStudent = async function() {
+  if (!editingStudentId) return;
+  const grade      = document.getElementById('edit-grade').value;
+  const branch     = document.getElementById('edit-branch').value;
+  const teacherUid = document.getElementById('edit-teacher').value;
+  const teacherName = teacherUid ? (teachersCache.find(t => t.id === teacherUid)?.name || '') : '';
+  const days       = [...document.querySelectorAll('.edit-day:checked')].map(cb => cb.value);
+  const classGroup = document.getElementById('edit-classgroup').value.trim();
+
+  try {
+    await updateDoc(doc(db, 'students', editingStudentId), {
+      grade, branch, teacherUid, teacherName, days, classGroup
+    });
+    showMsg('editStudentMsg', '✅ 저장 완료!', 'success');
+    await loadStudents();
+    setTimeout(() => closeEditModal(), 900);
+  } catch(e) {
+    showMsg('editStudentMsg', '오류: ' + e.message, 'error');
+  }
+};
+
+// 모달 바깥 클릭 시 닫기
+document.getElementById('editStudentModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
 
 window.deleteStudent = async (uid, name) => {
   if (!confirm(`${name} 학생을 삭제하시겠습니까?`)) return;
