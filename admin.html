@@ -4361,17 +4361,16 @@ function getWlData() {
     to:     document.getElementById('wl-to')?.value || '',
     consultNote: document.getElementById('wl-consult-note')?.value || '',
     textbook:    document.getElementById('wl-textbook')?.value || '',
-    rows: {},
   };
+  // 중첩 배열 대신 { sec_ri_ci: value } 평탄화 형태로 저장
+  const flat = {};
   secs.forEach(sec => {
-    data.rows[sec] = [];
     document.querySelectorAll(`[data-sec="${sec}"]`).forEach(inp => {
-      const r = parseInt(inp.dataset.row);
-      const c = parseInt(inp.dataset.col);
-      if (!data.rows[sec][r]) data.rows[sec][r] = [];
-      data.rows[sec][r][c] = inp.value;
+      flat[`${sec}_${inp.dataset.row}_${inp.dataset.col}`] = inp.value;
     });
+    flat[`${sec}__count`] = document.getElementById('wl-' + sec + '-rows')?.children.length || 0;
   });
+  data.flat = flat;
   return data;
 }
 
@@ -4382,18 +4381,22 @@ function setWlData(d) {
   if (d.consultNote !== undefined) document.getElementById('wl-consult-note').value = d.consultNote;
   if (d.textbook !== undefined)    document.getElementById('wl-textbook').value     = d.textbook;
 
-  if (d.rows) {
-    Object.entries(d.rows).forEach(([sec, rows]) => {
-      const container = document.getElementById('wl-' + sec + '-rows');
-      if (!container) return;
-      container.innerHTML = '';
-      (rows.length ? rows : [[]]).forEach((rowData, ri) => {
-        wlAddRow(sec);
-        const inputs = container.querySelectorAll(`[data-row="${ri}"]`);
-        inputs.forEach((inp, ci) => { inp.value = (rowData && rowData[ci]) || ''; });
+  const flat = d.flat || {};
+  const secs = ['new','leave','pause','upcoming','cash','consult'];
+  secs.forEach(sec => {
+    const container = document.getElementById('wl-' + sec + '-rows');
+    if (!container) return;
+    container.innerHTML = '';
+    const count = flat[`${sec}__count`] || 1;
+    for (let ri = 0; ri < count; ri++) {
+      wlAddRow(sec);
+      const inputs = container.querySelectorAll(`[data-row="${ri}"]`);
+      inputs.forEach(inp => {
+        const key = `${sec}_${ri}_${inp.dataset.col}`;
+        if (flat[key] !== undefined) inp.value = flat[key];
       });
-    });
-  }
+    }
+  });
 }
 
 function getAttData() {
