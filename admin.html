@@ -740,29 +740,35 @@
   <!-- 학생 출결 -->
   <div class="tab-panel" id="tab-attendance">
     <div class="card">
-      <h3>✅ 오늘 등원 예정 학생</h3>
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;">
-        <div id="attTodayLabel" style="font-size:15px;font-weight:700;color:var(--gold);"></div>
-        <div style="display:flex;gap:8px;">
+      <h3>✅ 출결 체크</h3>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+        <div id="attTodayLabel" style="font-size:15px;font-weight:700;color:var(--gold);min-width:160px;"></div>
+        <div style="display:flex;gap:6px;">
           <button class="btn btn-sm btn-secondary" onclick="changeAttDay(-1)">◀ 전날</button>
-          <button class="btn btn-sm btn-primary" onclick="resetAttDay()">오늘</button>
+          <button class="btn btn-sm btn-primary"   onclick="resetAttDay()">오늘</button>
           <button class="btn btn-sm btn-secondary" onclick="changeAttDay(1)">다음날 ▶</button>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <label style="font-size:12px;color:var(--muted);">관할 필터:</label>
-          <select id="attBranchFilter" onchange="renderAttendance()" style="padding:6px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;">
-            <option value="">전체</option>
-            <option value="평촌관">평촌관</option>
-            <option value="산본관">산본관</option>
-          </select>
-        </div>
+        <select id="attBranchFilter" onchange="renderAttendance()"
+          style="padding:7px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+          border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;">
+          <option value="">전체</option>
+          <option value="평촌관">평촌관</option>
+          <option value="산본관">산본관</option>
+        </select>
+        <button class="btn btn-sm btn-secondary" id="attDownloadBtn" onclick="downloadAttendanceImage()" style="display:none;">⬇ 이미지 저장</button>
       </div>
-      <div id="attStudentList" style="font-size:13px;color:var(--muted);">불러오는 중...</div>
+      <div style="display:flex;gap:14px;margin-bottom:16px;font-size:12px;color:var(--muted);">
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:13px;height:13px;border-radius:3px;background:#3B82F6;display:inline-block;"></span>출석</span>
+        <span style="display:flex;align-items:center;gap:5px;"><span style="width:13px;height:13px;border-radius:3px;background:#EF4444;display:inline-block;"></span>결석</span>
+        <span>· 칸 클릭 시 출석↔결석 전환</span>
+      </div>
+      <div id="attStudentList"></div>
     </div>
     <div class="card">
       <h3>📊 출결 요약</h3>
-      <div id="attSummary" style="font-size:13px;color:var(--muted);">위에서 요일을 선택하면 자동으로 표시됩니다.</div>
+      <div id="attSummary" style="font-size:13px;color:var(--muted);"></div>
     </div>
+    <canvas id="attCanvas" style="display:none;"></canvas>
   </div>
 
   <!-- 관리자 계정 관리 -->
@@ -3713,81 +3719,300 @@ window.downloadDailyReport = function() {
 // ══════════════════════════════════════════
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 let attCurrentDate = new Date();
+let attStatus = {};   // { studentId: 'present'|'absent' }
 
 window.initAttendanceTab = function() {
   attCurrentDate = new Date();
+  attStatus = {};
   renderAttendance();
 };
 
 window.changeAttDay = function(delta) {
+  attCurrentDate = new Date(attCurrentDate);
   attCurrentDate.setDate(attCurrentDate.getDate() + delta);
+  attStatus = {};
   renderAttendance();
 };
 
 window.resetAttDay = function() {
   attCurrentDate = new Date();
+  attStatus = {};
   renderAttendance();
 };
 
+window.toggleAttStatus = function(uid) {
+  attStatus[uid] = attStatus[uid] === 'absent' ? 'present' : 'absent';
+  // 칩 색깔만 업데이트
+  const chip = document.getElementById('att-chip-' + uid);
+  if (!chip) return;
+  const isAbsent = attStatus[uid] === 'absent';
+  chip.style.background    = isAbsent ? '#EF4444' : '#3B82F6';
+  chip.style.borderColor   = isAbsent ? '#B91C1C' : '#1D4ED8';
+  chip.title = isAbsent ? '결석 (클릭하면 출석)' : '출석 (클릭하면 결석)';
+  updateAttSummary();
+};
+
 window.renderAttendance = function() {
-  const dow = attCurrentDate.getDay(); // 0=일
+  const dow     = attCurrentDate.getDay();
   const dayName = DAY_NAMES[dow];
   const dateStr = attCurrentDate.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
   document.getElementById('attTodayLabel').textContent = `${dateStr} (${dayName}요일)`;
 
   const branchFilter = document.getElementById('attBranchFilter')?.value || '';
+  const el    = document.getElementById('attStudentList');
+  const dlBtn = document.getElementById('attDownloadBtn');
 
-  const filtered = studentsCache.filter(s => {
-    const days = s.days || [];
-    const hasDay = days.includes(dayName);
-    const matchBranch = !branchFilter || s.branch === branchFilter;
-    return hasDay && matchBranch;
-  });
-
-  const el = document.getElementById('attStudentList');
-  const sumEl = document.getElementById('attSummary');
+  const filtered = studentsCache.filter(s =>
+    (s.days || []).includes(dayName) &&
+    (!branchFilter || s.branch === branchFilter)
+  );
 
   if (!filtered.length) {
     el.innerHTML = `<div style="color:var(--muted);padding:12px 0;">${dayName}요일 등원 예정 학생이 없습니다.</div>`;
-    sumEl.innerHTML = '';
+    document.getElementById('attSummary').innerHTML = '';
+    if (dlBtn) dlBtn.style.display = 'none';
     return;
   }
 
-  // 선생님별 그룹핑
-  const byTeacher = {};
-  filtered.forEach(s => {
-    const key = s.teacherName || '미배정';
-    if (!byTeacher[key]) byTeacher[key] = [];
-    byTeacher[key].push(s);
+  // 새 학생은 기본 출석으로 초기화
+  filtered.forEach(s => { if (!attStatus[s.id]) attStatus[s.id] = 'present'; });
+
+  // 학년 그룹 순서
+  const gradeOrder = ['초5','초6','중1','중2','중3','고1','고2','고3','N수'];
+
+  // 관별 → 학년별 그룹핑
+  const branches = branchFilter
+    ? [branchFilter]
+    : [...new Set(filtered.map(s => s.branch))].sort();
+
+  let html = '';
+  branches.forEach(branch => {
+    const bStudents = filtered.filter(s => s.branch === branch);
+    if (!bStudents.length) return;
+
+    // 학년별 그룹
+    const byGrade = {};
+    bStudents.forEach(s => {
+      const g = s.grade || '기타';
+      if (!byGrade[g]) byGrade[g] = [];
+      byGrade[g].push(s);
+    });
+    const sortedGrades = Object.keys(byGrade).sort(
+      (a,b) => (gradeOrder.indexOf(a) === -1 ? 99 : gradeOrder.indexOf(a)) -
+                (gradeOrder.indexOf(b) === -1 ? 99 : gradeOrder.indexOf(b))
+    );
+
+    html += `<div style="margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:700;color:#A78BFA;letter-spacing:1px;
+        padding:6px 10px;background:rgba(167,139,250,0.1);border-radius:6px;margin-bottom:10px;">
+        🏫 ${branch} (${bStudents.length}명)
+      </div>`;
+
+    sortedGrades.forEach(grade => {
+      const gStudents = byGrade[grade];
+      html += `<div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px;
+          margin-bottom:6px;padding-left:4px;">${grade}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">`;
+
+      gStudents.forEach(s => {
+        const isAbsent = attStatus[s.id] === 'absent';
+        const bg    = isAbsent ? '#EF4444' : '#3B82F6';
+        const bdr   = isAbsent ? '#B91C1C' : '#1D4ED8';
+        const title = isAbsent ? '결석 (클릭하면 출석)' : '출석 (클릭하면 결석)';
+        html += `<div id="att-chip-${s.id}" onclick="toggleAttStatus('${s.id}')"
+          title="${title}"
+          style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+            min-width:72px;padding:7px 10px;border-radius:8px;cursor:pointer;
+            background:${bg};border:2px solid ${bdr};
+            transition:background 0.15s,border-color 0.15s;user-select:none;">
+          <span style="font-size:13px;font-weight:700;color:#fff;">${s.name}</span>
+          <span style="font-size:10px;color:rgba(255,255,255,0.85);margin-top:2px;">${s.classGroup || s.grade}</span>
+        </div>`;
+      });
+
+      html += `</div></div>`;
+    });
+    html += `</div>`;
   });
 
-  el.innerHTML = Object.entries(byTeacher).sort((a, b) => a[0].localeCompare(b[0], 'ko')).map(([teacher, students]) => `
-    <div style="margin-bottom:16px;">
-      <div style="font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;
-        padding:6px 0;border-bottom:1px solid rgba(240,192,64,0.2);margin-bottom:8px;">
-        👩‍🏫 ${teacher} T <span style="font-weight:400;color:var(--muted);">(${students.length}명)</span>
-      </div>
-      ${students.map(s => `
-        <div class="student-item" style="padding:10px 14px;">
-          <div class="student-name">${s.name}</div>
-          <span class="student-meta">${s.grade}</span>
-          <span class="student-meta">${s.branch}</span>
-          <span class="student-meta" style="font-size:11px;color:var(--gold);">${(s.days||[]).join('·') || '-'}</span>
-        </div>`).join('')}
-    </div>`).join('');
+  el.innerHTML = html;
+  if (dlBtn) dlBtn.style.display = 'inline-flex';
+  updateAttSummary();
+};
 
-  // 요약
-  const gradeCount = {};
-  filtered.forEach(s => { gradeCount[s.grade] = (gradeCount[s.grade] || 0) + 1; });
-  const gradeOrder = ['중1','중2','중3','고1','고2','고3','N수'];
-  const gradeSummary = gradeOrder.filter(g => gradeCount[g]).map(g => `${g}: ${gradeCount[g]}명`).join(' · ');
+function updateAttSummary() {
+  const sumEl = document.getElementById('attSummary');
+  const dow     = attCurrentDate.getDay();
+  const dayName = DAY_NAMES[dow];
+  const branchFilter = document.getElementById('attBranchFilter')?.value || '';
+
+  const filtered = studentsCache.filter(s =>
+    (s.days || []).includes(dayName) &&
+    (!branchFilter || s.branch === branchFilter)
+  );
+
+  const total   = filtered.length;
+  const absent  = filtered.filter(s => attStatus[s.id] === 'absent').length;
+  const present = total - absent;
+
+  const absentNames = filtered
+    .filter(s => attStatus[s.id] === 'absent')
+    .map(s => s.name)
+    .join(', ');
 
   sumEl.innerHTML = `
-    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
-      <div style="font-size:18px;font-weight:700;color:var(--gold);">${filtered.length}명</div>
-      <div style="font-size:13px;color:var(--muted);">${gradeSummary}</div>
-    </div>`;
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+      <div style="font-size:18px;font-weight:700;color:var(--gold);">총 ${total}명</div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <span style="width:12px;height:12px;border-radius:2px;background:#3B82F6;display:inline-block;"></span>
+        <span style="font-size:14px;font-weight:600;color:#93C5FD;">출석 ${present}명</span>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <span style="width:12px;height:12px;border-radius:2px;background:#EF4444;display:inline-block;"></span>
+        <span style="font-size:14px;font-weight:600;color:#FCA5A5;">결석 ${absent}명</span>
+      </div>
+    </div>
+    ${absentNames ? `<div style="font-size:12px;color:#FCA5A5;">결석: ${absentNames}</div>` : ''}`;
+}
+
+// 출결 이미지 다운로드
+window.downloadAttendanceImage = function() {
+  const dow     = attCurrentDate.getDay();
+  const dayName = DAY_NAMES[dow];
+  const dateStr = attCurrentDate.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+  const branchFilter = document.getElementById('attBranchFilter')?.value || '';
+
+  const filtered = studentsCache.filter(s =>
+    (s.days || []).includes(dayName) &&
+    (!branchFilter || s.branch === branchFilter)
+  );
+  if (!filtered.length) return;
+
+  const gradeOrder = ['초5','초6','중1','중2','중3','고1','고2','고3','N수'];
+  const branches = branchFilter
+    ? [branchFilter]
+    : [...new Set(filtered.map(s => s.branch))].sort();
+
+  // 레이아웃 계산
+  const CW = 900, PAD = 36, CHIP_W = 84, CHIP_H = 52, GAP = 8;
+  const cols = Math.floor((CW - PAD * 2 + GAP) / (CHIP_W + GAP));
+
+  // 필요한 높이 미리 계산
+  let totalH = 80; // 제목
+  branches.forEach(branch => {
+    const bStudents = filtered.filter(s => s.branch === branch);
+    totalH += 40; // 관 헤더
+    const byGrade = {};
+    bStudents.forEach(s => { const g = s.grade||'기타'; if(!byGrade[g]) byGrade[g]=[]; byGrade[g].push(s); });
+    Object.values(byGrade).forEach(arr => {
+      totalH += 26; // 학년 헤더
+      totalH += Math.ceil(arr.length / cols) * (CHIP_H + GAP) + 12;
+    });
+  });
+  totalH += 60; // 요약 + 여백
+
+  const canvas = document.getElementById('attCanvas');
+  canvas.width = CW; canvas.height = totalH;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, CW, totalH);
+
+  // 제목
+  ctx.fillStyle = '#111';
+  ctx.font = 'bold 22px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${dateStr} (${dayName}요일) 출결 현황${branchFilter ? ' — ' + branchFilter : ''}`, CW/2, 44);
+  ctx.textAlign = 'left';
+
+  let y = 66;
+
+  branches.forEach(branch => {
+    const bStudents = filtered.filter(s => s.branch === branch);
+    if (!bStudents.length) return;
+
+    // 관 헤더
+    ctx.fillStyle = '#EDE9FE';
+    ctx.fillRect(PAD, y, CW - PAD*2, 26);
+    ctx.fillStyle = '#5B21B6';
+    ctx.font = 'bold 13px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+    ctx.fillText(`🏫 ${branch} (${bStudents.length}명)`, PAD + 10, y + 18);
+    y += 34;
+
+    const byGrade = {};
+    bStudents.forEach(s => { const g = s.grade||'기타'; if(!byGrade[g]) byGrade[g]=[]; byGrade[g].push(s); });
+    const sortedGrades = Object.keys(byGrade).sort(
+      (a,b) => (gradeOrder.indexOf(a)===-1?99:gradeOrder.indexOf(a)) -
+               (gradeOrder.indexOf(b)===-1?99:gradeOrder.indexOf(b))
+    );
+
+    sortedGrades.forEach(grade => {
+      const arr = byGrade[grade];
+      ctx.fillStyle = '#B45309';
+      ctx.font = 'bold 12px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+      ctx.fillText(grade, PAD + 4, y + 14);
+      y += 22;
+
+      arr.forEach((s, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const cx = PAD + col * (CHIP_W + GAP);
+        const cy = y + row * (CHIP_H + GAP);
+        const absent = attStatus[s.id] === 'absent';
+
+        // 칩 배경
+        ctx.fillStyle = absent ? '#EF4444' : '#3B82F6';
+        roundRect(ctx, cx, cy, CHIP_W, CHIP_H, 7);
+        ctx.fill();
+
+        // 이름
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 13px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.name, cx + CHIP_W/2, cy + 22, CHIP_W - 8);
+        // 반명
+        ctx.font = '10px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        ctx.fillText(s.classGroup || s.grade, cx + CHIP_W/2, cy + 37, CHIP_W - 8);
+        ctx.textAlign = 'left';
+      });
+
+      y += Math.ceil(arr.length / cols) * (CHIP_H + GAP) + 8;
+    });
+  });
+
+  // 요약
+  const total   = filtered.length;
+  const absent  = filtered.filter(s => attStatus[s.id] === 'absent').length;
+  const present = total - absent;
+  y += 8;
+  ctx.fillStyle = '#333';
+  ctx.font = '13px "Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(`총 ${total}명 · 출석 ${present}명 · 결석 ${absent}명`, PAD, y + 16);
+  const absentNames = filtered.filter(s => attStatus[s.id]==='absent').map(s=>s.name).join(', ');
+  if (absentNames) {
+    ctx.fillStyle = '#DC2626';
+    ctx.fillText(`결석: ${absentNames}`, PAD, y + 34);
+  }
+
+  const link = document.createElement('a');
+  const dateTag = attCurrentDate.toISOString().slice(0,10).replace(/-/g,'');
+  link.download = `출결_${branchFilter||'전체'}_${dateTag}_${dayName}요일.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
 };
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r, y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x, y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
 
 // ══════════════════════════════════════════
 // 관리자 계정 관리
