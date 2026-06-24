@@ -550,10 +550,11 @@ async function loadVideos() {
     const cats = new Set();
     snap.forEach(d => {
       const v = { id: d.id, ...d.data() };
-      const folder = v.folder || v.category || '';
-      if (v.apexAccess === true && folder.startsWith('기출')) {
+      const tag   = v.tag || v.folder || v.category || '';
+      const title = v.title || '';
+      if (v.apexAccess === true && (tag.startsWith('기출') || title.includes('[기출]'))) {
         mathVideos.push(v);
-        if (v.folder) cats.add(v.folder);
+        if (tag) cats.add(tag);
       }
     });
     buildCatFilter('catFilter1', cats, filterCat1);
@@ -629,7 +630,7 @@ function renderGrid(gridId, videos, cat) {
         </div>
       </div>
       <div class="video-info">
-        <div class="video-cat-tag">${v.folder || v.category || ''}</div>
+        <div class="video-cat-tag">${v.tag || v.folder || v.category || ''}</div>
         <div class="video-title">${v.title || '제목 없음'}</div>
         <div class="video-meta">${v.teacher || ''} ${v.grade || ''}</div>
       </div>`;

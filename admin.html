@@ -4648,15 +4648,16 @@ window.initApexVideoTab = async function() {
 // 기출해설 apexAccess 일괄 설정
 window.setApexAccessBulk = async function(flag) {
   const label = flag ? '공개' : '비공개';
-  if (!confirm(`기출해설 영상 전체를 에이펙스관 ${label}으로 변경하시겠습니까?`)) return;
+  if (!confirm(`기출해설 영상 전체를 Apex관 ${label}으로 변경하시겠습니까?`)) return;
   try {
     const snap = await getDocs(collection(db, 'videos'));
     let count = 0;
     const batch = [];
     snap.forEach(d => {
       const v = d.data();
-      const folder = v.folder || v.category || '';
-      if (folder.startsWith('기출')) {
+      const tag    = v.tag    || v.folder || v.category || '';
+      const title  = v.title  || '';
+      if (tag.startsWith('기출') || title.includes('[기출]')) {
         batch.push(updateDoc(doc(db, 'videos', d.id), { apexAccess: flag }));
         count++;
       }
