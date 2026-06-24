@@ -200,6 +200,8 @@
     <button class="admin-tab" onclick="switchTab('progress',this);initProgressTab()">📍 반별진도</button>
     <button class="admin-tab" onclick="switchTab('monthly',this);initMonthlyTab()">📝 월말보고서</button>
     <button class="admin-tab" onclick="switchTab('satclinic',this);initSatClinicTab()">🏥 토요클리닉</button>
+    <button class="admin-tab" onclick="switchTab('dailyreport',this);initDailyReportTab()">📋 관리부 마감</button>
+    <button class="admin-tab" onclick="switchTab('attendance',this);initAttendanceTab()">✅ 학생 출결</button>
   </div>
 
   <!-- 학생 관리 -->
@@ -534,6 +536,111 @@
 
     <!-- 결과 테이블 -->
     <div id="clinicAdminResult"></div>
+  </div>
+
+  <!-- 관리부 마감 -->
+  <div class="tab-panel" id="tab-dailyreport">
+    <div class="card">
+      <h3>📋 일일 업무 보고서 작성</h3>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.7;">
+        하루 업무 내용을 입력하고 이미지 파일로 저장합니다. 입력한 내용은 사진과 같은 보고서 양식으로 다운로드됩니다.
+      </div>
+
+      <!-- 날짜 / 작성자 -->
+      <div class="form-row" style="max-width:600px;">
+        <div class="form-group">
+          <label>날짜</label>
+          <input type="date" id="dr-date" style="color-scheme:dark;width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:14px;font-family:inherit;outline:none;">
+        </div>
+        <div class="form-group">
+          <label>작성자</label>
+          <input type="text" id="dr-author" placeholder="예: 조유진" style="width:100%;">
+        </div>
+      </div>
+
+      <!-- 금일 수업 반 -->
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>금일 수업 반</label>
+        <input type="text" id="dr-classes" placeholder="예: 초6 2A / 중1 7A / 중2 2A,7A / 중3 2A,7A" style="width:100%;">
+      </div>
+
+      <!-- 4칸 그리드 -->
+      <div class="form-row" style="max-width:700px;">
+        <div class="form-group">
+          <label>상담 및 테스트</label>
+          <textarea id="dr-consult" rows="3" placeholder="-" style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>현금영수증 발행 현황</label>
+          <textarea id="dr-receipt" rows="3" placeholder="-" style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="form-row" style="max-width:700px;">
+        <div class="form-group">
+          <label>출결 현황 (결석자)</label>
+          <textarea id="dr-absent" rows="5" placeholder="예: 강예서(문잔t)-병결" style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>교재 입/출고</label>
+          <textarea id="dr-textbook" rows="5" placeholder="예: 개뿔 중등라이트 1-1 2ea 입고 및 초6 2-A 판매처리" style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="form-row" style="max-width:700px;">
+        <div class="form-group">
+          <label>비고 (신규/퇴원)</label>
+          <textarea id="dr-note" rows="3" placeholder="-" style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>전화문의</label>
+          <textarea id="dr-phone" rows="3" placeholder="-" style="width:100%;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>익일 상담 및 신규원생</label>
+        <textarea id="dr-nextday" rows="2" placeholder="-" style="width:100%;max-width:700px;padding:10px 13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-primary" onclick="previewDailyReport()">👁 미리보기</button>
+        <button class="btn btn-secondary" onclick="downloadDailyReport()">⬇ 이미지 다운로드</button>
+      </div>
+    </div>
+
+    <!-- 미리보기 영역 (캔버스) -->
+    <div id="drPreviewWrap" style="display:none;margin-top:16px;">
+      <div class="card">
+        <h3 style="margin-bottom:14px;">미리보기</h3>
+        <canvas id="drCanvas" style="max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.1);"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 학생 출결 -->
+  <div class="tab-panel" id="tab-attendance">
+    <div class="card">
+      <h3>✅ 오늘 등원 예정 학생</h3>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;">
+        <div id="attTodayLabel" style="font-size:15px;font-weight:700;color:var(--gold);"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm btn-secondary" onclick="changeAttDay(-1)">◀ 전날</button>
+          <button class="btn btn-sm btn-primary" onclick="resetAttDay()">오늘</button>
+          <button class="btn btn-sm btn-secondary" onclick="changeAttDay(1)">다음날 ▶</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label style="font-size:12px;color:var(--muted);">관할 필터:</label>
+          <select id="attBranchFilter" onchange="renderAttendance()" style="padding:6px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;">
+            <option value="">전체</option>
+            <option value="평촌관">평촌관</option>
+            <option value="산본관">산본관</option>
+          </select>
+        </div>
+      </div>
+      <div id="attStudentList" style="font-size:13px;color:var(--muted);">불러오는 중...</div>
+    </div>
+    <div class="card">
+      <h3>📊 출결 요약</h3>
+      <div id="attSummary" style="font-size:13px;color:var(--muted);">위에서 요일을 선택하면 자동으로 표시됩니다.</div>
+    </div>
   </div>
 
   <!-- 강의 목록 -->
@@ -2924,6 +3031,267 @@ window.downloadClinicExcel = function() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '토요클리닉');
   XLSX.writeFile(wb, `토요클리닉_${fromVal}_${toVal}.xlsx`);
+};
+
+// ══════════════════════════════════════════
+// 관리부 마감 (일일업무보고서 이미지 생성)
+// ══════════════════════════════════════════
+
+window.initDailyReportTab = function() {
+  // 오늘 날짜 기본값
+  const today = new Date().toISOString().slice(0, 10);
+  if (!document.getElementById('dr-date').value) {
+    document.getElementById('dr-date').value = today;
+  }
+};
+
+function getDRValues() {
+  const dateVal = document.getElementById('dr-date').value;
+  let dateDisplay = dateVal || '';
+  if (dateVal) {
+    const d = new Date(dateVal);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    dateDisplay = `${y}.${m}.${day}`;
+  }
+  return {
+    date:     dateDisplay,
+    author:   document.getElementById('dr-author').value.trim() || '-',
+    classes:  document.getElementById('dr-classes').value.trim() || '-',
+    consult:  document.getElementById('dr-consult').value.trim() || '-',
+    receipt:  document.getElementById('dr-receipt').value.trim() || '-',
+    absent:   document.getElementById('dr-absent').value.trim() || '-',
+    textbook: document.getElementById('dr-textbook').value.trim() || '-',
+    note:     document.getElementById('dr-note').value.trim() || '-',
+    phone:    document.getElementById('dr-phone').value.trim() || '-',
+    nextday:  document.getElementById('dr-nextday').value.trim() || '-',
+  };
+}
+
+function drawDailyReport(canvas, data) {
+  const W = 860, H = 1120;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // 배경
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+
+  // 제목
+  ctx.fillStyle = '#222';
+  ctx.font = 'bold 34px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('< 일일  업무  보고 >', W / 2, 70);
+  ctx.textAlign = 'left';
+
+  // 선 굵기 공통
+  const bdr = '#888';
+  const headerBg = '#D4E6B5'; // 연초록
+
+  // 테이블 설정
+  const tl = 40, tr = W - 40;
+  const tableW = tr - tl;
+  const col1 = 110, col2 = 280, col3 = tl + col1 + col2, col4 = tableW - col1 - col2;
+
+  let y = 90;
+
+  function rect(x, ry, w, h, fill) {
+    if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, ry, w, h); }
+    ctx.strokeStyle = bdr;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, ry, w, h);
+  }
+
+  function cellText(text, x, ry, w, h, opts = {}) {
+    const { bold = false, size = 13, color = '#222', align = 'center', multiline = false } = opts;
+    ctx.fillStyle = color;
+    ctx.font = `${bold ? 'bold ' : ''}${size}px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif`;
+    ctx.textAlign = align;
+    const px = align === 'center' ? x + w / 2 : x + 10;
+    if (multiline) {
+      const lines = text.split('\n');
+      const lineH = size + 4;
+      const startY = ry + (h - lines.length * lineH) / 2 + size;
+      lines.forEach((ln, i) => ctx.fillText(ln, px, startY + i * lineH, w - 14));
+    } else {
+      ctx.fillText(text, px, ry + h / 2 + size / 3, w - 14);
+    }
+    ctx.textAlign = 'left';
+  }
+
+  // === Row 1: 날짜 / 작성자 ===
+  const row1H = 38;
+  rect(tl, y, col1, row1H, headerBg);
+  cellText('날 짜', tl, y, col1, row1H, { bold: true, size: 13 });
+  rect(tl + col1, y, col2, row1H);
+  cellText(data.date, tl + col1, y, col2, row1H, { size: 13 });
+  rect(col3, y, col1, row1H, headerBg);
+  cellText('작 성 자', col3, y, col1, row1H, { bold: true, size: 13 });
+  rect(col3 + col1, y, col4, row1H);
+  cellText(data.author, col3 + col1, y, col4, row1H, { size: 13 });
+  y += row1H;
+
+  // === Row 2: 금일 수업 반 (full width, 연초록) ===
+  const row2H = 34;
+  rect(tl, y, tableW, row2H, '#EAF4D8');
+  cellText('금일 수업 반 : ' + data.classes, tl, y, tableW, row2H, { size: 12, align: 'center' });
+  y += row2H;
+
+  // === Rows 3–8: 2열 구조 ===
+  function twoColRow(label1, val1, label2, val2, rowH) {
+    const halfW = tableW / 2;
+    // 좌측
+    rect(tl, y, col1, rowH, headerBg);
+    cellText(label1, tl, y, col1, rowH, { bold: true, size: 12, multiline: true });
+    rect(tl + col1, y, halfW - col1, rowH);
+    cellText(val1, tl + col1, y, halfW - col1, rowH, { size: 12, multiline: true });
+    // 우측
+    const rx = tl + halfW;
+    rect(rx, y, col1, rowH, headerBg);
+    cellText(label2, rx, y, col1, rowH, { bold: true, size: 12, multiline: true });
+    rect(rx + col1, y, halfW - col1, rowH);
+    cellText(val2, rx + col1, y, halfW - col1, rowH, { size: 12, multiline: true });
+    y += rowH;
+  }
+
+  // 결석자 행수에 따라 높이 조절
+  const absentLines = data.absent.split('\n').length;
+  const tbLines = data.textbook.split('\n').length;
+  const midH = Math.max(absentLines, tbLines) * 18 + 60;
+
+  twoColRow('상담 및\n테스트', data.consult, '현금영수증\n발행 현황', data.receipt, 90);
+  twoColRow('출결 현황\n<결석자>', data.absent, '교재\n입/출고', data.textbook, midH);
+  // 결석자 수
+  const absentCount = data.absent === '-' ? 0 : data.absent.split('\n').filter(l => l.trim()).length;
+  // 결석 수 표시 (좌측 셀 하단)
+  if (absentCount > 0) {
+    ctx.fillStyle = '#444';
+    ctx.font = '11px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(absentCount), tl + col1 + (tableW / 2 - col1) / 2, y - 8);
+    ctx.textAlign = 'left';
+  }
+  twoColRow('비고\n(신규/ 퇴원)', data.note, '전화문의', data.phone, 90);
+
+  // === Row: 익일 상담 및 신규원생 (full width) ===
+  const row9H = 50;
+  rect(tl, y, col1, row9H, headerBg);
+  cellText('익일 상담 및\n신규 원생', tl, y, col1, row9H, { bold: true, size: 12, multiline: true });
+  rect(tl + col1, y, tableW - col1, row9H);
+  cellText(data.nextday, tl + col1, y, tableW - col1, row9H, { size: 12, multiline: true });
+  y += row9H;
+
+  // === 하단 주간 업무 스케줄 안내 ===
+  y += 14;
+  ctx.fillStyle = '#444';
+  ctx.font = '11px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('주간 업무 스케줄 : 월(교재정산, 주간성취도안내문자) 화(매쓰플랫체크, 반별진도현황)', W / 2, y);
+  y += 18;
+  ctx.fillText('수(시간표정산) 목(현금영수증정산) 금(아카사진체크,학년, 학교체크) 토(주간업무보고)', W / 2, y);
+  ctx.textAlign = 'left';
+}
+
+window.previewDailyReport = function() {
+  const data = getDRValues();
+  const canvas = document.getElementById('drCanvas');
+  drawDailyReport(canvas, data);
+  document.getElementById('drPreviewWrap').style.display = 'block';
+};
+
+window.downloadDailyReport = function() {
+  const data = getDRValues();
+  const canvas = document.getElementById('drCanvas');
+  drawDailyReport(canvas, data);
+  document.getElementById('drPreviewWrap').style.display = 'block';
+  const link = document.createElement('a');
+  const dateStr = data.date.replace(/\./g, '') || 'report';
+  link.download = `일일업무보고_${dateStr}_${data.author}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+};
+
+// ══════════════════════════════════════════
+// 학생 출결 탭
+// ══════════════════════════════════════════
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+let attCurrentDate = new Date();
+
+window.initAttendanceTab = function() {
+  attCurrentDate = new Date();
+  renderAttendance();
+};
+
+window.changeAttDay = function(delta) {
+  attCurrentDate.setDate(attCurrentDate.getDate() + delta);
+  renderAttendance();
+};
+
+window.resetAttDay = function() {
+  attCurrentDate = new Date();
+  renderAttendance();
+};
+
+window.renderAttendance = function() {
+  const dow = attCurrentDate.getDay(); // 0=일
+  const dayName = DAY_NAMES[dow];
+  const dateStr = attCurrentDate.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('attTodayLabel').textContent = `${dateStr} (${dayName}요일)`;
+
+  const branchFilter = document.getElementById('attBranchFilter')?.value || '';
+
+  const filtered = studentsCache.filter(s => {
+    const days = s.days || [];
+    const hasDay = days.includes(dayName);
+    const matchBranch = !branchFilter || s.branch === branchFilter;
+    return hasDay && matchBranch;
+  });
+
+  const el = document.getElementById('attStudentList');
+  const sumEl = document.getElementById('attSummary');
+
+  if (!filtered.length) {
+    el.innerHTML = `<div style="color:var(--muted);padding:12px 0;">${dayName}요일 등원 예정 학생이 없습니다.</div>`;
+    sumEl.innerHTML = '';
+    return;
+  }
+
+  // 선생님별 그룹핑
+  const byTeacher = {};
+  filtered.forEach(s => {
+    const key = s.teacherName || '미배정';
+    if (!byTeacher[key]) byTeacher[key] = [];
+    byTeacher[key].push(s);
+  });
+
+  el.innerHTML = Object.entries(byTeacher).sort((a, b) => a[0].localeCompare(b[0], 'ko')).map(([teacher, students]) => `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;
+        padding:6px 0;border-bottom:1px solid rgba(240,192,64,0.2);margin-bottom:8px;">
+        👩‍🏫 ${teacher} T <span style="font-weight:400;color:var(--muted);">(${students.length}명)</span>
+      </div>
+      ${students.map(s => `
+        <div class="student-item" style="padding:10px 14px;">
+          <div class="student-name">${s.name}</div>
+          <span class="student-meta">${s.grade}</span>
+          <span class="student-meta">${s.branch}</span>
+          <span class="student-meta" style="font-size:11px;color:var(--gold);">${(s.days||[]).join('·') || '-'}</span>
+        </div>`).join('')}
+    </div>`).join('');
+
+  // 요약
+  const gradeCount = {};
+  filtered.forEach(s => { gradeCount[s.grade] = (gradeCount[s.grade] || 0) + 1; });
+  const gradeOrder = ['중1','중2','중3','고1','고2','고3','N수'];
+  const gradeSummary = gradeOrder.filter(g => gradeCount[g]).map(g => `${g}: ${gradeCount[g]}명`).join(' · ');
+
+  sumEl.innerHTML = `
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+      <div style="font-size:18px;font-weight:700;color:var(--gold);">${filtered.length}명</div>
+      <div style="font-size:13px;color:var(--muted);">${gradeSummary}</div>
+    </div>`;
 };
 </script>
 <div id="toast"></div>
