@@ -749,11 +749,12 @@
           <button class="btn btn-sm btn-secondary" onclick="changeAttDay(1)">다음날 ▶</button>
         </div>
         <select id="attBranchFilter" onchange="renderAttendance()"
-          style="padding:7px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
-          border-radius:8px;color:var(--off-white);font-size:13px;font-family:inherit;outline:none;">
-          <option value="">전체</option>
-          <option value="평촌관">평촌관</option>
-          <option value="산본관">산본관</option>
+          style="padding:7px 14px;background:#2D1F5E;border:1px solid rgba(240,192,64,0.4);
+          border-radius:8px;color:#F0EDF8;font-size:13px;font-family:inherit;outline:none;
+          cursor:pointer;color-scheme:dark;">
+          <option value=""   style="background:#2D1F5E;color:#F0EDF8;">전체</option>
+          <option value="평촌관" style="background:#2D1F5E;color:#F0EDF8;">평촌관</option>
+          <option value="산본관" style="background:#2D1F5E;color:#F0EDF8;">산본관</option>
         </select>
         <button class="btn btn-sm btn-secondary" id="attDownloadBtn" onclick="downloadAttendanceImage()" style="display:none;">⬇ 이미지 저장</button>
       </div>
