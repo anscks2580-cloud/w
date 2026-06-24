@@ -3129,16 +3129,29 @@ function drawDailyReport(canvas, data) {
   ctx.fillText('< 일일  업무  보고 >', W / 2, 70);
   ctx.textAlign = 'left';
 
-  // 선 굵기 공통
   const bdr = '#888';
-  const headerBg = '#D4E6B5'; // 연초록
+  const headerBg = '#D4E6B5';
 
-  // 테이블 설정
-  const tl = 40, tr = W - 40;
-  const tableW = tr - tl;
-  const col1 = 110, col2 = 280, col3 = tl + col1 + col2, col4 = tableW - col1 - col2;
+  const tl = 40;
+  const tableW = W - 80;
+  const labelW = 110; // 헤더 셀 너비 (고정)
 
-  let y = 90;
+  // ── 전체 높이를 꽉 채우도록 고정 행 높이 계산 ──
+  const tableTop = 90;
+  const footerH  = 50;   // 하단 안내 텍스트 영역
+  const tableH   = H - tableTop - footerH;
+
+  // 행 비율: row1(날짜)·row2(수업반)·row3(상담/현금)·row4(출결/교재)·row5(비고/전화)·row6(익일)
+  // 비율: 1 : 0.8 : 2 : 3.5 : 2 : 1.2  → 합계 10.5
+  const unit = tableH / 10.5;
+  const row1H = unit * 1;
+  const row2H = unit * 0.8;
+  const row3H = unit * 2;
+  const row4H = unit * 3.5;
+  const row5H = unit * 2;
+  const row6H = unit * 1.2;
+
+  let y = tableTop;
 
   function rect(x, ry, w, h, fill) {
     if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, ry, w, h); }
@@ -3147,92 +3160,88 @@ function drawDailyReport(canvas, data) {
     ctx.strokeRect(x, ry, w, h);
   }
 
+  // 텍스트를 셀 안에 여러 줄로 그리기 (클리핑 포함)
   function cellText(text, x, ry, w, h, opts = {}) {
-    const { bold = false, size = 13, color = '#222', align = 'center', multiline = false } = opts;
+    const { bold = false, size = 13, color = '#222', align = 'center' } = opts;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x + 2, ry + 2, w - 4, h - 4);
+    ctx.clip();
     ctx.fillStyle = color;
     ctx.font = `${bold ? 'bold ' : ''}${size}px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif`;
     ctx.textAlign = align;
     const px = align === 'center' ? x + w / 2 : x + 10;
-    if (multiline) {
-      const lines = text.split('\n');
-      const lineH = size + 4;
-      const startY = ry + (h - lines.length * lineH) / 2 + size;
-      lines.forEach((ln, i) => ctx.fillText(ln, px, startY + i * lineH, w - 14));
-    } else {
-      ctx.fillText(text, px, ry + h / 2 + size / 3, w - 14);
-    }
-    ctx.textAlign = 'left';
+    const lines = String(text).split('\n');
+    const lineH = size + 5;
+    const totalTH = lines.length * lineH;
+    let startY = ry + (h - totalTH) / 2 + size;
+    lines.forEach(ln => {
+      ctx.fillText(ln, px, startY, w - 16);
+      startY += lineH;
+    });
+    ctx.restore();
   }
 
   // === Row 1: 날짜 / 작성자 ===
-  const row1H = 38;
-  rect(tl, y, col1, row1H, headerBg);
-  cellText('날 짜', tl, y, col1, row1H, { bold: true, size: 13 });
-  rect(tl + col1, y, col2, row1H);
-  cellText(data.date, tl + col1, y, col2, row1H, { size: 13 });
-  rect(col3, y, col1, row1H, headerBg);
-  cellText('작 성 자', col3, y, col1, row1H, { bold: true, size: 13 });
-  rect(col3 + col1, y, col4, row1H);
-  cellText(data.author, col3 + col1, y, col4, row1H, { size: 13 });
+  const col3 = tl + tableW / 2;
+  rect(tl,        y, labelW,             row1H, headerBg);
+  cellText('날 짜', tl, y, labelW, row1H, { bold: true, size: 13 });
+  rect(tl + labelW, y, tableW / 2 - labelW, row1H);
+  cellText(data.date, tl + labelW, y, tableW / 2 - labelW, row1H, { size: 13 });
+  rect(col3,      y, labelW,             row1H, headerBg);
+  cellText('작 성 자', col3, y, labelW, row1H, { bold: true, size: 13 });
+  rect(col3 + labelW, y, tableW / 2 - labelW, row1H);
+  cellText(data.author, col3 + labelW, y, tableW / 2 - labelW, row1H, { size: 13 });
   y += row1H;
 
-  // === Row 2: 금일 수업 반 (full width, 연초록) ===
-  const row2H = 34;
+  // === Row 2: 금일 수업 반 ===
   rect(tl, y, tableW, row2H, '#EAF4D8');
   cellText('금일 수업 반 : ' + data.classes, tl, y, tableW, row2H, { size: 12, align: 'center' });
   y += row2H;
 
-  // === Rows 3–8: 2열 구조 ===
+  // === 2열 행 그리기 헬퍼 ===
   function twoColRow(label1, val1, label2, val2, rowH) {
     const halfW = tableW / 2;
-    // 좌측
-    rect(tl, y, col1, rowH, headerBg);
-    cellText(label1, tl, y, col1, rowH, { bold: true, size: 12, multiline: true });
-    rect(tl + col1, y, halfW - col1, rowH);
-    cellText(val1, tl + col1, y, halfW - col1, rowH, { size: 12, multiline: true });
-    // 우측
-    const rx = tl + halfW;
-    rect(rx, y, col1, rowH, headerBg);
-    cellText(label2, rx, y, col1, rowH, { bold: true, size: 12, multiline: true });
-    rect(rx + col1, y, halfW - col1, rowH);
-    cellText(val2, rx + col1, y, halfW - col1, rowH, { size: 12, multiline: true });
+    rect(tl,              y, labelW,          rowH, headerBg);
+    cellText(label1, tl,  y, labelW,          rowH, { bold: true, size: 12 });
+    rect(tl + labelW,     y, halfW - labelW,  rowH);
+    cellText(val1, tl + labelW, y, halfW - labelW, rowH, { size: 12 });
+    rect(tl + halfW,      y, labelW,          rowH, headerBg);
+    cellText(label2, tl + halfW, y, labelW,   rowH, { bold: true, size: 12 });
+    rect(tl + halfW + labelW, y, halfW - labelW, rowH);
+    cellText(val2, tl + halfW + labelW, y, halfW - labelW, rowH, { size: 12 });
     y += rowH;
   }
 
-  // 결석자 행수에 따라 높이 조절
-  const absentLines = data.absent.split('\n').length;
-  const tbLines = data.textbook.split('\n').length;
-  const midH = Math.max(absentLines, tbLines) * 18 + 60;
+  twoColRow('상담 및\n테스트',    data.consult,  '현금영수증\n발행 현황', data.receipt,  row3H);
+  twoColRow('출결 현황\n<결석자>', data.absent,  '교재\n입/출고',        data.textbook, row4H);
 
-  twoColRow('상담 및\n테스트', data.consult, '현금영수증\n발행 현황', data.receipt, 90);
-  twoColRow('출결 현황\n<결석자>', data.absent, '교재\n입/출고', data.textbook, midH);
-  // 결석자 수
-  const absentCount = data.absent === '-' ? 0 : data.absent.split('\n').filter(l => l.trim()).length;
-  // 결석 수 표시 (좌측 셀 하단)
+  // 결석자 수 (출결 셀 하단 우측)
+  const absentCount = (data.absent === '-') ? 0 : data.absent.split('\n').filter(l => l.trim()).length;
   if (absentCount > 0) {
-    ctx.fillStyle = '#444';
+    ctx.fillStyle = '#555';
     ctx.font = '11px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(String(absentCount), tl + col1 + (tableW / 2 - col1) / 2, y - 8);
+    ctx.textAlign = 'right';
+    ctx.fillText(String(absentCount), tl + tableW / 2 - 6, y - 6);
     ctx.textAlign = 'left';
   }
-  twoColRow('비고\n(신규/ 퇴원)', data.note, '전화문의', data.phone, 90);
 
-  // === Row: 익일 상담 및 신규원생 (full width) ===
-  const row9H = 50;
-  rect(tl, y, col1, row9H, headerBg);
-  cellText('익일 상담 및\n신규 원생', tl, y, col1, row9H, { bold: true, size: 12, multiline: true });
-  rect(tl + col1, y, tableW - col1, row9H);
-  cellText(data.nextday, tl + col1, y, tableW - col1, row9H, { size: 12, multiline: true });
-  y += row9H;
+  twoColRow('비고\n(신규/ 퇴원)', data.note,    '전화문의',             data.phone,    row5H);
+
+  // === Row 6: 익일 상담 및 신규원생 ===
+  rect(tl,          y, labelW,             row6H, headerBg);
+  cellText('익일 상담 및\n신규 원생', tl, y, labelW, row6H, { bold: true, size: 12 });
+  rect(tl + labelW, y, tableW - labelW,    row6H);
+  cellText(data.nextday, tl + labelW, y, tableW - labelW, row6H, { size: 12 });
+  y += row6H;
 
   // === 하단 주간 업무 스케줄 안내 ===
-  y += 14;
+  y += 12;
   ctx.fillStyle = '#444';
   ctx.font = '11px "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('주간 업무 스케줄 : 월(교재정산, 주간성취도안내문자) 화(매쓰플랫체크, 반별진도현황)', W / 2, y);
-  y += 18;
+  y += 17;
   ctx.fillText('수(시간표정산) 목(현금영수증정산) 금(아카사진체크,학년, 학교체크) 토(주간업무보고)', W / 2, y);
   ctx.textAlign = 'left';
 }
