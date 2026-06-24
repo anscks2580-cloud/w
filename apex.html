@@ -408,20 +408,32 @@
       </div>
     </div>
 
-    <!-- 동영상강의 섹션 -->
+    <!-- 기출해설 섹션 -->
     <div class="section-wrap">
       <div class="sec-header">
-        <div class="sec-eyebrow">VIDEO LECTURES</div>
-        <div class="sec-title">에이펙스 전용 공개 강의</div>
+        <div class="sec-eyebrow">MATH LECTURE</div>
+        <div class="sec-title">기출해설 강의</div>
+        <p style="font-size:13px;color:rgba(240,237,248,0.5);margin-top:8px;">송우찬수학학원 기출해설 영상 중 에이펙스 전용 공개 강의입니다.</p>
       </div>
-
-      <!-- 카테고리 필터 -->
-      <div class="cat-filter" id="catFilter">
-        <button class="cat-btn active" data-cat="all" onclick="filterCat(this,'all')">전체</button>
+      <div class="cat-filter" id="catFilter1">
+        <button class="cat-btn active" data-cat="all" onclick="filterCat1(this,'all')">전체</button>
       </div>
+      <div id="videoGrid1" class="video-grid">
+        <div class="loading-msg">강의 목록을 불러오는 중...</div>
+      </div>
+    </div>
 
-      <!-- 영상 그리드 -->
-      <div id="videoGrid" class="video-grid">
+    <!-- 에이펙스 자체 영상 섹션 -->
+    <div class="section-wrap">
+      <div class="sec-header">
+        <div class="sec-eyebrow">APEX LECTURE</div>
+        <div class="sec-title">에이펙스 영어 강의</div>
+        <p style="font-size:13px;color:rgba(240,237,248,0.5);margin-top:8px;">에이펙스영어학원에서 직접 제공하는 전용 영상 강의입니다.</p>
+      </div>
+      <div class="cat-filter" id="catFilter2">
+        <button class="cat-btn active" data-cat="all" onclick="filterCat2(this,'all')">전체</button>
+      </div>
+      <div id="videoGrid2" class="video-grid">
         <div class="loading-msg">강의 목록을 불러오는 중...</div>
       </div>
     </div>
@@ -518,59 +530,81 @@ function showContent() {
   loadVideos();
 }
 
-// ── Firestore 에서 videos 컬렉션 로드 (videos.html 과 동일 구조)
-let allVideos = [];
-let currentCat = 'all';
+// ── 기출해설 (videos 컬렉션, apexAccess=true, folder 기출_ 시작)
+let mathVideos = [], mathCat = 'all';
+// ── 에이펙스 자체 영상 (apexVideos 컬렉션)
+let apexVids = [], apexCat = 'all';
 
 async function loadVideos() {
-  const grid = document.getElementById('videoGrid');
-  const catFilter = document.getElementById('catFilter');
+  // 1) 기출해설
   try {
     const snap = await getDocs(query(collection(db, 'videos'), orderBy('order', 'asc')));
-    allVideos = [];
+    mathVideos = [];
     const cats = new Set();
     snap.forEach(d => {
       const v = { id: d.id, ...d.data() };
-      // 에이펙스 공개 허용된 영상만 표시
-      if (v.apexAccess === true) {
-        allVideos.push(v);
-        if (v.category) cats.add(v.category);
+      const folder = v.folder || v.category || '';
+      if (v.apexAccess === true && folder.startsWith('기출')) {
+        mathVideos.push(v);
+        if (v.folder) cats.add(v.folder);
       }
     });
-
-    // 카테고리 버튼 생성
-    cats.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.className = 'cat-btn';
-      btn.dataset.cat = cat;
-      btn.textContent = cat;
-      btn.onclick = function() { filterCat(this, cat); };
-      catFilter.appendChild(btn);
-    });
-
-    if (allVideos.length === 0) {
-      grid.innerHTML = '<div class="loading-msg">현재 공개된 강의가 없습니다.<br><small>관리자가 강의를 공개하면 여기에 표시됩니다.</small></div>';
-      return;
-    }
-    renderVideos('all');
+    buildCatFilter('catFilter1', cats, filterCat1);
+    renderGrid('videoGrid1', mathVideos, 'all');
   } catch(e) {
-    grid.innerHTML = '<div class="loading-msg">강의 목록을 불러오지 못했습니다.<br><small>' + e.message + '</small></div>';
+    document.getElementById('videoGrid1').innerHTML =
+      `<div class="loading-msg">불러오기 실패: ${e.message}</div>`;
+  }
+
+  // 2) 에이펙스 자체 영상
+  try {
+    const snap2 = await getDocs(query(collection(db, 'apexVideos'), orderBy('order', 'asc')));
+    apexVids = [];
+    const cats2 = new Set();
+    snap2.forEach(d => {
+      const v = { id: d.id, ...d.data() };
+      apexVids.push(v);
+      if (v.category) cats2.add(v.category);
+    });
+    buildCatFilter('catFilter2', cats2, filterCat2);
+    renderGrid('videoGrid2', apexVids, 'all');
+  } catch(e) {
+    document.getElementById('videoGrid2').innerHTML =
+      `<div class="loading-msg">불러오기 실패: ${e.message}</div>`;
   }
 }
 
-window.filterCat = function(btn, cat) {
-  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  currentCat = cat;
-  renderVideos(cat);
+function buildCatFilter(filterId, cats, filterFn) {
+  const el = document.getElementById(filterId);
+  el.innerHTML = '<button class="cat-btn active" data-cat="all">전체</button>';
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    btn.dataset.cat = cat;
+    btn.textContent = cat;
+    el.appendChild(btn);
+  });
+  el.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.onclick = function() { filterFn(this, this.dataset.cat); };
+  });
+}
+
+window.filterCat1 = function(btn, cat) {
+  document.querySelectorAll('#catFilter1 .cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); mathCat = cat;
+  renderGrid('videoGrid1', mathVideos, cat);
+};
+window.filterCat2 = function(btn, cat) {
+  document.querySelectorAll('#catFilter2 .cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); apexCat = cat;
+  renderGrid('videoGrid2', apexVids, cat);
 };
 
-function renderVideos(cat) {
-  const grid = document.getElementById('videoGrid');
-  const list = cat === 'all' ? allVideos : allVideos.filter(v => v.category === cat);
+function renderGrid(gridId, videos, cat) {
+  const grid = document.getElementById(gridId);
+  const list = cat === 'all' ? videos : videos.filter(v => (v.folder || v.category) === cat);
   if (!list.length) {
-    grid.innerHTML = '<div class="loading-msg">해당 카테고리에 공개된 강의가 없습니다.</div>';
-    return;
+    grid.innerHTML = '<div class="loading-msg">현재 공개된 강의가 없습니다.</div>'; return;
   }
   grid.innerHTML = '';
   list.forEach(v => {
@@ -584,13 +618,11 @@ function renderVideos(cat) {
           ? `<img src="https://vumbnail.com/${vimeoId}.jpg" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
           : `<div style="width:100%;height:100%;background:#111;"></div>`}
         <div class="video-thumb-overlay">
-          <div class="play-icon">
-            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-          </div>
+          <div class="play-icon"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div>
         </div>
       </div>
       <div class="video-info">
-        <div class="video-cat-tag">${v.category || ''}</div>
+        <div class="video-cat-tag">${v.folder || v.category || ''}</div>
         <div class="video-title">${v.title || '제목 없음'}</div>
         <div class="video-meta">${v.teacher || ''} ${v.grade || ''}</div>
       </div>`;

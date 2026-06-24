@@ -205,6 +205,7 @@
     <button class="admin-tab" onclick="switchTab('weeklylog',this);initWeeklyLogTab()">📅 주간업무일지</button>
     <button class="admin-tab" onclick="switchTab('attendance',this);initAttendanceTab()">✅ 학생 출결</button>
     <button class="admin-tab" onclick="switchTab('adminmgmt',this);initAdminMgmtTab()">🔑 관리자 계정</button>
+    <button class="admin-tab" onclick="switchTab('apexvideo',this);initApexVideoTab()">🎬 에이펙스 영상</button>
   </div>
 
   <!-- 학생 관리 -->
@@ -393,6 +394,60 @@
         </div>
       </div>
       <div class="msg" id="classAssignMsg"></div>
+    </div>
+  </div>
+
+  <!-- 에이펙스 영상 관리 -->
+  <div class="tab-panel" id="tab-apexvideo">
+
+    <!-- 기출해설 apexAccess 일괄 설정 -->
+    <div class="card">
+      <h3>📂 기출해설 에이펙스 공개 설정</h3>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;">
+        <code style="color:var(--gold);background:rgba(240,192,64,0.1);padding:2px 6px;border-radius:4px;">기출_</code>
+        로 시작하는 폴더의 영상들을 에이펙스관에 공개하거나 비공개합니다.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <button class="btn btn-primary" onclick="setApexAccessBulk(true)">✅ 기출해설 전체 공개</button>
+        <button class="btn btn-danger"  onclick="setApexAccessBulk(false)">🚫 기출해설 전체 비공개</button>
+      </div>
+      <div id="apexAccessMsg" class="msg"></div>
+    </div>
+
+    <!-- 에이펙스 자체 영상 업로드 -->
+    <div class="card">
+      <h3>➕ 에이펙스 자체 영상 등록</h3>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+        에이펙스영어학원에서 직접 올리는 영상입니다. Vimeo ID(또는 URL)를 입력하세요.
+      </div>
+      <div class="form-row" style="max-width:700px;">
+        <div class="form-group">
+          <label>영상 제목</label>
+          <input type="text" id="apexv-title" placeholder="예: 6월 영어 모의고사 해설">
+        </div>
+        <div class="form-group">
+          <label>Vimeo ID 또는 URL</label>
+          <input type="text" id="apexv-vimeo" placeholder="예: 1234567890 또는 https://vimeo.com/1234567890">
+        </div>
+      </div>
+      <div class="form-row" style="max-width:700px;">
+        <div class="form-group">
+          <label>카테고리</label>
+          <input type="text" id="apexv-cat" placeholder="예: 영어 모의고사 해설">
+        </div>
+        <div class="form-group">
+          <label>설명 (선택)</label>
+          <input type="text" id="apexv-desc" placeholder="간단한 설명">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addApexVideo()">영상 등록</button>
+      <div id="apexVideoAddMsg" class="msg"></div>
+    </div>
+
+    <!-- 등록된 에이펙스 영상 목록 -->
+    <div class="card">
+      <h3>🎬 등록된 에이펙스 영상 (<span id="apexVideoCount">0</span>개)</h3>
+      <div id="apexVideoList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
     </div>
   </div>
 
@@ -4580,6 +4635,98 @@ window.deleteAdmin = async (uid, name) => {
     await loadAdmins();
   } catch(e) {
     showMsg('adminCreateMsg', '오류: ' + e.message, 'error');
+  }
+};
+
+// ══════════════════════════════════════════
+// 에이펙스 영상 관리
+// ══════════════════════════════════════════
+window.initApexVideoTab = async function() {
+  await loadApexVideos();
+};
+
+// 기출해설 apexAccess 일괄 설정
+window.setApexAccessBulk = async function(flag) {
+  const label = flag ? '공개' : '비공개';
+  if (!confirm(`기출해설 영상 전체를 에이펙스관 ${label}으로 변경하시겠습니까?`)) return;
+  try {
+    const snap = await getDocs(collection(db, 'videos'));
+    let count = 0;
+    const batch = [];
+    snap.forEach(d => {
+      const v = d.data();
+      const folder = v.folder || v.category || '';
+      if (folder.startsWith('기출')) {
+        batch.push(updateDoc(doc(db, 'videos', d.id), { apexAccess: flag }));
+        count++;
+      }
+    });
+    await Promise.all(batch);
+    showMsg('apexAccessMsg', `✅ 기출해설 영상 ${count}개 ${label} 완료`, 'success');
+  } catch(e) {
+    showMsg('apexAccessMsg', '오류: ' + e.message, 'error');
+  }
+};
+
+// 에이펙스 자체 영상 등록
+window.addApexVideo = async function() {
+  const title  = document.getElementById('apexv-title').value.trim();
+  const vimeo  = document.getElementById('apexv-vimeo').value.trim();
+  const cat    = document.getElementById('apexv-cat').value.trim() || '에이펙스 영상';
+  const desc   = document.getElementById('apexv-desc').value.trim();
+  if (!title || !vimeo) {
+    showMsg('apexVideoAddMsg', '제목과 Vimeo ID를 입력해주세요.', 'error'); return;
+  }
+  // URL에서 ID 추출
+  const vimeoId = vimeo.match(/vimeo\.com\/(\d+)/) ? vimeo.match(/vimeo\.com\/(\d+)/)[1] : vimeo.replace(/\D/g, '');
+  if (!vimeoId) { showMsg('apexVideoAddMsg', 'Vimeo ID를 확인해주세요.', 'error'); return; }
+  try {
+    await addDoc(collection(db, 'apexVideos'), {
+      title, vimeoId, category: cat, description: desc,
+      createdAt: new Date().toISOString(), order: Date.now()
+    });
+    showMsg('apexVideoAddMsg', `✅ "${title}" 등록 완료`, 'success');
+    document.getElementById('apexv-title').value = '';
+    document.getElementById('apexv-vimeo').value = '';
+    document.getElementById('apexv-cat').value   = '';
+    document.getElementById('apexv-desc').value  = '';
+    await loadApexVideos();
+  } catch(e) {
+    showMsg('apexVideoAddMsg', '오류: ' + e.message, 'error');
+  }
+};
+
+async function loadApexVideos() {
+  try {
+    const snap = await getDocs(query(collection(db, 'apexVideos'), orderBy('order', 'asc')));
+    const list = [];
+    snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+    document.getElementById('apexVideoCount').textContent = list.length;
+    const el = document.getElementById('apexVideoList');
+    if (!list.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:13px;">등록된 영상이 없습니다.</div>'; return;
+    }
+    el.innerHTML = list.map(v => `
+      <div class="student-item">
+        <div class="student-name">${v.title}</div>
+        <span class="student-meta" style="color:var(--gold);font-size:12px;">${v.category || ''}</span>
+        <span class="student-meta" style="font-size:11px;">Vimeo: ${v.vimeoId}</span>
+        <span class="student-meta" style="font-size:11px;color:var(--muted);">${v.description || ''}</span>
+        <button class="btn btn-danger btn-sm" onclick="deleteApexVideo('${v.id}','${(v.title||'').replace(/'/g,"\\'")}')">삭제</button>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('apexVideoList').innerHTML =
+      `<div style="color:#ff9090;font-size:13px;">오류: ${e.message}</div>`;
+  }
+}
+
+window.deleteApexVideo = async function(id, title) {
+  if (!confirm(`"${title}" 영상을 삭제하시겠습니까?`)) return;
+  try {
+    await deleteDoc(doc(db, 'apexVideos', id));
+    await loadApexVideos();
+  } catch(e) {
+    alert('삭제 오류: ' + e.message);
   }
 };
 </script>
