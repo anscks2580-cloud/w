@@ -215,11 +215,45 @@
 }
 
 /* 영상 그리드 */
-.video-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+/* ── 아코디언 ── */
+.acc-group { margin-bottom: 10px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+.acc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px; cursor: pointer;
+  background: rgba(255,255,255,0.04);
+  transition: background 0.15s;
 }
+.acc-header:hover { background: rgba(201,168,76,0.08); }
+.acc-header-left { display: flex; align-items: center; gap: 10px; }
+.acc-label { font-size: 14px; font-weight: 700; color: var(--off-white); }
+.acc-count { font-size: 11px; color: var(--muted); }
+.acc-arrow { color: var(--gold); font-size: 11px; transition: transform 0.2s; }
+.acc-arrow.open { transform: rotate(180deg); }
+.acc-body { display: none; padding: 12px; background: rgba(0,0,0,0.15); }
+.acc-body.open { display: block; }
+
+/* 아코디언 내부 목록 */
+.acc-video-list { display: flex; flex-direction: column; gap: 6px; }
+.acc-video-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s, border-color 0.15s;
+}
+.acc-video-item:hover { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.25); }
+.acc-thumb {
+  width: 80px; height: 45px; border-radius: 5px; overflow: hidden;
+  background: #111; flex-shrink: 0; position: relative;
+}
+.acc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.acc-play {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.35);
+}
+.acc-play svg { fill: rgba(201,168,76,0.9); width: 16px; height: 16px; margin-left: 2px; }
+.acc-video-title { font-size: 13px; color: var(--off-white); line-height: 1.4; }
+.acc-video-meta  { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
 .video-card {
   background: rgba(255,255,255,0.03);
@@ -414,12 +448,8 @@
         <div class="sec-title">기출해설 강의</div>
         <p style="font-size:13px;color:rgba(240,237,248,0.5);margin-top:8px;">송우찬수학학원 기출해설 영상 중 Apex 전용 공개 강의입니다.</p>
       </div>
-      <div class="cat-filter" id="catFilter1">
-        <button class="cat-btn active" data-cat="all" onclick="filterCat1(this,'all')">전체</button>
-      </div>
-      <div id="videoGrid1" class="video-grid">
-        <div class="loading-msg">강의 목록을 불러오는 중...</div>
-      </div>
+      <!-- 기출해설: 아코디언 -->
+      <div id="videoGrid1"></div>
     </div>
 
     <!-- Apex 자체 영상 섹션 -->
@@ -558,7 +588,7 @@ async function loadVideos() {
       }
     });
     buildCatFilter('catFilter1', cats, filterCat1);
-    renderGrid('videoGrid1', mathVideos, 'all');
+    renderMathAccordion(mathVideos, 'all');
   } catch(e) {
     document.getElementById('videoGrid1').innerHTML =
       `<div class="loading-msg">불러오기 실패: ${e.message}</div>`;
@@ -600,12 +630,80 @@ function buildCatFilter(filterId, cats, filterFn) {
 window.filterCat1 = function(btn, cat) {
   document.querySelectorAll('#catFilter1 .cat-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active'); mathCat = cat;
-  renderGrid('videoGrid1', mathVideos, cat);
+  renderMathAccordion(mathVideos, cat);
 };
 window.filterCat2 = function(btn, cat) {
   document.querySelectorAll('#catFilter2 .cat-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active'); apexCat = cat;
   renderGrid('videoGrid2', apexVids, cat);
+};
+
+// 기출해설 아코디언 렌더 (학년별 그룹)
+function renderMathAccordion(videos, cat) {
+  const el = document.getElementById('videoGrid1');
+  const list = cat === 'all' ? videos : videos.filter(v => (v.tag || v.folder || v.category || '') === cat);
+  if (!list.length) {
+    el.innerHTML = '<div class="loading-msg">현재 공개된 강의가 없습니다.</div>'; return;
+  }
+
+  // tag에서 학년 추출: "기출_고1_2025" → "고1"
+  function getGrade(v) {
+    const tag = v.tag || v.folder || v.category || '';
+    const m = tag.match(/기출_?(고\d|중\d|공통)/);
+    return m ? m[1] : '기타';
+  }
+
+  // 학년 순서
+  const gradeOrder = ['고1','고2','고3','중3','중2','중1','공통','기타'];
+  const byGrade = {};
+  list.forEach(v => {
+    const g = getGrade(v);
+    if (!byGrade[g]) byGrade[g] = [];
+    byGrade[g].push(v);
+  });
+  const sorted = Object.keys(byGrade).sort((a,b) =>
+    (gradeOrder.indexOf(a) === -1 ? 99 : gradeOrder.indexOf(a)) -
+    (gradeOrder.indexOf(b) === -1 ? 99 : gradeOrder.indexOf(b))
+  );
+
+  el.innerHTML = sorted.map((grade, gi) => {
+    const vids = byGrade[grade];
+    const items = vids.map(v => {
+      const vimeoId = extractVimeoId(v.url || v.vimeoId || '');
+      const tag = v.tag || v.folder || v.category || '';
+      return `<div class="acc-video-item" onclick="openModal('${(v.title||'강의').replace(/'/g,"\\'")}','${vimeoId}')">
+        <div class="acc-thumb">
+          ${vimeoId ? `<img src="https://vumbnail.com/${vimeoId}.jpg" onerror="this.style.display='none'">` : ''}
+          <div class="acc-play"><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg></div>
+        </div>
+        <div>
+          <div class="acc-video-title">${v.title || '제목 없음'}</div>
+          <div class="acc-video-meta">${tag}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="acc-group">
+      <div class="acc-header" onclick="toggleAcc(${gi})">
+        <div class="acc-header-left">
+          <span class="acc-label">${grade}</span>
+          <span class="acc-count">${vids.length}개</span>
+        </div>
+        <span class="acc-arrow" id="acc-arrow-${gi}">▼</span>
+      </div>
+      <div class="acc-body ${gi === 0 ? 'open' : ''}" id="acc-body-${gi}">
+        <div class="acc-video-list">${items}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleAcc = function(idx) {
+  const body  = document.getElementById('acc-body-' + idx);
+  const arrow = document.getElementById('acc-arrow-' + idx);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
 };
 
 function renderGrid(gridId, videos, cat) {
