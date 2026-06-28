@@ -196,7 +196,7 @@
     <button class="admin-tab" onclick="switchTab('classassign',this);initClassAssignTab()">🏫 반 배정</button>
     <button class="admin-tab" onclick="switchTab('promotion',this);initPromotionTab()">🎓 일괄 진급</button>
     <button class="admin-tab" onclick="switchTab('assign',this)">강의 배정</button>
-    <button class="admin-tab" onclick="switchTab('videos',this)">강의 목록</button>
+    <button class="admin-tab" onclick="switchTab('videos',this);renderFolderAccordion()">강의 목록</button>
     <button class="admin-tab" onclick="switchTab('teachers',this)">선생님 관리</button>
     <button class="admin-tab" onclick="switchTab('weekly',this);initWeeklyTab()">📊 주간성취도</button>
     <button class="admin-tab" onclick="switchTab('progress',this);initProgressTab()">📍 반별진도</button>
@@ -2412,12 +2412,14 @@ function renderFolderAccordion(q='') {
   el.innerHTML = html || '<div style="padding:12px;font-size:12px;color:var(--muted);">검색 결과 없음</div>';
   updateFolderCount();
 }
+window.renderFolderAccordion = renderFolderAccordion;
 
 function onFolderCheckChange(cb) {
   if (cb.checked) _checkedFolders.add(cb.value);
   else _checkedFolders.delete(cb.value);
   updateFolderCount();
 }
+window.onFolderCheckChange = onFolderCheckChange;
 
 window.toggleFolderGroup = (id) => {
   const el = document.getElementById(id);
