@@ -194,6 +194,7 @@
     <button class="admin-tab active" onclick="switchTab('students',this)">학생 관리</button>
     <button class="admin-tab" onclick="switchTab('excel',this)">엑셀 일괄 등록</button>
     <button class="admin-tab" onclick="switchTab('classassign',this);initClassAssignTab()">🏫 반 배정</button>
+    <button class="admin-tab" onclick="switchTab('promotion',this);initPromotionTab()">🎓 일괄 진급</button>
     <button class="admin-tab" onclick="switchTab('assign',this)">강의 배정</button>
     <button class="admin-tab" onclick="switchTab('videos',this)">강의 목록</button>
     <button class="admin-tab" onclick="switchTab('teachers',this)">선생님 관리</button>
@@ -258,7 +259,21 @@
       <div class="msg" id="createMsg"></div>
     </div>
     <div class="card">
-      <h3>📋 등록된 학생 (<span id="studentCount">0</span>명)</h3>
+      <h3>🔍 학생 진단</h3>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+        Firebase에 등록됐는데 목록에 안 보이는 학생을 찾습니다.<br>
+        이름으로 검색하거나, 전체 진단을 실행하세요.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <input type="text" id="diag-name" placeholder="이름 직접 검색 (예: 홍길동)"
+          style="flex:1;min-width:160px;max-width:240px;padding:8px 13px;background:rgba(255,255,255,0.05);
+          border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--off-white);font-size:13px;
+          font-family:inherit;outline:none;">
+        <button class="btn btn-primary btn-sm" onclick="diagSearchByName()">이름 검색</button>
+        <button class="btn btn-secondary btn-sm" onclick="diagRunAll()">전체 진단 실행</button>
+      </div>
+      <div id="diag-result"></div>
+    </div>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
         <input type="text" id="studentSearch" placeholder="이름 검색..." oninput="renderStudents()"
           style="flex:1;min-width:160px;max-width:280px;padding:8px 13px;background:rgba(255,255,255,0.05);
@@ -449,6 +464,42 @@
     <div class="card">
       <h3>🎬 등록된 에이펙스 영상 (<span id="apexVideoCount">0</span>개)</h3>
       <div id="apexVideoList"><div style="color:var(--muted);font-size:13px;">불러오는 중...</div></div>
+    </div>
+  </div>
+
+  <!-- 일괄 진급 -->
+  <div class="tab-panel" id="tab-promotion">
+    <div class="card">
+      <h3>🎓 연말 일괄 진급 처리</h3>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:20px;">
+        전체 학생의 학년과 수업 반을 한 단계씩 올립니다.<br>
+        <span style="color:#FCA5A5;">⚠️ 실행 후 되돌릴 수 없습니다. 반드시 미리보기로 확인 후 실행하세요.</span><br>
+        · 고3 → <span style="color:var(--gold);">N수</span> 처리 (반 배정 초기화)<br>
+        · N수 학생은 변경하지 않습니다.<br>
+        · 반 이름의 숫자 앞 학년 표기도 자동으로 올라갑니다. (예: 중1-7A → 중2-7A)
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+        <select id="promo-branch"
+          style="padding:8px 14px;background:#2D1F5E;border:1px solid rgba(240,192,64,0.3);border-radius:8px;
+          color:var(--off-white);font-size:13px;font-family:inherit;outline:none;color-scheme:dark;">
+          <option value="">전체 관</option>
+          <option value="평촌관">평촌관만</option>
+          <option value="산본관">산본관만</option>
+        </select>
+        <button class="btn btn-secondary" onclick="previewPromotion()">👁 미리보기</button>
+        <button class="btn btn-danger"    onclick="runPromotion()"    id="promo-run-btn" style="display:none;">🎓 진급 실행</button>
+      </div>
+
+      <div id="promo-msg" class="msg"></div>
+    </div>
+
+    <!-- 미리보기 테이블 -->
+    <div class="card" id="promo-preview-card" style="display:none;">
+      <h3>📋 진급 미리보기 <span id="promo-count" style="font-size:13px;font-weight:400;color:var(--muted);"></span></h3>
+      <div style="overflow-x:auto;">
+        <table class="preview-table" id="promo-table"></table>
+      </div>
     </div>
   </div>
 
@@ -4591,6 +4642,111 @@ window.loadDraft = async function(type) {
   } catch(e) {
     showDraftStatus(type, '❌ 불러오기 실패: ' + e.message, true);
   }
+};
+
+// ══════════════════════════════════════════
+// 일괄 진급 처리
+// ══════════════════════════════════════════
+
+const GRADE_UP = {
+  '초5':'초6', '초6':'중1',
+  '중1':'중2', '중2':'중3', '중3':'고1',
+  '고1':'고2', '고2':'고3', '고3':'N수',
+};
+
+// 반 이름에서 학년 부분만 올리기: "중1-7A" → "중2-7A", "(중1)7-A" → "(중2)7-A"
+function promoteClassGroup(classGroup, oldGrade, newGrade) {
+  if (!classGroup || !oldGrade || !newGrade) return classGroup;
+  // 정확히 oldGrade 문자열만 교체 (앞뒤 비단어 경계)
+  return classGroup.replace(new RegExp(oldGrade.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'g'), newGrade);
+}
+
+let promoPreviewData = []; // 미리보기용 데이터 캐시
+
+window.initPromotionTab = function() {
+  promoPreviewData = [];
+  document.getElementById('promo-preview-card').style.display = 'none';
+  document.getElementById('promo-run-btn').style.display = 'none';
+  document.getElementById('promo-msg').style.display = 'none';
+};
+
+window.previewPromotion = async function() {
+  const branch = document.getElementById('promo-branch').value;
+  const msgEl  = document.getElementById('promo-msg');
+  msgEl.style.display = 'none';
+
+  const targets = studentsCache.filter(s => {
+    if (branch && s.branch !== branch) return false;
+    return GRADE_UP[s.grade]; // N수는 GRADE_UP에 없으므로 자동 제외
+  });
+
+  if (!targets.length) {
+    showMsg('promo-msg', '진급 대상 학생이 없습니다.', 'error'); return;
+  }
+
+  promoPreviewData = targets.map(s => {
+    const newGrade      = GRADE_UP[s.grade] || s.grade;
+    const newClassGroup = newGrade === 'N수'
+      ? ''   // 고3→N수: 반 초기화
+      : promoteClassGroup(s.classGroup || '', s.grade, newGrade);
+    return { ...s, newGrade, newClassGroup };
+  });
+
+  // 테이블 렌더
+  const table = document.getElementById('promo-table');
+  table.innerHTML = `
+    <tr>
+      <th>이름</th><th>관</th><th>현재 학년</th><th>→ 진급 학년</th>
+      <th>현재 반</th><th>→ 진급 반</th><th>담당</th>
+    </tr>
+    ${promoPreviewData.map(s => `
+      <tr>
+        <td>${s.name}</td>
+        <td>${s.branch||''}</td>
+        <td>${s.grade}</td>
+        <td style="color:var(--gold);font-weight:600;">${s.newGrade}</td>
+        <td style="color:var(--muted);">${s.classGroup||'-'}</td>
+        <td style="color:var(--gold);">${s.newClassGroup||'-'}</td>
+        <td>${s.teacherName||''}</td>
+      </tr>`).join('')}`;
+
+  document.getElementById('promo-count').textContent = `(${promoPreviewData.length}명)`;
+  document.getElementById('promo-preview-card').style.display = 'block';
+  document.getElementById('promo-run-btn').style.display      = 'inline-flex';
+  document.getElementById('promo-preview-card').scrollIntoView({ behavior:'smooth' });
+};
+
+window.runPromotion = async function() {
+  if (!promoPreviewData.length) return;
+  if (!confirm(`${promoPreviewData.length}명의 학년과 반을 진급 처리합니다.\n이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?`)) return;
+
+  const btn = document.getElementById('promo-run-btn');
+  btn.disabled = true; btn.textContent = '처리 중...';
+
+  let ok = 0, fail = 0;
+  for (const s of promoPreviewData) {
+    try {
+      await updateDoc(doc(db, 'students', s.id), {
+        grade:      s.newGrade,
+        classGroup: s.newClassGroup,
+      });
+      ok++;
+    } catch(e) {
+      fail++;
+      console.warn('진급 실패:', s.name, e.message);
+    }
+  }
+
+  btn.disabled = false; btn.textContent = '🎓 진급 실행';
+  showMsg('promo-msg',
+    `✅ ${ok}명 진급 완료${fail ? ` / 실패 ${fail}명` : ''}`,
+    ok > 0 ? 'success' : 'error'
+  );
+
+  promoPreviewData = [];
+  document.getElementById('promo-preview-card').style.display = 'none';
+  document.getElementById('promo-run-btn').style.display = 'none';
+  await loadStudents();
 };
 
 // ══════════════════════════════════════════
