@@ -492,27 +492,132 @@
       <!-- 3단계: 기출해설 년도 서브 -->
       <div class="filter-sub filter-sub-year" id="sub-기출-고1">
         <button class="filter-btn active" onclick="selectYear('기출-고1-all',this,'기출-고1')">전체</button>
-        <button class="filter-btn" onclick="selectYear('기출-고1-2025',this,'기출-고1')">2025</button>
-        <button class="filter-btn" onclick="selectYear('기출-고1-2024',this,'기출-고1')">2024</button>
-        <button class="filter-btn" onclick="selectYear('기출-고1-2023',this,'기출-고1')">2023</button>
-        <button class="filter-btn" onclick="selectYear('기출-고1-2022',this,'기출-고1')">2022</button>
-        <button class="filter-btn" onclick="selectYear('기출-고1-2021',this,'기출-고1')">2021</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고1-2025',this,'기출-고1')">2025</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고1-2024',this,'기출-고1')">2024</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고1-2023',this,'기출-고1')">2023</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고1-2022',this,'기출-고1')">2022</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고1-2021',this,'기출-고1')">2021</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고1-2025">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고1-2025-all',this,'기출-고1-2025')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2025-1중간',this,'기출-고1-2025')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2025-1기말',this,'기출-고1-2025')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2025-2중간',this,'기출-고1-2025')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2025-2기말',this,'기출-고1-2025')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고1-2024">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고1-2024-all',this,'기출-고1-2024')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2024-1중간',this,'기출-고1-2024')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2024-1기말',this,'기출-고1-2024')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2024-2중간',this,'기출-고1-2024')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2024-2기말',this,'기출-고1-2024')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고1-2023">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고1-2023-all',this,'기출-고1-2023')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2023-1중간',this,'기출-고1-2023')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2023-1기말',this,'기출-고1-2023')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2023-2중간',this,'기출-고1-2023')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2023-2기말',this,'기출-고1-2023')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고1-2022">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고1-2022-all',this,'기출-고1-2022')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2022-1중간',this,'기출-고1-2022')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2022-1기말',this,'기출-고1-2022')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2022-2중간',this,'기출-고1-2022')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2022-2기말',this,'기출-고1-2022')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고1-2021">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고1-2021-all',this,'기출-고1-2021')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2021-1중간',this,'기출-고1-2021')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2021-1기말',this,'기출-고1-2021')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2021-2중간',this,'기출-고1-2021')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고1-2021-2기말',this,'기출-고1-2021')">2학기 기말</button>
       </div>
       <div class="filter-sub filter-sub-year" id="sub-기출-고2">
         <button class="filter-btn active" onclick="selectYear('기출-고2-all',this,'기출-고2')">전체</button>
-        <button class="filter-btn" onclick="selectYear('기출-고2-2025',this,'기출-고2')">2025</button>
-        <button class="filter-btn" onclick="selectYear('기출-고2-2024',this,'기출-고2')">2024</button>
-        <button class="filter-btn" onclick="selectYear('기출-고2-2023',this,'기출-고2')">2023</button>
-        <button class="filter-btn" onclick="selectYear('기출-고2-2022',this,'기출-고2')">2022</button>
-        <button class="filter-btn" onclick="selectYear('기출-고2-2021',this,'기출-고2')">2021</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고2-2025',this,'기출-고2')">2025</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고2-2024',this,'기출-고2')">2024</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고2-2023',this,'기출-고2')">2023</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고2-2022',this,'기출-고2')">2022</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고2-2021',this,'기출-고2')">2021</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고2-2025">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고2-2025-all',this,'기출-고2-2025')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2025-1중간',this,'기출-고2-2025')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2025-1기말',this,'기출-고2-2025')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2025-2중간',this,'기출-고2-2025')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2025-2기말',this,'기출-고2-2025')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고2-2024">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고2-2024-all',this,'기출-고2-2024')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2024-1중간',this,'기출-고2-2024')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2024-1기말',this,'기출-고2-2024')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2024-2중간',this,'기출-고2-2024')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2024-2기말',this,'기출-고2-2024')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고2-2023">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고2-2023-all',this,'기출-고2-2023')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2023-1중간',this,'기출-고2-2023')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2023-1기말',this,'기출-고2-2023')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2023-2중간',this,'기출-고2-2023')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2023-2기말',this,'기출-고2-2023')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고2-2022">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고2-2022-all',this,'기출-고2-2022')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2022-1중간',this,'기출-고2-2022')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2022-1기말',this,'기출-고2-2022')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2022-2중간',this,'기출-고2-2022')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2022-2기말',this,'기출-고2-2022')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고2-2021">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고2-2021-all',this,'기출-고2-2021')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2021-1중간',this,'기출-고2-2021')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2021-1기말',this,'기출-고2-2021')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2021-2중간',this,'기출-고2-2021')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고2-2021-2기말',this,'기출-고2-2021')">2학기 기말</button>
       </div>
       <div class="filter-sub filter-sub-year" id="sub-기출-고3">
         <button class="filter-btn active" onclick="selectYear('기출-고3-all',this,'기출-고3')">전체</button>
-        <button class="filter-btn" onclick="selectYear('기출-고3-2025',this,'기출-고3')">2025</button>
-        <button class="filter-btn" onclick="selectYear('기출-고3-2024',this,'기출-고3')">2024</button>
-        <button class="filter-btn" onclick="selectYear('기출-고3-2023',this,'기출-고3')">2023</button>
-        <button class="filter-btn" onclick="selectYear('기출-고3-2022',this,'기출-고3')">2022</button>
-        <button class="filter-btn" onclick="selectYear('기출-고3-2021',this,'기출-고3')">2021</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고3-2025',this,'기출-고3')">2025</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고3-2024',this,'기출-고3')">2024</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고3-2023',this,'기출-고3')">2023</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고3-2022',this,'기출-고3')">2022</button>
+        <button class="filter-btn" onclick="selectExamYear('기출-고3-2021',this,'기출-고3')">2021</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고3-2025">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고3-2025-all',this,'기출-고3-2025')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2025-1중간',this,'기출-고3-2025')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2025-1기말',this,'기출-고3-2025')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2025-2중간',this,'기출-고3-2025')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2025-2기말',this,'기출-고3-2025')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고3-2024">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고3-2024-all',this,'기출-고3-2024')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2024-1중간',this,'기출-고3-2024')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2024-1기말',this,'기출-고3-2024')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2024-2중간',this,'기출-고3-2024')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2024-2기말',this,'기출-고3-2024')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고3-2023">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고3-2023-all',this,'기출-고3-2023')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2023-1중간',this,'기출-고3-2023')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2023-1기말',this,'기출-고3-2023')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2023-2중간',this,'기출-고3-2023')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2023-2기말',this,'기출-고3-2023')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고3-2022">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고3-2022-all',this,'기출-고3-2022')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2022-1중간',this,'기출-고3-2022')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2022-1기말',this,'기출-고3-2022')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2022-2중간',this,'기출-고3-2022')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2022-2기말',this,'기출-고3-2022')">2학기 기말</button>
+      </div>
+      <div class="filter-sub filter-sub-term" id="sub-기출-고3-2021">
+        <button class="filter-btn active" onclick="selectExamTerm('기출-고3-2021-all',this,'기출-고3-2021')">전체</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2021-1중간',this,'기출-고3-2021')">1학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2021-1기말',this,'기출-고3-2021')">1학기 기말</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2021-2중간',this,'기출-고3-2021')">2학기 중간</button>
+        <button class="filter-btn" onclick="selectExamTerm('기출-고3-2021-2기말',this,'기출-고3-2021')">2학기 기말</button>
       </div>
       <!-- 2단계: 보충강의실 서브 (관 선택) -->
       <div class="filter-sub" id="sub-보충강의실">
@@ -804,7 +909,10 @@ function getAllSubjectTags(subject) {
 const MAIN_TAGS = {
   '중등':    ['중1','중2','중3'],
   '고등':    [...Object.keys(SUBJECT_BOOKS).flatMap(s => getAllSubjectTags(s)), '송팁_공통수학1','송팁_공통수학2'],
-  '기출해설': EXAM_YEARS.flatMap(y => ['고1','고2','고3'].map(g => `기출_${g}_${y}`)),
+  '기출해설': [
+    ...EXAM_YEARS.flatMap(y => ['고1','고2','고3'].map(g => `기출_${g}_${y}`)),
+    '기출_고1_2025_1중간', '기출_고1_2025_1기말', '기출_고1_2025_2중간', '기출_고1_2025_2기말', '기출_고1_2024_1중간', '기출_고1_2024_1기말', '기출_고1_2024_2중간', '기출_고1_2024_2기말', '기출_고1_2023_1중간', '기출_고1_2023_1기말', '기출_고1_2023_2중간', '기출_고1_2023_2기말', '기출_고1_2022_1중간', '기출_고1_2022_1기말', '기출_고1_2022_2중간', '기출_고1_2022_2기말', '기출_고1_2021_1중간', '기출_고1_2021_1기말', '기출_고1_2021_2중간', '기출_고1_2021_2기말', '기출_고2_2025_1중간', '기출_고2_2025_1기말', '기출_고2_2025_2중간', '기출_고2_2025_2기말', '기출_고2_2024_1중간', '기출_고2_2024_1기말', '기출_고2_2024_2중간', '기출_고2_2024_2기말', '기출_고2_2023_1중간', '기출_고2_2023_1기말', '기출_고2_2023_2중간', '기출_고2_2023_2기말', '기출_고2_2022_1중간', '기출_고2_2022_1기말', '기출_고2_2022_2중간', '기출_고2_2022_2기말', '기출_고2_2021_1중간', '기출_고2_2021_1기말', '기출_고2_2021_2중간', '기출_고2_2021_2기말', '기출_고3_2025_1중간', '기출_고3_2025_1기말', '기출_고3_2025_2중간', '기출_고3_2025_2기말', '기출_고3_2024_1중간', '기출_고3_2024_1기말', '기출_고3_2024_2중간', '기출_고3_2024_2기말', '기출_고3_2023_1중간', '기출_고3_2023_1기말', '기출_고3_2023_2중간', '기출_고3_2023_2기말', '기출_고3_2022_1중간', '기출_고3_2022_1기말', '기출_고3_2022_2중간', '기출_고3_2022_2기말', '기출_고3_2021_1중간', '기출_고3_2021_1기말', '기출_고3_2021_2중간', '기출_고3_2021_2기말',
+  ],
   '수리논술': ['수리논술'],
   '보충강의실': [
     ...TEACHERS['평촌관'].map(t => `보충_평촌_${t}`),
@@ -845,6 +953,7 @@ window.clearSearch = function() {
 // 모든 서브 패널 닫기 (메인 카테고리 변경 시)
 function closeAllSubs() {
   document.querySelectorAll('.filter-sub').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.filter-sub-term').forEach(el => el.classList.remove('open'));
 }
 
 // 1단계: 메인 카테고리
@@ -859,6 +968,7 @@ window.selectMain = function(main, btn) {
   document.querySelectorAll('.filter-sub-subject').forEach(el => el.classList.remove('open'));
   document.querySelectorAll('.filter-sub-detail').forEach(el => el.classList.remove('open'));
   document.querySelectorAll('.filter-sub-teacher').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.filter-sub-term').forEach(el => el.classList.remove('open'));
   const subEl = document.getElementById('sub-' + main);
   if (subEl) {
     subEl.classList.add('open');
@@ -892,7 +1002,37 @@ window.selectGrade = function(grade, btn, main) {
   renderVideos();
 };
 
-// 3단계: 년도 선택 (기출해설 전용)
+
+// 3단계: 기출해설 연도 선택 (시험구분 서브 열기)
+window.selectExamYear = function(yearKey, btn, gradeKey) {
+  const gradeEl = document.getElementById('sub-' + gradeKey);
+  if (gradeEl) gradeEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // 이 학년의 모든 시험구분 서브 닫기
+  document.querySelectorAll('.filter-sub-term').forEach(el => el.classList.remove('open'));
+  if (yearKey.endsWith('-all')) {
+    currentSub = null;
+  } else {
+    currentSub = yearKey; // 예: 기출-고1-2025
+    const termEl = document.getElementById('sub-' + yearKey);
+    if (termEl) {
+      termEl.classList.add('open');
+      termEl.querySelectorAll('.filter-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+    }
+  }
+  renderVideos();
+};
+
+// 4단계: 기출해설 시험구분 선택
+window.selectExamTerm = function(termKey, btn, yearKey) {
+  const yearEl = document.getElementById('sub-' + yearKey);
+  if (yearEl) yearEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSub = termKey.endsWith('-all') ? yearKey : termKey;
+  renderVideos();
+};
+
+// 3단계: 년도 선택 (기출해설 전용) — legacy
 window.selectYear = function(yearKey, btn, gradeKey) {
   const gradeEl = document.getElementById('sub-' + gradeKey);
   if (gradeEl) gradeEl.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -953,12 +1093,17 @@ function renderVideos() {
     list = myVideos;
   } else if (currentSub) {
     // 기출해설 년도
-    const examYearMatch = currentSub.match(/^기출-(고[123])-(\d{4})$/);
+    const examTermMatch = currentSub.match(/^기출-(고[123])-(\d{4})-(1중간|1기말|2중간|2기말)$/);
+    const examYearMatch = !examTermMatch && currentSub.match(/^기출-(고[123])-(\d{4})$/);
     // 보충강의실 선생님
     const teacherMatch  = currentSub.match(/^보충-(평촌관|산본관)-(.+)$/);
-    if (examYearMatch) {
-      const tag = `기출_${examYearMatch[1]}_${examYearMatch[2]}`;
+    if (examTermMatch) {
+      const tag = `기출_${examTermMatch[1]}_${examTermMatch[2]}_${examTermMatch[3]}`;
       list = myVideos.filter(v => v.tag === tag);
+    } else if (examYearMatch) {
+      // 연도 선택 시 시험구분 태그 + 구태그 모두 포함
+      const baseTag = `기출_${examYearMatch[1]}_${examYearMatch[2]}`;
+      list = myVideos.filter(v => v.tag === baseTag || (v.tag||'').startsWith(baseTag + '_'));
     } else if (teacherMatch) {
       const branch = teacherMatch[1] === '평촌관' ? '평촌' : '산본';
       const tag = `보충_${branch}_${teacherMatch[2]}`;
