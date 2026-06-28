@@ -196,7 +196,7 @@
     <button class="admin-tab" onclick="switchTab('classassign',this);initClassAssignTab()">🏫 반 배정</button>
     <button class="admin-tab" onclick="switchTab('promotion',this);initPromotionTab()">🎓 일괄 진급</button>
     <button class="admin-tab" onclick="switchTab('assign',this)">강의 배정</button>
-    <button class="admin-tab" onclick="switchTab('videos',this);renderFolderAccordion()">강의 목록</button>
+    <button class="admin-tab" onclick="switchTab('videos',this);renderFolderAccordion();renderVideos()">강의 목록</button>
     <button class="admin-tab" onclick="switchTab('teachers',this)">선생님 관리</button>
     <button class="admin-tab" onclick="switchTab('weekly',this);initWeeklyTab()">📊 주간성취도</button>
     <button class="admin-tab" onclick="switchTab('progress',this);initProgressTab()">📍 반별진도</button>
@@ -1890,6 +1890,7 @@ const VIDEO_CAT_TAGS = {
   "Song's Tip": ['송팁_공통수학1','송팁_공통수학2'],
 };
 let currentVideoFilter = ''; // '' = 전체
+window.renderVideos = function(...args) { return renderVideos(...args); };
 
 window.filterAdminVideos = function(cat, btn) {
   currentVideoFilter = cat;
