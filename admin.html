@@ -196,7 +196,7 @@
     <button class="admin-tab" onclick="switchTab('classassign',this);initClassAssignTab()">🏫 반 배정</button>
     <button class="admin-tab" onclick="switchTab('promotion',this);initPromotionTab()">🎓 일괄 진급</button>
     <button class="admin-tab" onclick="switchTab('assign',this)">강의 배정</button>
-    <button class="admin-tab" onclick="switchTab('videos',this);renderFolderAccordion();renderVideos()">강의 목록</button>
+    <button class="admin-tab" onclick="switchTab('videos',this);renderFolderAccordion()">강의 목록</button>
     <button class="admin-tab" onclick="switchTab('teachers',this)">선생님 관리</button>
     <button class="admin-tab" onclick="switchTab('weekly',this);initWeeklyTab()">📊 주간성취도</button>
     <button class="admin-tab" onclick="switchTab('progress',this);initProgressTab()">📍 반별진도</button>
@@ -1286,6 +1286,7 @@ const GRADE_TAG_MAP = {
 
 let studentsCache = [];
 let videosCache = [];
+window.videosCache = videosCache;
 
 // 관리자 확인
 onAuthStateChanged(auth, async (user) => {
@@ -1318,7 +1319,8 @@ async function loadStudents() {
   snap.forEach(d => studentsCache.push({id: d.id, ...d.data()}));
   renderStudents();
   renderAssignSelect();
-  document.getElementById('studentCount').textContent = studentsCache.length;
+  const scEl = document.getElementById('studentCount');
+  if (scEl) scEl.textContent = studentsCache.length;
 }
 
 window.renderStudents = function renderStudents() {
@@ -1802,8 +1804,9 @@ async function loadVideos() {
   const snap = await getDocs(collection(db, 'videos'));
   videosCache = [];
   snap.forEach(d => videosCache.push({id: d.id, ...d.data()}));
+  window.videosCache = videosCache;
   renderVideos();
-  document.getElementById('videoCount').textContent = videosCache.length;
+  const videoCountEl = document.getElementById('videoCount'); if (videoCountEl) videoCountEl.textContent = videosCache.length;
 }
 
 // 카테고리 그룹 정의
@@ -2900,7 +2903,7 @@ async function loadTeachers() {
   snap.forEach(d => teachersCache.push({ id: d.id, ...d.data() }));
   renderTeachers();
   renderTeacherSelect();
-  document.getElementById('teacherCount').textContent = teachersCache.length;
+  const teacherCountEl = document.getElementById('teacherCount'); if (teacherCountEl) teacherCountEl.textContent = teachersCache.length;
 }
 
 function renderTeachers() {
@@ -4134,7 +4137,7 @@ window.renderAttendance = function() {
   const dow     = attCurrentDate.getDay();
   const dayName = DAY_NAMES[dow];
   const dateStr = attCurrentDate.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
-  document.getElementById('attTodayLabel').textContent = `${dateStr} (${dayName}요일)`;
+  const attTodayLabelEl = document.getElementById('attTodayLabel'); if (attTodayLabelEl) attTodayLabelEl.textContent = `${dateStr} (${dayName}요일)`;
 
   const branchFilter = document.getElementById('attBranchFilter')?.value || '';
   const el    = document.getElementById('attStudentList');
@@ -4834,7 +4837,7 @@ window.previewPromotion = async function() {
         <td>${s.teacherName||''}</td>
       </tr>`).join('')}`;
 
-  document.getElementById('promo-count').textContent = `(${promoPreviewData.length}명)`;
+  const promo_countEl = document.getElementById('promo-count'); if (promo_countEl) promo_countEl.textContent = `(${promoPreviewData.length}명)`;
   document.getElementById('promo-preview-card').style.display = 'block';
   document.getElementById('promo-run-btn').style.display      = 'inline-flex';
   document.getElementById('promo-preview-card').scrollIntoView({ behavior:'smooth' });
@@ -5088,7 +5091,7 @@ async function loadAdmins() {
     adminsCache = [];
     snap.forEach(d => adminsCache.push({ id: d.id, ...d.data() }));
     renderAdmins();
-    document.getElementById('adminCount').textContent = adminsCache.length;
+    const adminCountEl = document.getElementById('adminCount'); if (adminCountEl) adminCountEl.textContent = adminsCache.length;
   } catch(e) {
     document.getElementById('adminList').innerHTML =
       `<div style="color:#ff9090;font-size:13px;">오류: ${e.message}</div>`;
@@ -5223,7 +5226,7 @@ async function loadApexVideos() {
     const snap = await getDocs(query(collection(db, 'apexVideos'), orderBy('order', 'asc')));
     const list = [];
     snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-    document.getElementById('apexVideoCount').textContent = list.length;
+    const apexVideoCountEl = document.getElementById('apexVideoCount'); if (apexVideoCountEl) apexVideoCountEl.textContent = list.length;
     const el = document.getElementById('apexVideoList');
     if (!list.length) {
       el.innerHTML = '<div style="color:var(--muted);font-size:13px;">등록된 영상이 없습니다.</div>'; return;
