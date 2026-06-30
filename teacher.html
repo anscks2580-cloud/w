@@ -320,15 +320,15 @@
         style="border:2px dashed rgba(240,192,64,0.3);border-radius:12px;padding:36px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:16px;">
         <div style="font-size:36px;margin-bottom:10px;">📄</div>
         <p style="font-size:14px;color:var(--off-white);margin-bottom:4px;">PDF 파일을 클릭하거나 드래그해서 올려주세요</p>
-        <small style="font-size:12px;color:var(--muted);">.pdf 파일만 지원 · 최대 20MB</small>
-        <div id="pdfFileName" style="margin-top:12px;font-size:13px;color:var(--gold);display:none;"></div>
+        <small style="font-size:12px;color:var(--muted);">.pdf 파일만 지원 · 여러 개 선택 가능 · 파일당 최대 20MB</small>
+        <div id="pdfFileName" style="margin-top:12px;font-size:13px;color:var(--gold);display:none;text-align:left;"></div>
       </div>
-      <input type="file" id="pdfFileInput" accept=".pdf" style="display:none;">
+      <input type="file" id="pdfFileInput" accept=".pdf" multiple style="display:none;">
 
       <!-- 업로드 진행바 -->
       <div id="uploadProgressWrap" style="display:none;margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
-          <span>업로드 중...</span><span id="uploadPct">0%</span>
+          <span id="uploadStatusText">업로드 중...</span><span id="uploadPct">0%</span>
         </div>
         <div style="background:rgba(255,255,255,0.08);border-radius:99px;height:6px;">
           <div id="uploadBar" style="background:var(--gold);height:6px;border-radius:99px;width:0;transition:width 0.2s;"></div>
@@ -994,35 +994,67 @@ async function loadWeeklyHistory() {
 }
 
 // ══ PDF 드롭존 설정 ══
-let selectedPdfFile = null;
+let selectedPdfFiles = [];
 
 function setupPdfDrop() {
   const input = document.getElementById('pdfFileInput');
   const drop  = document.getElementById('pdfDrop');
   if (!input || !drop) return;
 
-  input.addEventListener('change', e => setPdfFile(e.target.files[0]));
+  input.addEventListener('change', e => setPdfFiles(e.target.files));
   drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor='var(--gold)'; drop.style.background='rgba(240,192,64,0.05)'; });
   drop.addEventListener('dragleave', () => { drop.style.borderColor=''; drop.style.background=''; });
   drop.addEventListener('drop', e => {
     e.preventDefault(); drop.style.borderColor=''; drop.style.background='';
-    const f = e.dataTransfer.files[0];
-    if (f && f.type === 'application/pdf') setPdfFile(f);
-    else alert('PDF 파일만 업로드 가능합니다.');
+    setPdfFiles(e.dataTransfer.files);
   });
 }
 
-function setPdfFile(file) {
-  if (!file) return;
-  if (file.type !== 'application/pdf') { alert('PDF 파일만 가능합니다.'); return; }
-  if (file.size > 20 * 1024 * 1024) { alert('파일 크기는 20MB 이하여야 합니다.'); return; }
-  selectedPdfFile = file;
-  const nameEl = document.getElementById('pdfFileName');
-  nameEl.textContent = `✅ ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`;
-  nameEl.style.display = 'block';
+function setPdfFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+
+  const valid = [];
+  const rejected = [];
+  files.forEach(f => {
+    if (f.type !== 'application/pdf') { rejected.push(`${f.name} (PDF 아님)`); return; }
+    if (f.size > 20 * 1024 * 1024) { rejected.push(`${f.name} (20MB 초과)`); return; }
+    valid.push(f);
+  });
+
+  if (rejected.length) {
+    alert('다음 파일은 제외되었습니다:\n' + rejected.join('\n'));
+  }
+  if (!valid.length) return;
+
+  // 기존 선택에 추가 (중복 파일명+크기는 한 번만)
+  const existingKeys = new Set(selectedPdfFiles.map(f => f.name + f.size));
+  valid.forEach(f => {
+    const key = f.name + f.size;
+    if (!existingKeys.has(key)) { selectedPdfFiles.push(f); existingKeys.add(key); }
+  });
+
+  renderSelectedPdfFiles();
 }
 
-// ══ 월말보고서 PDF 업로드 ══
+function removeSelectedPdfFile(idx) {
+  selectedPdfFiles.splice(idx, 1);
+  renderSelectedPdfFiles();
+}
+
+function renderSelectedPdfFiles() {
+  const nameEl = document.getElementById('pdfFileName');
+  if (!selectedPdfFiles.length) { nameEl.style.display = 'none'; nameEl.innerHTML = ''; return; }
+  nameEl.style.display = 'block';
+  nameEl.innerHTML = selectedPdfFiles.map((f, i) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
+      <span>✅ ${f.name} (${(f.size/1024/1024).toFixed(1)}MB)</span>
+      <span onclick="event.stopPropagation(); removeSelectedPdfFile(${i})" style="cursor:pointer;color:var(--muted);padding:0 6px;">✕</span>
+    </div>
+  `).join('');
+}
+
+// ══ 월말보고서 PDF 업로드 (여러 파일 지원) ══
 window.submitMonthlyPDF = async function() {
   const month = document.getElementById('m-month').value;
   const memo  = document.getElementById('m-memo').value.trim();
@@ -1030,50 +1062,73 @@ window.submitMonthlyPDF = async function() {
   const err   = document.getElementById('monthly-err');
   const btn   = document.getElementById('m-submitBtn');
 
-  if (!month)           { showAlert(err, '보고 월을 선택해주세요.', 'err'); return; }
-  if (!selectedPdfFile) { showAlert(err, 'PDF 파일을 선택해주세요.', 'err'); return; }
+  if (!month)                    { showAlert(err, '보고 월을 선택해주세요.', 'err'); return; }
+  if (!selectedPdfFiles.length)  { showAlert(err, 'PDF 파일을 선택해주세요.', 'err'); return; }
 
+  const total = selectedPdfFiles.length;
   btn.disabled = true; btn.textContent = '업로드 중...';
   document.getElementById('uploadProgressWrap').style.display = 'block';
+  const statusEl = document.getElementById('uploadStatusText');
 
-  const fileName = `monthlyReports/${currentTeacher.uid}/${month}_${currentTeacher.name}_${Date.now()}.pdf`;
-  const storageRef = ref(storage, fileName);
-  const uploadTask = uploadBytesResumable(storageRef, selectedPdfFile);
+  let successCount = 0;
+  const failedFiles = [];
 
-  uploadTask.on('state_changed',
-    snapshot => {
-      const pct = Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100);
-      document.getElementById('uploadBar').style.width = pct + '%';
-      document.getElementById('uploadPct').textContent = pct + '%';
-    },
-    error => {
-      showAlert(err, '업로드 오류: ' + error.message, 'err');
-      btn.disabled = false; btn.textContent = '업로드';
-      document.getElementById('uploadProgressWrap').style.display = 'none';
-    },
-    async () => {
-      const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-      await addDoc(collection(db, 'monthlyReports'), {
-        teacherUid:  currentTeacher.uid,
-        teacherName: currentTeacher.name,
-        month, memo,
-        fileName: selectedPdfFile.name,
-        filePath: fileName,
-        downloadURL,
-        fileSize: selectedPdfFile.size,
-        submittedAt: serverTimestamp()
+  for (let i = 0; i < total; i++) {
+    const file = selectedPdfFiles[i];
+    statusEl.textContent = `업로드 중... (${i + 1}/${total}) ${file.name}`;
+
+    try {
+      await new Promise((resolve, reject) => {
+        const fileName = `monthlyReports/${currentTeacher.uid}/${month}_${currentTeacher.name}_${Date.now()}_${i}.pdf`;
+        const storageRef = ref(storage, fileName);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on('state_changed',
+          snapshot => {
+            const pct = Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100);
+            document.getElementById('uploadBar').style.width = pct + '%';
+            document.getElementById('uploadPct').textContent = pct + '%';
+          },
+          error => reject(error),
+          async () => {
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              await addDoc(collection(db, 'monthlyReports'), {
+                teacherUid:  currentTeacher.uid,
+                teacherName: currentTeacher.name,
+                month, memo,
+                fileName: file.name,
+                filePath: fileName,
+                downloadURL,
+                fileSize: file.size,
+                submittedAt: serverTimestamp()
+              });
+              resolve();
+            } catch (e) { reject(e); }
+          }
+        );
       });
-      showAlert(ok, `✅ ${month} 월말보고서가 업로드되었습니다.`, 'ok');
-      document.getElementById('m-month').value = '';
-      document.getElementById('m-memo').value = '';
-      document.getElementById('pdfFileName').style.display = 'none';
-      document.getElementById('uploadProgressWrap').style.display = 'none';
-      document.getElementById('uploadBar').style.width = '0';
-      selectedPdfFile = null;
-      btn.disabled = false; btn.textContent = '업로드';
-      loadMonthlyHistory();
+      successCount++;
+    } catch (e) {
+      failedFiles.push(`${file.name} (${e.message})`);
     }
-  );
+  }
+
+  if (failedFiles.length) {
+    showAlert(err, `⚠️ ${successCount}/${total}개 업로드 완료. 실패: ${failedFiles.join(', ')}`, 'err');
+  } else {
+    showAlert(ok, `✅ ${month} 월말보고서 ${successCount}개가 업로드되었습니다.`, 'ok');
+  }
+
+  document.getElementById('m-month').value = '';
+  document.getElementById('m-memo').value = '';
+  selectedPdfFiles = [];
+  renderSelectedPdfFiles();
+  document.getElementById('uploadProgressWrap').style.display = 'none';
+  document.getElementById('uploadBar').style.width = '0';
+  statusEl.textContent = '업로드 중...';
+  btn.disabled = false; btn.textContent = '업로드';
+  loadMonthlyHistory();
 };
 
 // ── 월말 이력 로드 ──
