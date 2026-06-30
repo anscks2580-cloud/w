@@ -221,7 +221,7 @@
       <div class="form-row">
         <div class="form-group"><label>학년</label>
           <select id="n-grade">
-            <option>중1</option><option>중2</option><option>중3</option>
+            <option>초4</option><option>초5</option><option>초6</option><option>중1</option><option>중2</option><option>중3</option>
             <option>고1</option><option>고2</option><option>고3</option><option>N수</option>
           </select>
         </div>
@@ -295,7 +295,7 @@
       <div class="form-row">
         <div class="form-group"><label>학년</label>
           <select id="edit-grade">
-            <option>중1</option><option>중2</option><option>중3</option>
+            <option>초4</option><option>초5</option><option>초6</option><option>중1</option><option>중2</option><option>중3</option>
             <option>고1</option><option>고2</option><option>고3</option><option>N수</option>
           </select>
         </div>
@@ -530,7 +530,7 @@
           <label>대상 학년</label>
           <select id="bulkGrade">
             <option value="all">전체 학생</option>
-            <option>중1</option><option>중2</option><option>중3</option>
+            <option>초4</option><option>초5</option><option>초6</option><option>중1</option><option>중2</option><option>중3</option>
             <option>고1</option><option>고2</option><option>고3</option><option>N수</option>
           </select>
         </div>
@@ -4159,7 +4159,7 @@ window.renderAttendance = function() {
   filtered.forEach(s => { if (!attStatus[s.id]) attStatus[s.id] = 'present'; });
 
   // 학년 그룹 순서
-  const gradeOrder = ['초5','초6','중1','중2','중3','고1','고2','고3','N수'];
+  const gradeOrder = ['초4','초5','초6','중1','중2','중3','고1','고2','고3','N수'];
 
   // 관별 → 학년별 그룹핑
   const branches = branchFilter
@@ -4274,7 +4274,7 @@ window.downloadAttendanceImage = function() {
   );
   if (!filtered.length) return;
 
-  const gradeOrder = ['초5','초6','중1','중2','중3','고1','고2','고3','N수'];
+  const gradeOrder = ['초4','초5','초6','중1','중2','중3','고1','고2','고3','N수'];
   const branches = branchFilter
     ? [branchFilter]
     : [...new Set(filtered.map(s => s.branch))].sort();
@@ -4776,7 +4776,7 @@ window.loadDraft = async function(type) {
 // ══════════════════════════════════════════
 
 const GRADE_UP = {
-  '초5':'초6', '초6':'중1',
+  '초4':'초5', '초5':'초6', '초6':'중1',
   '중1':'중2', '중2':'중3', '중3':'고1',
   '고1':'고2', '고2':'고3', '고3':'N수',
 };
