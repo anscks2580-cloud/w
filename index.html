@@ -309,7 +309,7 @@
         <span class="card-arrow">강의 보러가기 →</span>
       </a>
 
-      <div class="menu-card" style="cursor:default;grid-column:1 / -1;">
+      <div class="menu-card" style="cursor:default;">
         <span class="card-icon">🏆</span>
         <div class="card-title">명예의 전당</div>
         <div class="card-desc" style="margin-bottom:12px;">송우찬수학학원 합격생</div>
@@ -448,9 +448,9 @@ document.addEventListener('DOMContentLoaded', function() {
       label: 'SKY',
       color: '#9B8ED4',
       items: [
-        { univ: '서울대학교', name: '배○석' },
-        { univ: '연세대학교', name: '정○현' },
-        { univ: '고려대학교', name: '탁○서' }
+        { univ: '서울대', name: '배○석' },
+        { univ: '연세대', name: '정○현' },
+        { univ: '고려대', name: '탁○서' }
       ]
     },
     {
@@ -465,28 +465,28 @@ document.addEventListener('DOMContentLoaded', function() {
     {
       color: '#4A9FD4',
       items: [
-        { univ: '성균관대학교', name: '이○윤' },
+        { univ: '성균관대', name: '이○윤' },
         { univ: '이화여대', name: '윤○서' },
         { univ: '이화여대', name: '목○우' },
-        { univ: '중앙대학교', name: '최○아' },
+        { univ: '중앙대', name: '최○아' },
         { univ: '한국외대', name: '이○혁' },
-        { univ: '동국대학교', name: '김○현' },
-        { univ: '동국대학교', name: '윤○형' },
-        { univ: '아주대학교', name: '심○민' },
-        { univ: '아주대학교', name: '이○훈' },
-        { univ: '세종대학교', name: '이○학' },
-        { univ: '세종대학교', name: '임○훈' },
-        { univ: '세종대학교', name: '최○아' },
-        { univ: '홍익대학교', name: '이○' },
-        { univ: '단국대학교', name: '신○우' },
-        { univ: '단국대학교', name: '최○빈' },
+        { univ: '동국대', name: '김○현' },
+        { univ: '동국대', name: '윤○형' },
+        { univ: '아주대', name: '심○민' },
+        { univ: '아주대', name: '이○훈' },
+        { univ: '세종대', name: '이○학' },
+        { univ: '세종대', name: '임○훈' },
+        { univ: '세종대', name: '최○아' },
+        { univ: '홍익대', name: '이○' },
+        { univ: '단국대', name: '신○우' },
+        { univ: '단국대', name: '최○빈' },
         { univ: '서울교대', name: '김○은' },
         { univ: '성신여대', name: '강○경' }
       ]
     }
   ];
 
-  var PER_SLIDE = 6;
+  var PER_SLIDE = 4;
 
   // 슬라이드 목록 생성: 각 그룹을 PER_SLIDE개씩 분할
   var slides = [];
@@ -520,11 +520,11 @@ document.addEventListener('DOMContentLoaded', function() {
       lbl.textContent = s.label;
       slide.appendChild(lbl);
     }
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;';
+    grid.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
     s.items.forEach(function(it) {
       var chip = document.createElement('div');
-      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:6px 10px;background:' + s.color + '18;min-height:44px;';
-      chip.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--off-white);line-height:1.35;word-break:keep-all;">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">' + it.name + '</div>';
+      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:6px 10px;background:' + s.color + '18;display:flex;align-items:center;justify-content:space-between;gap:8px;';
+      chip.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--off-white);line-height:1.35;word-break:keep-all;">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;">' + it.name + '</div>';
       grid.appendChild(chip);
     });
     slide.appendChild(grid);
