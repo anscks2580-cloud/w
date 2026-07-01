@@ -445,11 +445,19 @@ window.doNavLogout = async function() {
 document.addEventListener('DOMContentLoaded', function() {
   var groups = [
     {
+      label: 'SKY',
       color: '#9B8ED4',
       items: [
         { univ: '서울대학교', name: '배○석' },
         { univ: '연세대학교', name: '정○현' },
         { univ: '고려대학교', name: '탁○서' }
+      ]
+    },
+    {
+      label: '해외대학교',
+      color: '#4AC4A0',
+      items: [
+        { univ: '시카고 일리노이 주립대 치과대학', name: '정○욱' }
       ]
     },
     {
@@ -484,6 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
     for (var i = 0; i < g.items.length; i += PER_SLIDE) {
       slides.push({
         groupIdx: gi,
+        label: g.label,
         color: g.color,
         items: g.items.slice(i, i + PER_SLIDE),
         total: Math.ceil(g.items.length / PER_SLIDE),
@@ -503,17 +512,17 @@ document.addEventListener('DOMContentLoaded', function() {
     slide.style.cssText = 'min-width:100%;box-sizing:border-box;';
 
     var grid = document.createElement('div');
-    if (s.groupIdx === 0) {
+    if (s.label) {
       var lbl = document.createElement('div');
-      lbl.style.cssText = 'font-size:9px;font-weight:700;color:#9B8ED4;letter-spacing:1.5px;margin-bottom:7px;';
-      lbl.textContent = 'SKY';
+      lbl.style.cssText = 'font-size:9px;font-weight:700;color:' + s.color + ';letter-spacing:1.5px;margin-bottom:7px;';
+      lbl.textContent = s.label;
       slide.appendChild(lbl);
     }
     grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:5px;';
     s.items.forEach(function(it) {
       var chip = document.createElement('div');
-      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:4px 8px;background:' + s.color + '18;';
-      chip.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--off-white);">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);">' + it.name + '</div>';
+      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:4px 8px;background:' + s.color + '18;overflow:hidden;';
+      chip.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--off-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);">' + it.name + '</div>';
       grid.appendChild(chip);
     });
     slide.appendChild(grid);
