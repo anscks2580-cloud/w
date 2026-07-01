@@ -309,7 +309,7 @@
         <span class="card-arrow">강의 보러가기 →</span>
       </a>
 
-      <div class="menu-card" style="cursor:default;">
+      <div class="menu-card" style="cursor:default;grid-column:1 / -1;">
         <span class="card-icon">🏆</span>
         <div class="card-title">명예의 전당</div>
         <div class="card-desc" style="margin-bottom:12px;">송우찬수학학원 합격생</div>
@@ -457,7 +457,9 @@ document.addEventListener('DOMContentLoaded', function() {
       label: '해외대학교',
       color: '#4AC4A0',
       items: [
-        { univ: '시카고 일리노이 주립대 치과대학', name: '정○욱' }
+        { univ: 'UCLA', name: '정○욱' },
+        { univ: 'UCSD', name: '정○욱' },
+        { univ: 'College of Dental Medicine - Illinois (치과대학)', name: '정○욱' }
       ]
     },
     {
@@ -514,15 +516,15 @@ document.addEventListener('DOMContentLoaded', function() {
     var grid = document.createElement('div');
     if (s.label) {
       var lbl = document.createElement('div');
-      lbl.style.cssText = 'font-size:9px;font-weight:700;color:' + s.color + ';letter-spacing:1.5px;margin-bottom:7px;';
+      lbl.style.cssText = 'font-size:10px;font-weight:700;color:' + s.color + ';letter-spacing:0.5px;margin-bottom:7px;white-space:nowrap;';
       lbl.textContent = s.label;
       slide.appendChild(lbl);
     }
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:5px;';
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;';
     s.items.forEach(function(it) {
       var chip = document.createElement('div');
-      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:4px 8px;background:' + s.color + '18;overflow:hidden;';
-      chip.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--off-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);">' + it.name + '</div>';
+      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:6px 10px;background:' + s.color + '18;min-height:44px;';
+      chip.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--off-white);line-height:1.35;word-break:keep-all;">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">' + it.name + '</div>';
       grid.appendChild(chip);
     });
     slide.appendChild(grid);
