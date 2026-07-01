@@ -111,7 +111,7 @@
 }
 
 .card-arrow {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   font-size: 13px; color: var(--gold); font-weight: 500;
   margin-top: auto;
 }
@@ -534,8 +534,8 @@ document.addEventListener('DOMContentLoaded', function() {
     grid.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
     s.items.forEach(function(it) {
       var chip = document.createElement('div');
-      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:6px 10px;background:' + s.color + '18;display:flex;align-items:center;justify-content:space-between;gap:8px;';
-      chip.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--off-white);line-height:1.35;word-break:keep-all;">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;">' + it.name + '</div>';
+      chip.style.cssText = 'border-left:2px solid ' + s.color + ';border-radius:0 4px 4px 0;padding:6px 8px;background:' + s.color + '18;';
+      chip.innerHTML = '<div style="font-size:10px;font-weight:600;color:var(--off-white);letter-spacing:-0.4px;white-space:nowrap;">' + it.univ + '</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">' + it.name + '</div>';
       grid.appendChild(chip);
     });
     slide.appendChild(grid);
